@@ -88,7 +88,8 @@ Report the PR URL returned by the command so the user can open it immediately.
 ## Notes
 
 - Never create the PR without explicit user confirmation — this is a shared, visible action.
-- If `gh` is not authenticated, tell the user to run `gh auth login` first.
+- `gh` (GitHub CLI) must be installed and authenticated. If missing, tell the user to install it from https://cli.github.com and run `gh auth login`.
+- On Windows, invoke `gh` directly rather than via the `.ps1` wrapper if PowerShell execution policy blocks scripts.
 - If the branch has no commits ahead of `main`, stop and say so — there is nothing to PR.
 - If the remote branch does not exist yet, tell the user to push first (`/commit-and-push`) before running this skill.
 - Default base branch is `main`. If the project uses a different default (e.g. `develop`), adjust accordingly.
