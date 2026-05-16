@@ -1,0 +1,42 @@
+# Build output
+bin/
+obj/
+out/
+
+# NuGet
+*.user
+*.suo
+.nuget/
+packages/
+
+# Rider / VS
+.idea/
+.vs/
+*.csproj.user
+*.sln.user
+launchSettings.json
+
+# dotnet tools
+.config/dotnet-tools.json
+
+# EF Core
+*.db
+*.db-shm
+*.db-wal
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment / secrets
+.env
+*.env.local
+appsettings.Local.json
+appsettings.*.local.json
+
+# Claude local settings (personal, not shared)
+.claude/settings.local.json

@@ -1,0 +1,6 @@
+@DeFinance.Api_HostAddress = http://localhost:5233
+
+GET {{DeFinance.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

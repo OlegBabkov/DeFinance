@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/DeFinance.Api/DeFinance.Api.csproj" />
+    <Project Path="src/DeFinance.Application/DeFinance.Application.csproj" />
+    <Project Path="src/DeFinance.Domain/DeFinance.Domain.csproj" />
+    <Project Path="src/DeFinance.Infrastructure/DeFinance.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/DeFinance.Api.Tests/DeFinance.Api.Tests.csproj" />
+    <Project Path="tests/DeFinance.Application.Tests/DeFinance.Application.Tests.csproj" />
+    <Project Path="tests/DeFinance.Domain.Tests/DeFinance.Domain.Tests.csproj" />
+  </Folder>
+</Solution>
