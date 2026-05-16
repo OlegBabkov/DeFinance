@@ -1,24 +1,43 @@
+using DeFinance.Application;
 using DeFinance.Infrastructure;
+using FluentValidation;
+using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+app.UseExceptionHandler(errorApp => errorApp.Run(async context =>
 {
+    var feature = context.Features.Get<IExceptionHandlerPathFeature>();
+
+    if (feature?.Error is ValidationException ve)
+    {
+        var errors = ve.Errors
+            .GroupBy(e => e.PropertyName)
+            .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray());
+
+        context.Response.StatusCode = StatusCodes.Status400BadRequest;
+        await context.Response.WriteAsJsonAsync(new ValidationProblemDetails(errors) { Status = 400 });
+        return;
+    }
+
+    context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+    await context.Response.WriteAsJsonAsync(
+        new ProblemDetails { Status = 500, Title = "An unexpected error occurred." });
+}));
+
+if (app.Environment.IsDevelopment())
     app.MapOpenApi();
-}
 
 app.UseHttpsRedirection();
-
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();
