@@ -5,10 +5,11 @@ param(
     [string]$Draft = "false"
 )
 
-$draftFlag = if ($Draft -eq "true") { "--draft" } else { "" }
+$gh = if (Get-Command gh -ErrorAction SilentlyContinue) { "gh" }
+      elseif (Test-Path "C:\Program Files\GitHub CLI\gh.exe") { "C:\Program Files\GitHub CLI\gh.exe" }
+      else { throw "gh CLI not found. Install from https://cli.github.com and run 'gh auth login'." }
 
-if ($draftFlag -ne "") {
-    gh pr create --title $Title --body $Body --base $Base $draftFlag
-} else {
-    gh pr create --title $Title --body $Body --base $Base
-}
+$args = @("pr", "create", "--title", $Title, "--body", $Body, "--base", $Base)
+if ($Draft -eq "true") { $args += "--draft" }
+
+& $gh @args
