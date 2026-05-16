@@ -20,6 +20,12 @@ public class Currency
             IsActive = true
         };
 
+    public void Update(string name, string symbol)
+    {
+        Name = name;
+        Symbol = symbol;
+    }
+
     public void Activate() => IsActive = true;
     public void Deactivate() => IsActive = false;
 }
