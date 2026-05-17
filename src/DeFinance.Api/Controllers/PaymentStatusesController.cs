@@ -1,0 +1,50 @@
+using DeFinance.Application.PaymentStatuses.Commands;
+using DeFinance.Application.PaymentStatuses.Queries;
+using MediatR;
+using Microsoft.AspNetCore.Mvc;
+
+namespace DeFinance.Api.Controllers;
+
+[ApiController]
+[Route("api/payment-statuses")]
+public class PaymentStatusesController(ISender sender) : ControllerBase
+{
+    [HttpGet]
+    public async Task<IActionResult> GetAll(CancellationToken ct) =>
+        Ok(await sender.Send(new GetAllPaymentStatusesQuery(), ct));
+
+    [HttpGet("{id:guid}")]
+    public async Task<IActionResult> GetById(Guid id, CancellationToken ct)
+    {
+        var result = await sender.Send(new GetPaymentStatusByIdQuery(id), ct);
+        return result is null ? NotFound() : Ok(result);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Create(CreatePaymentStatusCommand command, CancellationToken ct)
+    {
+        var result = await sender.Send(command, ct);
+        return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
+    }
+
+    [HttpPut("{id:guid}")]
+    public async Task<IActionResult> Update(Guid id, UpdatePaymentStatusCommand command, CancellationToken ct)
+    {
+        var result = await sender.Send(command with { Id = id }, ct);
+        return result is null ? NotFound() : Ok(result);
+    }
+
+    [HttpPatch("{id:guid}/activate")]
+    public async Task<IActionResult> Activate(Guid id, CancellationToken ct)
+    {
+        var result = await sender.Send(new ActivatePaymentStatusCommand(id), ct);
+        return result is null ? NotFound() : Ok(result);
+    }
+
+    [HttpPatch("{id:guid}/deactivate")]
+    public async Task<IActionResult> Deactivate(Guid id, CancellationToken ct)
+    {
+        var result = await sender.Send(new DeactivatePaymentStatusCommand(id), ct);
+        return result is null ? NotFound() : Ok(result);
+    }
+}
