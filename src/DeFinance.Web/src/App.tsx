@@ -6,6 +6,7 @@ import { AccountsPage } from './pages/AccountsPage'
 import { CategoriesPage } from './pages/CategoriesPage'
 import { CurrenciesPage } from './pages/CurrenciesPage'
 import { CounterpartiesPage } from './pages/CounterpartiesPage'
+import { AdministrationPage } from './pages/AdministrationPage'
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
               <Route path="/categories" element={<CategoriesPage />} />
               <Route path="/currencies" element={<CurrenciesPage />} />
               <Route path="/counterparties" element={<CounterpartiesPage />} />
+              <Route path="/administration" element={<AdministrationPage />} />
             </Routes>
           </main>
         </div>
