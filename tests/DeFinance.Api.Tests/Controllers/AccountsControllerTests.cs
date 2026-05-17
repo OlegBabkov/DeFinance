@@ -40,7 +40,7 @@ public class AccountsControllerTests : IClassFixture<DeFinanceWebApplicationFact
         var response = await _client.GetAsync("/api/accounts");
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var body = await response.Content.ReadFromJsonAsync<List<AccountResponse>>();
+        var body = await response.Content.ReadFromJsonAsync<List<AccountResponse>>(DeFinanceWebApplicationFactory.JsonOptions);
         body.Should().NotBeNull().And.BeEmpty();
     }
 
@@ -49,10 +49,10 @@ public class AccountsControllerTests : IClassFixture<DeFinanceWebApplicationFact
     {
         var command = new CreateAccountCommand("My Savings", AccountType.Savings, 500m, _currencyId);
 
-        var response = await _client.PostAsJsonAsync("/api/accounts", command);
+        var response = await _client.PostAsJsonAsync("/api/accounts", command, DeFinanceWebApplicationFactory.JsonOptions);
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
-        var body = await response.Content.ReadFromJsonAsync<AccountResponse>();
+        var body = await response.Content.ReadFromJsonAsync<AccountResponse>(DeFinanceWebApplicationFactory.JsonOptions);
         body.Should().NotBeNull();
         body!.Name.Should().Be("My Savings");
         body.Type.Should().Be(AccountType.Savings);
@@ -66,7 +66,7 @@ public class AccountsControllerTests : IClassFixture<DeFinanceWebApplicationFact
     {
         var command = new CreateAccountCommand("", AccountType.Checking, 0m, _currencyId);
 
-        var response = await _client.PostAsJsonAsync("/api/accounts", command);
+        var response = await _client.PostAsJsonAsync("/api/accounts", command, DeFinanceWebApplicationFactory.JsonOptions);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
@@ -76,7 +76,7 @@ public class AccountsControllerTests : IClassFixture<DeFinanceWebApplicationFact
     {
         var command = new CreateAccountCommand("Account", AccountType.Checking, -1m, _currencyId);
 
-        var response = await _client.PostAsJsonAsync("/api/accounts", command);
+        var response = await _client.PostAsJsonAsync("/api/accounts", command, DeFinanceWebApplicationFactory.JsonOptions);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
@@ -86,7 +86,7 @@ public class AccountsControllerTests : IClassFixture<DeFinanceWebApplicationFact
     {
         var command = new CreateAccountCommand("Account", AccountType.Checking, 0m, Guid.Empty);
 
-        var response = await _client.PostAsJsonAsync("/api/accounts", command);
+        var response = await _client.PostAsJsonAsync("/api/accounts", command, DeFinanceWebApplicationFactory.JsonOptions);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
@@ -99,7 +99,7 @@ public class AccountsControllerTests : IClassFixture<DeFinanceWebApplicationFact
         var response = await _client.GetAsync($"/api/accounts/{created.Id}");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<AccountResponse>();
+        var body = await response.Content.ReadFromJsonAsync<AccountResponse>(DeFinanceWebApplicationFactory.JsonOptions);
         body!.Id.Should().Be(created.Id);
         body.Name.Should().Be("Checking Account");
     }
@@ -121,7 +121,7 @@ public class AccountsControllerTests : IClassFixture<DeFinanceWebApplicationFact
         var response = await _client.PutAsJsonAsync($"/api/accounts/{created.Id}", updateCommand);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<AccountResponse>();
+        var body = await response.Content.ReadFromJsonAsync<AccountResponse>(DeFinanceWebApplicationFactory.JsonOptions);
         body!.Name.Should().Be("New Name");
     }
 
@@ -154,7 +154,7 @@ public class AccountsControllerTests : IClassFixture<DeFinanceWebApplicationFact
         var response = await _client.PatchAsync($"/api/accounts/{created.Id}/deactivate", null);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<AccountResponse>();
+        var body = await response.Content.ReadFromJsonAsync<AccountResponse>(DeFinanceWebApplicationFactory.JsonOptions);
         body!.IsActive.Should().BeFalse();
     }
 
@@ -167,7 +167,7 @@ public class AccountsControllerTests : IClassFixture<DeFinanceWebApplicationFact
         var response = await _client.PatchAsync($"/api/accounts/{created.Id}/activate", null);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<AccountResponse>();
+        var body = await response.Content.ReadFromJsonAsync<AccountResponse>(DeFinanceWebApplicationFactory.JsonOptions);
         body!.IsActive.Should().BeTrue();
     }
 
@@ -182,8 +182,8 @@ public class AccountsControllerTests : IClassFixture<DeFinanceWebApplicationFact
     private async Task<AccountResponse> CreateAccountAsync(string name, AccountType type, decimal balance)
     {
         var response = await _client.PostAsJsonAsync("/api/accounts",
-            new CreateAccountCommand(name, type, balance, _currencyId));
+            new CreateAccountCommand(name, type, balance, _currencyId), DeFinanceWebApplicationFactory.JsonOptions);
         response.EnsureSuccessStatusCode();
-        return (await response.Content.ReadFromJsonAsync<AccountResponse>())!;
+        return (await response.Content.ReadFromJsonAsync<AccountResponse>(DeFinanceWebApplicationFactory.JsonOptions))!;
     }
 }

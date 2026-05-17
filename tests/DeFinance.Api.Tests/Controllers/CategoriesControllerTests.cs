@@ -37,7 +37,7 @@ public class CategoriesControllerTests : IClassFixture<DeFinanceWebApplicationFa
         var response = await _client.GetAsync("/api/categories");
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var body = await response.Content.ReadFromJsonAsync<List<CategoryResponse>>();
+        var body = await response.Content.ReadFromJsonAsync<List<CategoryResponse>>(DeFinanceWebApplicationFactory.JsonOptions);
         body.Should().NotBeNull().And.BeEmpty();
     }
 
@@ -46,10 +46,10 @@ public class CategoriesControllerTests : IClassFixture<DeFinanceWebApplicationFa
     {
         var command = new CreateCategoryCommand("Food", CategoryType.Expense, "#FF5733", "🍔", null);
 
-        var response = await _client.PostAsJsonAsync("/api/categories", command);
+        var response = await _client.PostAsJsonAsync("/api/categories", command, DeFinanceWebApplicationFactory.JsonOptions);
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
-        var body = await response.Content.ReadFromJsonAsync<CategoryResponse>();
+        var body = await response.Content.ReadFromJsonAsync<CategoryResponse>(DeFinanceWebApplicationFactory.JsonOptions);
         body.Should().NotBeNull();
         body!.Name.Should().Be("Food");
         body.Type.Should().Be(CategoryType.Expense);
@@ -64,10 +64,10 @@ public class CategoriesControllerTests : IClassFixture<DeFinanceWebApplicationFa
     {
         var command = new CreateCategoryCommand("Salary", CategoryType.Income, null, null, null);
 
-        var response = await _client.PostAsJsonAsync("/api/categories", command);
+        var response = await _client.PostAsJsonAsync("/api/categories", command, DeFinanceWebApplicationFactory.JsonOptions);
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
-        var body = await response.Content.ReadFromJsonAsync<CategoryResponse>();
+        var body = await response.Content.ReadFromJsonAsync<CategoryResponse>(DeFinanceWebApplicationFactory.JsonOptions);
         body!.Color.Should().BeNull();
         body.Icon.Should().BeNull();
     }
@@ -77,7 +77,7 @@ public class CategoriesControllerTests : IClassFixture<DeFinanceWebApplicationFa
     {
         var command = new CreateCategoryCommand("", CategoryType.Expense, null, null, null);
 
-        var response = await _client.PostAsJsonAsync("/api/categories", command);
+        var response = await _client.PostAsJsonAsync("/api/categories", command, DeFinanceWebApplicationFactory.JsonOptions);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
@@ -87,7 +87,7 @@ public class CategoriesControllerTests : IClassFixture<DeFinanceWebApplicationFa
     {
         var command = new CreateCategoryCommand("Food", CategoryType.Expense, "red", null, null);
 
-        var response = await _client.PostAsJsonAsync("/api/categories", command);
+        var response = await _client.PostAsJsonAsync("/api/categories", command, DeFinanceWebApplicationFactory.JsonOptions);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
@@ -98,10 +98,10 @@ public class CategoriesControllerTests : IClassFixture<DeFinanceWebApplicationFa
         var parent = await CreateCategoryAsync("Food", CategoryType.Expense, null);
         var command = new CreateCategoryCommand("Fast Food", CategoryType.Expense, null, null, parent.Id);
 
-        var response = await _client.PostAsJsonAsync("/api/categories", command);
+        var response = await _client.PostAsJsonAsync("/api/categories", command, DeFinanceWebApplicationFactory.JsonOptions);
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
-        var body = await response.Content.ReadFromJsonAsync<CategoryResponse>();
+        var body = await response.Content.ReadFromJsonAsync<CategoryResponse>(DeFinanceWebApplicationFactory.JsonOptions);
         body!.ParentId.Should().Be(parent.Id);
     }
 
@@ -113,7 +113,7 @@ public class CategoriesControllerTests : IClassFixture<DeFinanceWebApplicationFa
         var response = await _client.GetAsync($"/api/categories/{created.Id}");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<CategoryResponse>();
+        var body = await response.Content.ReadFromJsonAsync<CategoryResponse>(DeFinanceWebApplicationFactory.JsonOptions);
         body!.Id.Should().Be(created.Id);
         body.Name.Should().Be("Transport");
     }
@@ -132,10 +132,10 @@ public class CategoriesControllerTests : IClassFixture<DeFinanceWebApplicationFa
         var created = await CreateCategoryAsync("Old Name", CategoryType.Income, null);
         var updateCommand = new UpdateCategoryCommand(created.Id, "New Name", "#AABBCC", "💰");
 
-        var response = await _client.PutAsJsonAsync($"/api/categories/{created.Id}", updateCommand);
+        var response = await _client.PutAsJsonAsync($"/api/categories/{created.Id}", updateCommand, DeFinanceWebApplicationFactory.JsonOptions);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<CategoryResponse>();
+        var body = await response.Content.ReadFromJsonAsync<CategoryResponse>(DeFinanceWebApplicationFactory.JsonOptions);
         body!.Name.Should().Be("New Name");
         body.Color.Should().Be("#AABBCC");
         body.Icon.Should().Be("💰");
@@ -147,7 +147,7 @@ public class CategoriesControllerTests : IClassFixture<DeFinanceWebApplicationFa
         var created = await CreateCategoryAsync("Category", CategoryType.Expense, null);
         var updateCommand = new UpdateCategoryCommand(created.Id, "", null, null);
 
-        var response = await _client.PutAsJsonAsync($"/api/categories/{created.Id}", updateCommand);
+        var response = await _client.PutAsJsonAsync($"/api/categories/{created.Id}", updateCommand, DeFinanceWebApplicationFactory.JsonOptions);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
@@ -170,7 +170,7 @@ public class CategoriesControllerTests : IClassFixture<DeFinanceWebApplicationFa
         var response = await _client.PatchAsync($"/api/categories/{created.Id}/deactivate", null);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<CategoryResponse>();
+        var body = await response.Content.ReadFromJsonAsync<CategoryResponse>(DeFinanceWebApplicationFactory.JsonOptions);
         body!.IsActive.Should().BeFalse();
     }
 
@@ -183,7 +183,7 @@ public class CategoriesControllerTests : IClassFixture<DeFinanceWebApplicationFa
         var response = await _client.PatchAsync($"/api/categories/{created.Id}/activate", null);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<CategoryResponse>();
+        var body = await response.Content.ReadFromJsonAsync<CategoryResponse>(DeFinanceWebApplicationFactory.JsonOptions);
         body!.IsActive.Should().BeTrue();
     }
 
@@ -200,6 +200,6 @@ public class CategoriesControllerTests : IClassFixture<DeFinanceWebApplicationFa
         var response = await _client.PostAsJsonAsync("/api/categories",
             new CreateCategoryCommand(name, type, color, null, null));
         response.EnsureSuccessStatusCode();
-        return (await response.Content.ReadFromJsonAsync<CategoryResponse>())!;
+        return (await response.Content.ReadFromJsonAsync<CategoryResponse>(DeFinanceWebApplicationFactory.JsonOptions))!;
     }
 }
