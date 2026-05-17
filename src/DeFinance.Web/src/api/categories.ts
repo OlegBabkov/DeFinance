@@ -1,6 +1,6 @@
 import client from './client'
 
-export type CategoryType = 'Income' | 'Expense' | 'Transfer'
+export type CategoryType = 'Income' | 'Expense'
 
 export interface Category {
   id: string
@@ -14,14 +14,13 @@ export interface Category {
 
 export interface CreateCategoryRequest {
   name: string
-  type: number
+  type: CategoryType
   color: string | null
   icon: string | null
   parentId: string | null
 }
 
 export interface UpdateCategoryRequest {
-  id: string
   name: string
   color: string | null
   icon: string | null
