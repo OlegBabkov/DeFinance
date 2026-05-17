@@ -17,6 +17,7 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<ICurrencyRepository, CurrencyRepository>();
         services.AddScoped<IAccountRepository, AccountRepository>();
         services.AddScoped<ICategoryRepository, CategoryRepository>();
+        services.AddScoped<ICounterpartyRepository, CounterpartyRepository>();
 
         return services;
     }
