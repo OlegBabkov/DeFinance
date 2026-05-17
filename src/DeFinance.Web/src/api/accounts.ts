@@ -13,13 +13,12 @@ export interface Account {
 
 export interface CreateAccountRequest {
   name: string
-  type: number
+  type: AccountType
   initialBalance: number
   currencyId: string
 }
 
 export interface UpdateAccountRequest {
-  id: string
   name: string
 }
 
