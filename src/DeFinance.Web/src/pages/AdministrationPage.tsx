@@ -137,7 +137,7 @@ function PaymentStatusesPanel() {
       {!loading && !error && (
         <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
-            <thead className="bg-gray-50 dark:bg-gray-700">
+            <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0 z-10">
               <tr>
                 {['Name', 'Description', 'Status', ''].map(h => (
                   <th key={h} className="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400 text-xs">

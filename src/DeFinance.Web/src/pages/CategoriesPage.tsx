@@ -105,34 +105,36 @@ export function CategoriesPage() {
   if (error) return <div className="p-8 text-red-500">{error}</div>
 
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Categories</h1>
-        <button
-          onClick={openCreate}
-          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors"
-        >
-          + New Category
-        </button>
-      </div>
-
-      <div className="flex border-b border-gray-200 dark:border-gray-700 mb-6">
-        {TABS.map(({ id, label }) => (
+    <div className="h-full flex flex-col">
+      <div className="px-8 pt-8 pb-0 shrink-0">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Categories</h1>
           <button
-            key={id}
-            onClick={() => setTab(id)}
-            className={`px-5 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
-              tab === id
-                ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400'
-                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-            }`}
+            onClick={openCreate}
+            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors"
           >
-            {label}
-            <span className="ml-2 rounded-full bg-gray-100 dark:bg-gray-700 px-2 py-0.5 text-xs text-gray-600 dark:text-gray-300">
-              {categories.filter(c => c.type === id).length}
-            </span>
+            + New Category
           </button>
-        ))}
+        </div>
+
+        <div className="flex border-b border-gray-200 dark:border-gray-700">
+          {TABS.map(({ id, label }) => (
+            <button
+              key={id}
+              onClick={() => setTab(id)}
+              className={`px-5 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
+                tab === id
+                  ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+              }`}
+            >
+              {label}
+              <span className="ml-2 rounded-full bg-gray-100 dark:bg-gray-700 px-2 py-0.5 text-xs text-gray-600 dark:text-gray-300">
+                {categories.filter(c => c.type === id).length}
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {modal !== null && (
@@ -211,9 +213,9 @@ export function CategoriesPage() {
         </Modal>
       )}
 
-      <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+      <div className="flex-1 min-h-0 overflow-auto mx-8 mb-8 mt-6 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
-          <thead className="bg-gray-50 dark:bg-gray-700">
+          <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0 z-10">
             <tr>
               {['Name', 'Color', 'Parent', 'Status', ''].map(h => (
                 <th key={h} className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">
