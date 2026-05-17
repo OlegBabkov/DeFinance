@@ -6,6 +6,7 @@ const links = [
   { to: '/accounts', label: 'Accounts', icon: '🏦' },
   { to: '/categories', label: 'Categories', icon: '🏷️' },
   { to: '/currencies', label: 'Currencies', icon: '💱' },
+  { to: '/counterparties', label: 'Counterparties', icon: '🤝' },
 ]
 
 export function Sidebar() {
