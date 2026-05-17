@@ -22,6 +22,7 @@ using (var scope = app.Services.CreateScope())
     if (db.Database.IsRelational())
         await db.Database.MigrateAsync();
     await CurrencySeeder.SeedAsync(db);
+    await AccountSeeder.SeedAsync(db);
 }
 
 app.UseExceptionHandler(errorApp => errorApp.Run(async context =>
