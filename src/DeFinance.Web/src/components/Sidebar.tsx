@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom'
+import { useTheme } from '../ThemeContext'
 
 const links = [
   { to: '/', label: 'Dashboard', icon: '📊' },
@@ -8,9 +9,11 @@ const links = [
 ]
 
 export function Sidebar() {
+  const { dark, toggle } = useTheme()
+
   return (
-    <aside className="w-56 min-h-screen bg-gray-900 text-white flex flex-col">
-      <div className="px-6 py-5 border-b border-gray-700">
+    <aside className="w-56 min-h-screen bg-gray-900 dark:bg-gray-950 text-white flex flex-col">
+      <div className="px-6 py-5 border-b border-gray-700 dark:border-gray-800">
         <span className="text-xl font-bold tracking-tight">💰 DeFinance</span>
       </div>
       <nav className="flex-1 py-4">
@@ -32,6 +35,15 @@ export function Sidebar() {
           </NavLink>
         ))}
       </nav>
+      <div className="px-6 py-4 border-t border-gray-700 dark:border-gray-800">
+        <button
+          onClick={toggle}
+          className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors w-full"
+        >
+          <span>{dark ? '☀️' : '🌙'}</span>
+          {dark ? 'Light mode' : 'Dark mode'}
+        </button>
+      </div>
     </aside>
   )
 }
