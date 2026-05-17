@@ -7,6 +7,7 @@ public class DeFinanceDbContext(DbContextOptions<DeFinanceDbContext> options) : 
 {
     public DbSet<Currency> Currencies => Set<Currency>();
     public DbSet<Account> Accounts => Set<Account>();
+    public DbSet<Category> Categories => Set<Category>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
