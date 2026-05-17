@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { currenciesApi, type Currency } from '../api/currencies'
 import { Modal } from '../components/Modal'
+import { IconButton, PencilIcon, CheckCircleIcon, BanIcon } from '../components/IconButton'
 
 type ModalState = null | 'create' | Currency
 
@@ -177,19 +178,21 @@ export function CurrenciesPage() {
                     {currency.isActive ? 'Active' : 'Inactive'}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-right space-x-3">
-                  <button
-                    onClick={() => openEdit(currency)}
-                    className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => toggle(currency)}
-                    className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
-                  >
-                    {currency.isActive ? 'Deactivate' : 'Activate'}
-                  </button>
+                <td className="px-4 py-3 text-right">
+                  <div className="inline-flex items-center gap-1">
+                    <IconButton
+                      icon={<PencilIcon />}
+                      label="Edit"
+                      onClick={() => openEdit(currency)}
+                      className="text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400"
+                    />
+                    <IconButton
+                      icon={currency.isActive ? <BanIcon /> : <CheckCircleIcon />}
+                      label={currency.isActive ? 'Deactivate' : 'Activate'}
+                      onClick={() => toggle(currency)}
+                      className={currency.isActive ? 'text-gray-400 hover:text-red-500 dark:hover:text-red-400' : 'text-gray-400 hover:text-green-600 dark:hover:text-green-400'}
+                    />
+                  </div>
                 </td>
               </tr>
             ))}
