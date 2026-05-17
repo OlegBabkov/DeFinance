@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { categoriesApi, type Category, type CategoryType } from '../api/categories'
 import { Modal } from '../components/Modal'
+import { IconButton, PencilIcon, CheckCircleIcon, BanIcon } from '../components/IconButton'
 
 type Tab = 'Income' | 'Expense'
 type ModalState = null | 'create' | Category
@@ -253,19 +254,21 @@ export function CategoriesPage() {
                     {cat.isActive ? 'Active' : 'Inactive'}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-right space-x-3">
-                  <button
-                    onClick={() => openEdit(cat)}
-                    className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => toggle(cat)}
-                    className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
-                  >
-                    {cat.isActive ? 'Deactivate' : 'Activate'}
-                  </button>
+                <td className="px-4 py-3 text-right">
+                  <div className="inline-flex items-center gap-1">
+                    <IconButton
+                      icon={<PencilIcon />}
+                      label="Edit"
+                      onClick={() => openEdit(cat)}
+                      className="text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400"
+                    />
+                    <IconButton
+                      icon={cat.isActive ? <BanIcon /> : <CheckCircleIcon />}
+                      label={cat.isActive ? 'Deactivate' : 'Activate'}
+                      onClick={() => toggle(cat)}
+                      className={cat.isActive ? 'text-gray-400 hover:text-red-500 dark:hover:text-red-400' : 'text-gray-400 hover:text-green-600 dark:hover:text-green-400'}
+                    />
+                  </div>
                 </td>
               </tr>
             ))}

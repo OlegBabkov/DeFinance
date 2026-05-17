@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { accountsApi, type Account, type AccountType } from '../api/accounts'
 import { currenciesApi, type Currency } from '../api/currencies'
 import { Modal } from '../components/Modal'
+import { IconButton, PencilIcon, CheckCircleIcon, BanIcon } from '../components/IconButton'
 
 type ModalState = null | 'create' | Account
 
@@ -210,19 +211,21 @@ export function AccountsPage() {
                     {account.isActive ? 'Active' : 'Inactive'}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-right space-x-3">
-                  <button
-                    onClick={() => openEdit(account)}
-                    className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => toggle(account)}
-                    className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
-                  >
-                    {account.isActive ? 'Deactivate' : 'Activate'}
-                  </button>
+                <td className="px-4 py-3 text-right">
+                  <div className="inline-flex items-center gap-1">
+                    <IconButton
+                      icon={<PencilIcon />}
+                      label="Edit"
+                      onClick={() => openEdit(account)}
+                      className="text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400"
+                    />
+                    <IconButton
+                      icon={account.isActive ? <BanIcon /> : <CheckCircleIcon />}
+                      label={account.isActive ? 'Deactivate' : 'Activate'}
+                      onClick={() => toggle(account)}
+                      className={account.isActive ? 'text-gray-400 hover:text-red-500 dark:hover:text-red-400' : 'text-gray-400 hover:text-green-600 dark:hover:text-green-400'}
+                    />
+                  </div>
                 </td>
               </tr>
             ))}
