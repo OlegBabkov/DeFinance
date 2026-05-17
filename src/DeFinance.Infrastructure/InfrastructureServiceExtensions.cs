@@ -15,6 +15,7 @@ public static class InfrastructureServiceExtensions
             options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
 
         services.AddScoped<ICurrencyRepository, CurrencyRepository>();
+        services.AddScoped<IAccountRepository, AccountRepository>();
 
         return services;
     }
