@@ -83,8 +83,9 @@ public static class CategorySeeder
         ("Subscriptions",     CategoryType.Expense, "#1F2937", "📦"),
 
         // Other
-        ("Pet Care",          CategoryType.Expense, "#84CC16", "🐾"),
-        ("Charity",           CategoryType.Expense, "#65A30D", "❤️"),
+        ("Pet Care",              CategoryType.Expense, "#84CC16", "🐾"),
+        ("Charity",               CategoryType.Expense, "#65A30D", "❤️"),
+        ("Expenses for Relatives",CategoryType.Expense, "#F59E0B", "👨‍👩‍👧‍👦"),
     ];
 
     public static async Task SeedAsync(DeFinanceDbContext context, CancellationToken cancellationToken = default)
