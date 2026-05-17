@@ -27,6 +27,7 @@ using (var scope = app.Services.CreateScope())
         await db.Database.MigrateAsync();
     await CurrencySeeder.SeedAsync(db);
     await AccountSeeder.SeedAsync(db);
+    await CategorySeeder.SeedAsync(db);
 }
 
 app.UseExceptionHandler(errorApp => errorApp.Run(async context =>
