@@ -9,7 +9,7 @@ RUN dotnet restore src/DeFinance.Api/DeFinance.Api.csproj
 
 COPY src/ src/
 RUN dotnet publish src/DeFinance.Api/DeFinance.Api.csproj \
-    -c Release -o /app/publish --no-restore
+    -c Release -o /app/publish
 
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime
 WORKDIR /app
