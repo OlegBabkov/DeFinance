@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using DeFinance.Api.Tests.Infrastructure;
 using DeFinance.Application.Categories.Commands;
+using DeFinance.Application.Common;
 using DeFinance.Application.DTOs.Category;
 using DeFinance.Domain.Entities;
 using DeFinance.Infrastructure.Persistence;
@@ -37,14 +38,16 @@ public class CategoriesControllerTests : IClassFixture<DeFinanceWebApplicationFa
         var response = await _client.GetAsync("/api/categories");
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var body = await response.Content.ReadFromJsonAsync<List<CategoryResponse>>(DeFinanceWebApplicationFactory.JsonOptions);
-        body.Should().NotBeNull().And.BeEmpty();
+        var body = await response.Content.ReadFromJsonAsync<PagedResult<CategoryResponse>>(DeFinanceWebApplicationFactory.JsonOptions);
+        body.Should().NotBeNull();
+        body!.Items.Should().BeEmpty();
+        body.TotalCount.Should().Be(0);
     }
 
     [Fact]
     public async Task Create_WithValidRequest_ReturnsCreated()
     {
-        var command = new CreateCategoryCommand("Food", CategoryType.Expense, "#FF5733", "🍔", null);
+        var command = new CreateCategoryCommand("Food", CategoryType.Expense, "#FF5733", "🍔", null, null);
 
         var response = await _client.PostAsJsonAsync("/api/categories", command, DeFinanceWebApplicationFactory.JsonOptions);
 
@@ -62,7 +65,7 @@ public class CategoriesControllerTests : IClassFixture<DeFinanceWebApplicationFa
     [Fact]
     public async Task Create_WithNoOptionals_ReturnsCreated()
     {
-        var command = new CreateCategoryCommand("Salary", CategoryType.Income, null, null, null);
+        var command = new CreateCategoryCommand("Salary", CategoryType.Income, null, null, null, null);
 
         var response = await _client.PostAsJsonAsync("/api/categories", command, DeFinanceWebApplicationFactory.JsonOptions);
 
@@ -75,7 +78,7 @@ public class CategoriesControllerTests : IClassFixture<DeFinanceWebApplicationFa
     [Fact]
     public async Task Create_WithEmptyName_ReturnsBadRequest()
     {
-        var command = new CreateCategoryCommand("", CategoryType.Expense, null, null, null);
+        var command = new CreateCategoryCommand("", CategoryType.Expense, null, null, null, null);
 
         var response = await _client.PostAsJsonAsync("/api/categories", command, DeFinanceWebApplicationFactory.JsonOptions);
 
@@ -85,7 +88,7 @@ public class CategoriesControllerTests : IClassFixture<DeFinanceWebApplicationFa
     [Fact]
     public async Task Create_WithInvalidColor_ReturnsBadRequest()
     {
-        var command = new CreateCategoryCommand("Food", CategoryType.Expense, "red", null, null);
+        var command = new CreateCategoryCommand("Food", CategoryType.Expense, "red", null, null, null);
 
         var response = await _client.PostAsJsonAsync("/api/categories", command, DeFinanceWebApplicationFactory.JsonOptions);
 
@@ -96,7 +99,7 @@ public class CategoriesControllerTests : IClassFixture<DeFinanceWebApplicationFa
     public async Task Create_WithParentId_ReturnsCreatedWithParent()
     {
         var parent = await CreateCategoryAsync("Food", CategoryType.Expense, null);
-        var command = new CreateCategoryCommand("Fast Food", CategoryType.Expense, null, null, parent.Id);
+        var command = new CreateCategoryCommand("Fast Food", CategoryType.Expense, null, null, parent.Id, null);
 
         var response = await _client.PostAsJsonAsync("/api/categories", command, DeFinanceWebApplicationFactory.JsonOptions);
 
@@ -130,7 +133,7 @@ public class CategoriesControllerTests : IClassFixture<DeFinanceWebApplicationFa
     public async Task Update_WhenExists_ReturnsUpdatedCategory()
     {
         var created = await CreateCategoryAsync("Old Name", CategoryType.Income, null);
-        var updateCommand = new UpdateCategoryCommand(created.Id, "New Name", "#AABBCC", "💰");
+        var updateCommand = new UpdateCategoryCommand(created.Id, "New Name", "#AABBCC", "💰", null);
 
         var response = await _client.PutAsJsonAsync($"/api/categories/{created.Id}", updateCommand, DeFinanceWebApplicationFactory.JsonOptions);
 
@@ -145,7 +148,7 @@ public class CategoriesControllerTests : IClassFixture<DeFinanceWebApplicationFa
     public async Task Update_WithEmptyName_ReturnsBadRequest()
     {
         var created = await CreateCategoryAsync("Category", CategoryType.Expense, null);
-        var updateCommand = new UpdateCategoryCommand(created.Id, "", null, null);
+        var updateCommand = new UpdateCategoryCommand(created.Id, "", null, null, null);
 
         var response = await _client.PutAsJsonAsync($"/api/categories/{created.Id}", updateCommand, DeFinanceWebApplicationFactory.JsonOptions);
 
@@ -155,7 +158,7 @@ public class CategoriesControllerTests : IClassFixture<DeFinanceWebApplicationFa
     [Fact]
     public async Task Update_WhenNotFound_ReturnsNotFound()
     {
-        var updateCommand = new UpdateCategoryCommand(Guid.NewGuid(), "Ghost", null, null);
+        var updateCommand = new UpdateCategoryCommand(Guid.NewGuid(), "Ghost", null, null, null);
 
         var response = await _client.PutAsJsonAsync($"/api/categories/{Guid.NewGuid()}", updateCommand);
 
@@ -198,7 +201,7 @@ public class CategoriesControllerTests : IClassFixture<DeFinanceWebApplicationFa
     private async Task<CategoryResponse> CreateCategoryAsync(string name, CategoryType type, string? color)
     {
         var response = await _client.PostAsJsonAsync("/api/categories",
-            new CreateCategoryCommand(name, type, color, null, null));
+            new CreateCategoryCommand(name, type, color, null, null, null));
         response.EnsureSuccessStatusCode();
         return (await response.Content.ReadFromJsonAsync<CategoryResponse>(DeFinanceWebApplicationFactory.JsonOptions))!;
     }

@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using DeFinance.Api.Tests.Infrastructure;
+using DeFinance.Application.Common;
 using DeFinance.Application.Counterparties.Commands;
 using DeFinance.Application.DTOs.Counterparty;
 using DeFinance.Domain.Entities;
@@ -37,8 +38,10 @@ public class CounterpartiesControllerTests : IClassFixture<DeFinanceWebApplicati
         var response = await _client.GetAsync("/api/counterparties");
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var body = await response.Content.ReadFromJsonAsync<List<CounterpartyResponse>>(DeFinanceWebApplicationFactory.JsonOptions);
-        body.Should().NotBeNull().And.BeEmpty();
+        var body = await response.Content.ReadFromJsonAsync<PagedResult<CounterpartyResponse>>(DeFinanceWebApplicationFactory.JsonOptions);
+        body.Should().NotBeNull();
+        body!.Items.Should().BeEmpty();
+        body.TotalCount.Should().Be(0);
     }
 
     [Fact]

@@ -1,4 +1,5 @@
 import client from './client'
+import type { PagedQuery, PagedResult } from './common'
 
 export interface PaymentStatus {
   id: string
@@ -17,8 +18,11 @@ export interface UpdatePaymentStatusRequest {
   description: string | null
 }
 
+export interface PaymentStatusQuery extends PagedQuery {}
+
 export const paymentStatusesApi = {
-  getAll: () => client.get<PaymentStatus[]>('/payment-statuses').then(r => r.data),
+  getAll: (params?: PaymentStatusQuery) =>
+    client.get<PagedResult<PaymentStatus>>('/payment-statuses', { params }).then(r => r.data),
   getById: (id: string) => client.get<PaymentStatus>(`/payment-statuses/${id}`).then(r => r.data),
   create: (req: CreatePaymentStatusRequest) => client.post<PaymentStatus>('/payment-statuses', req).then(r => r.data),
   update: (id: string, req: UpdatePaymentStatusRequest) => client.put<PaymentStatus>(`/payment-statuses/${id}`, req).then(r => r.data),

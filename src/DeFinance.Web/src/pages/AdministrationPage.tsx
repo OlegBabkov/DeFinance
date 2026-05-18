@@ -1,7 +1,10 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { paymentStatusesApi, type PaymentStatus } from '../api/paymentStatuses'
+import { type PagedResult, type PageSize, type SortDirection } from '../api/common'
 import { Modal } from '../components/Modal'
 import { IconButton, PencilIcon, CheckCircleIcon, BanIcon } from '../components/IconButton'
+import { Pagination } from '../components/Pagination'
+import { SortableHeader } from '../components/SortableHeader'
 
 type ModalState = null | 'create' | PaymentStatus
 
@@ -10,8 +13,11 @@ const inputCls =
 
 const labelCls = 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'
 
+const filterCls =
+  'px-2 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500'
+
 function PaymentStatusesPanel() {
-  const [statuses, setStatuses] = useState<PaymentStatus[]>([])
+  const [result, setResult] = useState<PagedResult<PaymentStatus> | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [modal, setModal] = useState<ModalState>(null)
@@ -20,26 +26,51 @@ function PaymentStatusesPanel() {
   const [formName, setFormName] = useState('')
   const [formDescription, setFormDescription] = useState('')
 
+  const [search, setSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [isActiveFilter, setIsActiveFilter] = useState('')
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState<PageSize>(100)
+  const [sortBy, setSortBy] = useState<string | null>(null)
+  const [sortDirection, setSortDirection] = useState<SortDirection>('Asc')
+  const [refreshKey, setRefreshKey] = useState(0)
+
   useEffect(() => {
-    paymentStatusesApi
-      .getAll()
-      .then(setStatuses)
-      .catch(() => setError('Failed to load payment statuses'))
-      .finally(() => setLoading(false))
-  }, [])
+    const t = setTimeout(() => { setDebouncedSearch(search); setPage(1) }, 400)
+    return () => clearTimeout(t)
+  }, [search])
+
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    paymentStatusesApi.getAll({
+      search: debouncedSearch || undefined,
+      isActive: isActiveFilter !== '' ? isActiveFilter === 'true' : undefined,
+      page,
+      pageSize,
+      sortBy: sortBy ?? undefined,
+      sortDirection,
+    })
+      .then(r => { if (!cancelled) { setResult(r); setError(null) } })
+      .catch(() => { if (!cancelled) setError('Failed to load payment statuses') })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [debouncedSearch, isActiveFilter, page, pageSize, sortBy, sortDirection, refreshKey])
+
+  const refetch = () => setRefreshKey(k => k + 1)
+
+  const handleSort = (field: string) => {
+    if (sortBy === field) setSortDirection(d => d === 'Asc' ? 'Desc' : 'Asc')
+    else { setSortBy(field); setSortDirection('Asc') }
+    setPage(1)
+  }
 
   const openCreate = () => {
-    setFormName('')
-    setFormDescription('')
-    setFormError(null)
-    setModal('create')
+    setFormName(''); setFormDescription(''); setFormError(null); setModal('create')
   }
 
   const openEdit = (s: PaymentStatus) => {
-    setFormName(s.name)
-    setFormDescription(s.description ?? '')
-    setFormError(null)
-    setModal(s)
+    setFormName(s.name); setFormDescription(s.description ?? ''); setFormError(null); setModal(s)
   }
 
   const closeModal = () => setModal(null)
@@ -52,13 +83,12 @@ function PaymentStatusesPanel() {
     try {
       const description = formDescription.trim() || null
       if (modal === 'create') {
-        const created = await paymentStatusesApi.create({ name: formName, description })
-        setStatuses(prev => [...prev, created])
+        await paymentStatusesApi.create({ name: formName, description })
       } else if (modal !== null) {
-        const updated = await paymentStatusesApi.update(modal.id, { name: formName, description })
-        setStatuses(prev => prev.map(s => (s.id === updated.id ? updated : s)))
+        await paymentStatusesApi.update(modal.id, { name: formName, description })
       }
       closeModal()
+      refetch()
     } catch {
       setFormError('Failed to save. Please check your input and try again.')
     } finally {
@@ -67,11 +97,12 @@ function PaymentStatusesPanel() {
   }
 
   const toggle = async (status: PaymentStatus) => {
-    const updated = status.isActive
-      ? await paymentStatusesApi.deactivate(status.id)
-      : await paymentStatusesApi.activate(status.id)
-    setStatuses(prev => prev.map(s => (s.id === updated.id ? updated : s)))
+    if (status.isActive) await paymentStatusesApi.deactivate(status.id)
+    else await paymentStatusesApi.activate(status.id)
+    refetch()
   }
+
+  const items = result?.items ?? []
 
   return (
     <>
@@ -121,33 +152,43 @@ function PaymentStatusesPanel() {
         </Modal>
       )}
 
-      <div className="flex items-center justify-between mb-3">
-        <span />
+      <div className="flex items-center gap-2 mb-3 flex-wrap">
+        <input
+          type="search"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Search…"
+          className={`${filterCls} w-36`}
+        />
+        <select value={isActiveFilter} onChange={e => { setIsActiveFilter(e.target.value); setPage(1) }} className={filterCls}>
+          <option value="">All statuses</option>
+          <option value="true">Active only</option>
+          <option value="false">Inactive only</option>
+        </select>
+        {loading && <span className="text-xs text-gray-400 dark:text-gray-500">Loading…</span>}
         <button
           onClick={openCreate}
-          className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium rounded-lg transition-colors"
+          className="ml-auto px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium rounded-lg transition-colors"
         >
           + New
         </button>
       </div>
 
-      {loading && <p className="text-sm text-gray-400">Loading…</p>}
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error && <p className="text-sm text-red-500 mb-2">{error}</p>}
 
-      {!loading && !error && (
-        <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
+      <div className="flex flex-col flex-1 min-h-0 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="flex-1 min-h-0 overflow-auto">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-xs">
             <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0 z-10">
               <tr>
-                {['Name', 'Description', 'Status', ''].map(h => (
-                  <th key={h} className="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400 text-xs">
-                    {h}
-                  </th>
-                ))}
+                <SortableHeader label="Name" field="name" sortBy={sortBy} sortDirection={sortDirection} onSort={handleSort} />
+                <th className="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400">Description</th>
+                <th className="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400">Status</th>
+                <th className="px-3 py-2" />
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-700 bg-white dark:bg-gray-800">
-              {statuses.map(s => (
+              {items.map(s => (
                 <tr key={s.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                   <td className="px-3 py-2 font-medium text-gray-900 dark:text-gray-100">{s.name}</td>
                   <td className="px-3 py-2 text-gray-500 dark:text-gray-400 max-w-xs truncate">
@@ -182,17 +223,27 @@ function PaymentStatusesPanel() {
                   </td>
                 </tr>
               ))}
-              {statuses.length === 0 && (
+              {items.length === 0 && !loading && (
                 <tr>
                   <td colSpan={4} className="px-3 py-6 text-center text-gray-400 dark:text-gray-500">
-                    No payment statuses yet.
+                    No payment statuses found.
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
-      )}
+        {result && (
+          <Pagination
+            page={result.page}
+            pageSize={pageSize}
+            totalCount={result.totalCount}
+            totalPages={result.totalPages}
+            onPageChange={setPage}
+            onPageSizeChange={size => { setPageSize(size); setPage(1) }}
+          />
+        )}
+      </div>
     </>
   )
 }
@@ -223,7 +274,7 @@ function Panel({ title, children, empty }: { title: string; children?: ReactNode
           <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">{title}</h2>
         </div>
       )}
-      <div className="flex-1 p-4 overflow-auto">
+      <div className="flex-1 p-4 overflow-auto flex flex-col min-h-0">
         {empty ? (
           <div className="h-full flex items-center justify-center text-gray-300 dark:text-gray-600 text-sm select-none">
             —
