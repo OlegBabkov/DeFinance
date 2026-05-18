@@ -208,6 +208,7 @@ export function AccountsPage() {
               <tr>
                 <SortableHeader label="Name" field="name" sortBy={sortBy} sortDirection={sortDirection} onSort={handleSort} />
                 <SortableHeader label="Type" field="type" sortBy={sortBy} sortDirection={sortDirection} onSort={handleSort} />
+                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Currency</th>
                 <SortableHeader label="Balance" field="balance" sortBy={sortBy} sortDirection={sortDirection} onSort={handleSort} />
                 <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Status</th>
                 <th className="px-4 py-3" />
@@ -218,6 +219,9 @@ export function AccountsPage() {
                 <tr key={account.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                   <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{account.name}</td>
                   <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{account.type}</td>
+                  <td className="px-4 py-3 text-gray-600 dark:text-gray-400 font-mono">
+                    {account.currency ? `${account.currency.symbol} ${account.currency.code}` : '—'}
+                  </td>
                   <td className="px-4 py-3 text-gray-900 dark:text-gray-100 font-mono">
                     {account.currency?.symbol ?? ''} {account.balance.toFixed(2)}
                   </td>
@@ -236,7 +240,7 @@ export function AccountsPage() {
               ))}
               {items.length === 0 && !loading && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-gray-400 dark:text-gray-500">No accounts found.</td>
+                  <td colSpan={6} className="px-4 py-8 text-center text-gray-400 dark:text-gray-500">No accounts found.</td>
                 </tr>
               )}
             </tbody>
