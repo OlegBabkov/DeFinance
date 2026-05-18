@@ -45,7 +45,7 @@ export function AccountsPage() {
 
   // load currencies for dropdown once
   useEffect(() => {
-    currenciesApi.getAll({ pageSize: 1000 })
+    currenciesApi.getAll({ isActive: true, pageSize: 100 })
       .then(r => {
         setCurrencies(r.items)
         if (r.items.length > 0) setFormCurrencyId(r.items[0].id)
