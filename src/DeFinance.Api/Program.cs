@@ -1,3 +1,4 @@
+using DeFinance.Api.Observability;
 using DeFinance.Application;
 using DeFinance.Infrastructure;
 using DeFinance.Infrastructure.Persistence;
@@ -6,11 +7,16 @@ using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Host.AddStructuredLogging();
+
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddOpenTelemetryObservability(builder.Configuration);
+builder.Services.AddObservabilityHealthChecks(builder.Configuration);
 builder.Services.AddControllers()
     .AddJsonOptions(opts =>
         opts.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
@@ -34,6 +40,8 @@ using (var scope = app.Services.CreateScope())
     await PaymentStatusSeeder.SeedAsync(db);
     await UserSeeder.SeedAsync(db);
 }
+
+app.UseSerilogRequestLogging();
 
 app.UseExceptionHandler(errorApp => errorApp.Run(async context =>
 {
@@ -65,6 +73,7 @@ app.UseSwaggerUI(options =>
 app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
+app.MapObservabilityEndpoints();
 
 app.Run();
 
