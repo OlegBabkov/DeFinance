@@ -23,6 +23,8 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
         builder.Property(c => c.Icon)
             .HasMaxLength(50);
 
+        builder.Property(c => c.PaymentObligation);
+
         builder.HasOne<Category>()
             .WithMany()
             .HasForeignKey(c => c.ParentId)
