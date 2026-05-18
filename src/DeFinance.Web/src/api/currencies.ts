@@ -1,4 +1,5 @@
 import client from './client'
+import type { PagedQuery, PagedResult } from './common'
 
 export interface Currency {
   id: string
@@ -19,8 +20,11 @@ export interface UpdateCurrencyRequest {
   symbol: string
 }
 
+export interface CurrencyQuery extends PagedQuery {}
+
 export const currenciesApi = {
-  getAll: () => client.get<Currency[]>('/currencies').then(r => r.data),
+  getAll: (params?: CurrencyQuery) =>
+    client.get<PagedResult<Currency>>('/currencies', { params }).then(r => r.data),
   getById: (id: string) => client.get<Currency>(`/currencies/${id}`).then(r => r.data),
   create: (req: CreateCurrencyRequest) => client.post<Currency>('/currencies', req).then(r => r.data),
   update: (id: string, req: UpdateCurrencyRequest) => client.put<Currency>(`/currencies/${id}`, req).then(r => r.data),

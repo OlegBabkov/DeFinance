@@ -1,4 +1,5 @@
 import client from './client'
+import type { PagedQuery, PagedResult } from './common'
 
 export type CategoryType = 'Income' | 'Expense'
 export type CategoryPaymentObligation = 'SepaTransfer' | 'Mandatory' | 'NonMandatory'
@@ -36,8 +37,14 @@ export interface UpdateCategoryRequest {
   paymentObligation: CategoryPaymentObligation | null
 }
 
+export interface CategoryQuery extends PagedQuery {
+  type?: CategoryType
+  paymentObligation?: CategoryPaymentObligation
+}
+
 export const categoriesApi = {
-  getAll: () => client.get<Category[]>('/categories').then(r => r.data),
+  getAll: (params?: CategoryQuery) =>
+    client.get<PagedResult<Category>>('/categories', { params }).then(r => r.data),
   getById: (id: string) => client.get<Category>(`/categories/${id}`).then(r => r.data),
   create: (req: CreateCategoryRequest) => client.post<Category>('/categories', req).then(r => r.data),
   update: (id: string, req: UpdateCategoryRequest) => client.put<Category>(`/categories/${id}`, req).then(r => r.data),

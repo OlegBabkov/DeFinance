@@ -1,4 +1,5 @@
 import client from './client'
+import type { PagedQuery, PagedResult } from './common'
 
 export type CounterpartyType = 'Person' | 'Company' | 'Other'
 
@@ -22,8 +23,13 @@ export interface UpdateCounterpartyRequest {
   contactInfo: string | null
 }
 
+export interface CounterpartyQuery extends PagedQuery {
+  type?: CounterpartyType
+}
+
 export const counterpartiesApi = {
-  getAll: () => client.get<Counterparty[]>('/counterparties').then(r => r.data),
+  getAll: (params?: CounterpartyQuery) =>
+    client.get<PagedResult<Counterparty>>('/counterparties', { params }).then(r => r.data),
   getById: (id: string) => client.get<Counterparty>(`/counterparties/${id}`).then(r => r.data),
   create: (req: CreateCounterpartyRequest) => client.post<Counterparty>('/counterparties', req).then(r => r.data),
   update: (id: string, req: UpdateCounterpartyRequest) => client.put<Counterparty>(`/counterparties/${id}`, req).then(r => r.data),

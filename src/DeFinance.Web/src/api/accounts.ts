@@ -1,4 +1,5 @@
 import client from './client'
+import type { PagedQuery, PagedResult } from './common'
 
 export type AccountType = 'Checking' | 'Savings' | 'Credit' | 'Cash' | 'Investment'
 
@@ -22,8 +23,14 @@ export interface UpdateAccountRequest {
   name: string
 }
 
+export interface AccountQuery extends PagedQuery {
+  type?: AccountType
+  currencyId?: string
+}
+
 export const accountsApi = {
-  getAll: () => client.get<Account[]>('/accounts').then(r => r.data),
+  getAll: (params?: AccountQuery) =>
+    client.get<PagedResult<Account>>('/accounts', { params }).then(r => r.data),
   getById: (id: string) => client.get<Account>(`/accounts/${id}`).then(r => r.data),
   create: (req: CreateAccountRequest) => client.post<Account>('/accounts', req).then(r => r.data),
   update: (id: string, req: UpdateAccountRequest) => client.put<Account>(`/accounts/${id}`, req).then(r => r.data),
