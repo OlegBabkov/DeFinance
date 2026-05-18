@@ -1,6 +1,13 @@
 import client from './client'
 
 export type CategoryType = 'Income' | 'Expense'
+export type CategoryPaymentObligation = 'SepaTransfer' | 'Mandatory' | 'NonMandatory'
+
+export const PAYMENT_OBLIGATION_LABELS: Record<CategoryPaymentObligation, string> = {
+  SepaTransfer: 'SEPA Transfer',
+  Mandatory: 'Mandatory',
+  NonMandatory: 'Non-Mandatory',
+}
 
 export interface Category {
   id: string
@@ -9,6 +16,7 @@ export interface Category {
   color: string | null
   icon: string | null
   parentId: string | null
+  paymentObligation: CategoryPaymentObligation | null
   isActive: boolean
 }
 
@@ -18,12 +26,14 @@ export interface CreateCategoryRequest {
   color: string | null
   icon: string | null
   parentId: string | null
+  paymentObligation: CategoryPaymentObligation | null
 }
 
 export interface UpdateCategoryRequest {
   name: string
   color: string | null
   icon: string | null
+  paymentObligation: CategoryPaymentObligation | null
 }
 
 export const categoriesApi = {

@@ -96,7 +96,7 @@ public static class CategorySeeder
 
         var toAdd = _categories
             .Where(c => !existingNames.Contains(c.Name))
-            .Select(c => Category.Create(c.Name, c.Type, c.Color, c.Icon, null))
+            .Select(c => Category.Create(c.Name, c.Type, c.Color, c.Icon, null, null))
             .ToList();
 
         if (toAdd.Count == 0) return;

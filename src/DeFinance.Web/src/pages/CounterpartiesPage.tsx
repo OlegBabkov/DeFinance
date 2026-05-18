@@ -84,8 +84,8 @@ export function CounterpartiesPage() {
   if (error) return <div className="p-8 text-red-500">{error}</div>
 
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between mb-6">
+    <div className="h-full flex flex-col">
+      <div className="px-8 pt-8 pb-6 shrink-0 flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Counterparties</h1>
         <button
           onClick={openCreate}
@@ -153,9 +153,9 @@ export function CounterpartiesPage() {
         </Modal>
       )}
 
-      <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+      <div className="flex-1 min-h-0 overflow-auto mx-8 mb-8 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
-          <thead className="bg-gray-50 dark:bg-gray-700">
+          <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0 z-10">
             <tr>
               {['Name', 'Type', 'Contact Info', 'Status', ''].map(h => (
                 <th key={h} className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">

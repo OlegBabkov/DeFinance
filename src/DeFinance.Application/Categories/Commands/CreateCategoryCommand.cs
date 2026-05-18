@@ -6,7 +6,7 @@ using MediatR;
 
 namespace DeFinance.Application.Categories.Commands;
 
-public record CreateCategoryCommand(string Name, CategoryType Type, string? Color, string? Icon, Guid? ParentId)
+public record CreateCategoryCommand(string Name, CategoryType Type, string? Color, string? Icon, Guid? ParentId, CategoryPaymentObligation? PaymentObligation)
     : IRequest<CategoryResponse>;
 
 public class CreateCategoryCommandHandler(ICategoryRepository repository)
@@ -14,7 +14,7 @@ public class CreateCategoryCommandHandler(ICategoryRepository repository)
 {
     public async Task<CategoryResponse> Handle(CreateCategoryCommand request, CancellationToken cancellationToken)
     {
-        var category = Category.Create(request.Name, request.Type, request.Color, request.Icon, request.ParentId);
+        var category = Category.Create(request.Name, request.Type, request.Color, request.Icon, request.ParentId, request.PaymentObligation);
         await repository.AddAsync(category, cancellationToken);
         await repository.SaveChangesAsync(cancellationToken);
         return category.ToResponse();
@@ -39,5 +39,9 @@ public class CreateCategoryCommandValidator : AbstractValidator<CreateCategoryCo
         RuleFor(x => x.Icon)
             .MaximumLength(50).WithMessage("Icon must not exceed 50 characters.")
             .When(x => x.Icon is not null);
+
+        RuleFor(x => x.PaymentObligation)
+            .IsInEnum().WithMessage("Payment obligation is invalid.")
+            .When(x => x.PaymentObligation is not null);
     }
 }

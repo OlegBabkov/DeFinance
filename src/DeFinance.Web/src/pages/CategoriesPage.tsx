@@ -1,7 +1,13 @@
 import { useEffect, useState } from 'react'
-import { categoriesApi, type Category, type CategoryType } from '../api/categories'
+import { categoriesApi, type Category, type CategoryType, type CategoryPaymentObligation, PAYMENT_OBLIGATION_LABELS } from '../api/categories'
 import { Modal } from '../components/Modal'
 import { IconButton, PencilIcon, CheckCircleIcon, BanIcon } from '../components/IconButton'
+
+const PAYMENT_OBLIGATIONS: { value: CategoryPaymentObligation; label: string }[] = [
+  { value: 'SepaTransfer', label: PAYMENT_OBLIGATION_LABELS.SepaTransfer },
+  { value: 'Mandatory', label: PAYMENT_OBLIGATION_LABELS.Mandatory },
+  { value: 'NonMandatory', label: PAYMENT_OBLIGATION_LABELS.NonMandatory },
+]
 
 type Tab = 'Income' | 'Expense'
 type ModalState = null | 'create' | Category
@@ -29,6 +35,7 @@ export function CategoriesPage() {
   const [formColor, setFormColor] = useState('')
   const [formIcon, setFormIcon] = useState('')
   const [formParentId, setFormParentId] = useState('')
+  const [formPaymentObligation, setFormPaymentObligation] = useState<CategoryPaymentObligation | ''>('')
 
   useEffect(() => {
     categoriesApi
@@ -43,6 +50,7 @@ export function CategoriesPage() {
     setFormColor('#6366f1')
     setFormIcon('')
     setFormParentId('')
+    setFormPaymentObligation('')
     setFormError(null)
     setModal('create')
   }
@@ -51,6 +59,7 @@ export function CategoriesPage() {
     setFormName(c.name)
     setFormColor(c.color ?? '#6366f1')
     setFormIcon(c.icon ?? '')
+    setFormPaymentObligation(c.paymentObligation ?? '')
     setFormError(null)
     setModal(c)
   }
@@ -66,6 +75,7 @@ export function CategoriesPage() {
     try {
       const color = formColor || null
       const icon = formIcon.trim() || null
+      const paymentObligation = formPaymentObligation || null
       if (modal === 'create') {
         const created = await categoriesApi.create({
           name: formName,
@@ -73,10 +83,11 @@ export function CategoriesPage() {
           color,
           icon,
           parentId: formParentId || null,
+          paymentObligation,
         })
         setCategories(prev => [...prev, created])
       } else if (modal !== null) {
-        const updated = await categoriesApi.update(modal.id, { name: formName, color, icon })
+        const updated = await categoriesApi.update(modal.id, { name: formName, color, icon, paymentObligation })
         setCategories(prev => prev.map(c => (c.id === updated.id ? updated : c)))
       }
       closeModal()
@@ -105,34 +116,36 @@ export function CategoriesPage() {
   if (error) return <div className="p-8 text-red-500">{error}</div>
 
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Categories</h1>
-        <button
-          onClick={openCreate}
-          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors"
-        >
-          + New Category
-        </button>
-      </div>
-
-      <div className="flex border-b border-gray-200 dark:border-gray-700 mb-6">
-        {TABS.map(({ id, label }) => (
+    <div className="h-full flex flex-col">
+      <div className="px-8 pt-8 pb-0 shrink-0">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Categories</h1>
           <button
-            key={id}
-            onClick={() => setTab(id)}
-            className={`px-5 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
-              tab === id
-                ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400'
-                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-            }`}
+            onClick={openCreate}
+            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors"
           >
-            {label}
-            <span className="ml-2 rounded-full bg-gray-100 dark:bg-gray-700 px-2 py-0.5 text-xs text-gray-600 dark:text-gray-300">
-              {categories.filter(c => c.type === id).length}
-            </span>
+            + New Category
           </button>
-        ))}
+        </div>
+
+        <div className="flex border-b border-gray-200 dark:border-gray-700">
+          {TABS.map(({ id, label }) => (
+            <button
+              key={id}
+              onClick={() => setTab(id)}
+              className={`px-5 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
+                tab === id
+                  ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+              }`}
+            >
+              {label}
+              <span className="ml-2 rounded-full bg-gray-100 dark:bg-gray-700 px-2 py-0.5 text-xs text-gray-600 dark:text-gray-300">
+                {categories.filter(c => c.type === id).length}
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {modal !== null && (
@@ -190,6 +203,19 @@ export function CategoriesPage() {
                 </select>
               </div>
             )}
+            <div>
+              <label className={labelCls}>Payment Obligation (optional)</label>
+              <select
+                value={formPaymentObligation}
+                onChange={e => setFormPaymentObligation(e.target.value as CategoryPaymentObligation | '')}
+                className={inputCls}
+              >
+                <option value="">— None —</option>
+                {PAYMENT_OBLIGATIONS.map(o => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+            </div>
             {formError && <p className="text-sm text-red-500">{formError}</p>}
             <div className="flex justify-end gap-3 pt-2">
               <button
@@ -211,11 +237,11 @@ export function CategoriesPage() {
         </Modal>
       )}
 
-      <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+      <div className="flex-1 min-h-0 overflow-auto mx-8 mb-8 mt-6 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
-          <thead className="bg-gray-50 dark:bg-gray-700">
+          <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0 z-10">
             <tr>
-              {['Name', 'Color', 'Parent', 'Status', ''].map(h => (
+              {['Name', 'Color', 'Parent', 'Obligation', 'Status', ''].map(h => (
                 <th key={h} className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">
                   {h}
                 </th>
@@ -243,6 +269,15 @@ export function CategoriesPage() {
                   )}
                 </td>
                 <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{parentName(cat.parentId)}</td>
+                <td className="px-4 py-3">
+                  {cat.paymentObligation ? (
+                    <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300">
+                      {PAYMENT_OBLIGATION_LABELS[cat.paymentObligation]}
+                    </span>
+                  ) : (
+                    <span className="text-gray-300 dark:text-gray-600">—</span>
+                  )}
+                </td>
                 <td className="px-4 py-3">
                   <span
                     className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
@@ -274,7 +309,7 @@ export function CategoriesPage() {
             ))}
             {visible.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-gray-400 dark:text-gray-500">
+                <td colSpan={6} className="px-4 py-8 text-center text-gray-400 dark:text-gray-500">
                   No categories yet.
                 </td>
               </tr>

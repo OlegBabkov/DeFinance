@@ -1,11 +1,12 @@
 using DeFinance.Application.Abstractions.Repositories;
 using DeFinance.Application.DTOs.Category;
+using DeFinance.Domain.Entities;
 using FluentValidation;
 using MediatR;
 
 namespace DeFinance.Application.Categories.Commands;
 
-public record UpdateCategoryCommand(Guid Id, string Name, string? Color, string? Icon) : IRequest<CategoryResponse?>;
+public record UpdateCategoryCommand(Guid Id, string Name, string? Color, string? Icon, CategoryPaymentObligation? PaymentObligation) : IRequest<CategoryResponse?>;
 
 public class UpdateCategoryCommandHandler(ICategoryRepository repository)
     : IRequestHandler<UpdateCategoryCommand, CategoryResponse?>
@@ -15,7 +16,7 @@ public class UpdateCategoryCommandHandler(ICategoryRepository repository)
         var category = await repository.GetByIdAsync(request.Id, cancellationToken);
         if (category is null) return null;
 
-        category.Update(request.Name, request.Color, request.Icon);
+        category.Update(request.Name, request.Color, request.Icon, request.PaymentObligation);
         await repository.SaveChangesAsync(cancellationToken);
         return category.ToResponse();
     }
@@ -36,5 +37,9 @@ public class UpdateCategoryCommandValidator : AbstractValidator<UpdateCategoryCo
         RuleFor(x => x.Icon)
             .MaximumLength(50).WithMessage("Icon must not exceed 50 characters.")
             .When(x => x.Icon is not null);
+
+        RuleFor(x => x.PaymentObligation)
+            .IsInEnum().WithMessage("Payment obligation is invalid.")
+            .When(x => x.PaymentObligation is not null);
     }
 }
