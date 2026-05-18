@@ -168,6 +168,122 @@ public class CurrenciesControllerTests : IClassFixture<DeFinanceWebApplicationFa
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
+    [Fact]
+    public async Task GetAll_WithMultipleItems_ReturnsCorrectPagedMetadata()
+    {
+        await CreateCurrencyAsync("USD", "US Dollar", "$");
+        await CreateCurrencyAsync("EUR", "Euro", "€");
+        await CreateCurrencyAsync("GBP", "British Pound", "£");
+
+        var response = await _client.GetAsync("/api/currencies");
+        var body = await response.Content.ReadFromJsonAsync<PagedResult<CurrencyResponse>>();
+
+        body!.TotalCount.Should().Be(3);
+        body.Page.Should().Be(1);
+        body.TotalPages.Should().Be(1);
+        body.HasNextPage.Should().BeFalse();
+        body.HasPreviousPage.Should().BeFalse();
+        body.Items.Should().HaveCount(3);
+    }
+
+    [Fact]
+    public async Task GetAll_WithPageSize1_ReturnsSingleItemAndCorrectTotalPages()
+    {
+        await CreateCurrencyAsync("USD", "US Dollar", "$");
+        await CreateCurrencyAsync("EUR", "Euro", "€");
+        await CreateCurrencyAsync("GBP", "British Pound", "£");
+
+        var response = await _client.GetAsync("/api/currencies?page=1&pageSize=1");
+        var body = await response.Content.ReadFromJsonAsync<PagedResult<CurrencyResponse>>();
+
+        body!.Items.Should().HaveCount(1);
+        body.TotalCount.Should().Be(3);
+        body.TotalPages.Should().Be(3);
+        body.HasNextPage.Should().BeTrue();
+        body.HasPreviousPage.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task GetAll_Page2_ReturnsSecondPageAndCorrectFlags()
+    {
+        await CreateCurrencyAsync("USD", "US Dollar", "$");
+        await CreateCurrencyAsync("EUR", "Euro", "€");
+        await CreateCurrencyAsync("GBP", "British Pound", "£");
+
+        var response = await _client.GetAsync("/api/currencies?page=2&pageSize=1");
+        var body = await response.Content.ReadFromJsonAsync<PagedResult<CurrencyResponse>>();
+
+        body!.Items.Should().HaveCount(1);
+        body.Page.Should().Be(2);
+        body.HasNextPage.Should().BeTrue();
+        body.HasPreviousPage.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task GetAll_WithSearchFilter_ReturnsOnlyMatchingItems()
+    {
+        await CreateCurrencyAsync("USD", "US Dollar", "$");
+        await CreateCurrencyAsync("EUR", "Euro", "€");
+
+        var response = await _client.GetAsync("/api/currencies?search=dollar");
+        var body = await response.Content.ReadFromJsonAsync<PagedResult<CurrencyResponse>>();
+
+        body!.TotalCount.Should().Be(1);
+        body.Items.Single().Code.Should().Be("USD");
+    }
+
+    [Fact]
+    public async Task GetAll_WithIsActiveFilter_ReturnsOnlyInactiveItems()
+    {
+        var created = await CreateCurrencyAsync("USD", "US Dollar", "$");
+        await CreateCurrencyAsync("EUR", "Euro", "€");
+        await _client.PatchAsync($"/api/currencies/{created.Id}/deactivate", null);
+
+        var response = await _client.GetAsync("/api/currencies?isActive=false");
+        var body = await response.Content.ReadFromJsonAsync<PagedResult<CurrencyResponse>>();
+
+        body!.TotalCount.Should().Be(1);
+        body.Items.Single().Code.Should().Be("USD");
+        body.Items.Single().IsActive.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task GetAll_WithSortByCode_ReturnsItemsInAlphabeticalOrder()
+    {
+        await CreateCurrencyAsync("USD", "US Dollar", "$");
+        await CreateCurrencyAsync("EUR", "Euro", "€");
+        await CreateCurrencyAsync("GBP", "British Pound", "£");
+
+        var response = await _client.GetAsync("/api/currencies?sortBy=code&sortDirection=Asc");
+        var body = await response.Content.ReadFromJsonAsync<PagedResult<CurrencyResponse>>();
+
+        body!.Items.Select(c => c.Code).Should().BeInAscendingOrder();
+    }
+
+    [Fact]
+    public async Task GetAll_WithSortByCodeDesc_ReturnsItemsInDescendingOrder()
+    {
+        await CreateCurrencyAsync("USD", "US Dollar", "$");
+        await CreateCurrencyAsync("EUR", "Euro", "€");
+        await CreateCurrencyAsync("GBP", "British Pound", "£");
+
+        var response = await _client.GetAsync("/api/currencies?sortBy=code&sortDirection=Desc");
+        var body = await response.Content.ReadFromJsonAsync<PagedResult<CurrencyResponse>>();
+
+        body!.Items.Select(c => c.Code).Should().BeInDescendingOrder();
+    }
+
+    [Theory]
+    [InlineData("/api/currencies?page=0")]
+    [InlineData("/api/currencies?pageSize=0")]
+    [InlineData("/api/currencies?pageSize=101")]
+    [InlineData("/api/currencies?sortBy=invalid")]
+    public async Task GetAll_WithInvalidQueryParams_ReturnsBadRequest(string url)
+    {
+        var response = await _client.GetAsync(url);
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
     private async Task<CurrencyResponse> CreateCurrencyAsync(string code, string name, string symbol)
     {
         var response = await _client.PostAsJsonAsync("/api/currencies", new CreateCurrencyCommand(code, name, symbol));

@@ -20,11 +20,11 @@ public class UpdateCategoryCommandHandlerTests
     public async Task Handle_WhenCategoryExists_ShouldUpdateAndReturnResponse()
     {
         var id = Guid.NewGuid();
-        var category = Category.Create("Old Name", CategoryType.Expense, "#000000", "icon", null);
+        var category = Category.Create("Old Name", CategoryType.Expense, "#000000", "icon", null, null);
         _repository.GetByIdAsync(id, Arg.Any<CancellationToken>()).Returns(category);
         _repository.SaveChangesAsync(Arg.Any<CancellationToken>()).Returns(1);
 
-        var result = await _handler.Handle(new UpdateCategoryCommand(id, "New Name", "#FFFFFF", "new-icon"), CancellationToken.None);
+        var result = await _handler.Handle(new UpdateCategoryCommand(id, "New Name", "#FFFFFF", "new-icon", null), CancellationToken.None);
 
         result.Should().NotBeNull();
         result!.Name.Should().Be("New Name");
@@ -38,7 +38,7 @@ public class UpdateCategoryCommandHandlerTests
     {
         _repository.GetByIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns((Category?)null);
 
-        var result = await _handler.Handle(new UpdateCategoryCommand(Guid.NewGuid(), "Name", null, null), CancellationToken.None);
+        var result = await _handler.Handle(new UpdateCategoryCommand(Guid.NewGuid(), "Name", null, null, null), CancellationToken.None);
 
         result.Should().BeNull();
         await _repository.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());

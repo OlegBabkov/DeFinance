@@ -14,7 +14,7 @@ public class ActivateDeactivateCategoryCommandHandlerTests
     public async Task Activate_WhenCategoryExists_ShouldSetIsActiveTrue()
     {
         var id = Guid.NewGuid();
-        var category = Category.Create("Food", CategoryType.Expense, null, null, null);
+        var category = Category.Create("Food", CategoryType.Expense, null, null, null, null);
         category.Deactivate();
         _repository.GetByIdAsync(id, Arg.Any<CancellationToken>()).Returns(category);
         _repository.SaveChangesAsync(Arg.Any<CancellationToken>()).Returns(1);
@@ -41,7 +41,7 @@ public class ActivateDeactivateCategoryCommandHandlerTests
     public async Task Deactivate_WhenCategoryExists_ShouldSetIsActiveFalse()
     {
         var id = Guid.NewGuid();
-        var category = Category.Create("Salary", CategoryType.Income, null, null, null);
+        var category = Category.Create("Salary", CategoryType.Income, null, null, null, null);
         _repository.GetByIdAsync(id, Arg.Any<CancellationToken>()).Returns(category);
         _repository.SaveChangesAsync(Arg.Any<CancellationToken>()).Returns(1);
 
