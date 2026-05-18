@@ -32,6 +32,7 @@ using (var scope = app.Services.CreateScope())
     await CategorySeeder.SeedAsync(db);
     await CounterpartySeeder.SeedAsync(db);
     await PaymentStatusSeeder.SeedAsync(db);
+    await UserSeeder.SeedAsync(db);
 }
 
 app.UseExceptionHandler(errorApp => errorApp.Run(async context =>
