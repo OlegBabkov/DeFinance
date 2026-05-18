@@ -99,7 +99,7 @@ export function CategoriesPage() {
   const openCreate = async () => {
     setFormName(''); setFormColor('#6366f1'); setFormIcon(''); setFormParentId('')
     setFormPaymentObligation(''); setFormError(null)
-    const r = await categoriesApi.getAll({ type: tab, pageSize: 1000 })
+    const r = await categoriesApi.getAll({ type: tab, pageSize: 100 })
     setParentOptions(r.items)
     setModal('create')
   }
