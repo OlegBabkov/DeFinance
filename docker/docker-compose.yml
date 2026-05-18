@@ -45,6 +45,28 @@ services:
       elasticsearch:
         condition: service_healthy
 
+  kibana-setup:
+    image: curlimages/curl:latest
+    container_name: definance-kibana-setup
+    restart: "no"
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "Waiting for Kibana to become available...";
+        until curl -sf http://kibana:5601/api/status | grep -q '"available"'; do
+          sleep 10;
+        done;
+        echo "Initializing Fleet...";
+        curl -sf -X POST "http://kibana:5601/api/fleet/setup" \
+          -H "kbn-xsrf: true" -H "Content-Type: application/json";
+        echo "Installing APM integration...";
+        curl -sf -X POST "http://kibana:5601/api/fleet/epm/packages/apm" \
+          -H "kbn-xsrf: true" -H "Content-Type: application/json" \
+          -d '{"force":true}';
+        echo "APM integration installed.";
+    depends_on:
+      - kibana
+
   apm-server:
     image: docker.elastic.co/apm/apm-server:8.13.4
     container_name: definance-apm-server
@@ -57,7 +79,10 @@ services:
         -E apm-server.kibana.host="http://kibana:5601"
         -E apm-server.auth.anonymous.enabled=true
         -E apm-server.auth.anonymous.allow_service=["*"]
+        -E apm-server.data_streams.wait_for_integration=false
     depends_on:
+      kibana-setup:
+        condition: service_completed_successfully
       elasticsearch:
         condition: service_healthy
 
