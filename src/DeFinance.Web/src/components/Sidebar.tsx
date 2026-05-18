@@ -7,6 +7,7 @@ const links = [
   { to: '/categories', label: 'Categories', icon: '🏷️' },
   { to: '/currencies', label: 'Currencies', icon: '💱' },
   { to: '/counterparties', label: 'Counterparties', icon: '🤝' },
+  { to: '/transactions', label: 'Transactions', icon: '💳' },
   { to: '/administration', label: 'Administration', icon: '⚙️' },
 ]
 
