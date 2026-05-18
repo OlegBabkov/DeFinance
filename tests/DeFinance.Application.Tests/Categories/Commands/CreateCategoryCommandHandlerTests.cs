@@ -19,7 +19,7 @@ public class CreateCategoryCommandHandlerTests
     [Fact]
     public async Task Handle_ShouldCreateCategoryAndReturnResponse()
     {
-        var command = new CreateCategoryCommand("Food", CategoryType.Expense, "#FF5733", "🍔", null);
+        var command = new CreateCategoryCommand("Food", CategoryType.Expense, "#FF5733", "🍔", null, null);
         _repository.SaveChangesAsync(Arg.Any<CancellationToken>()).Returns(1);
 
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -40,7 +40,7 @@ public class CreateCategoryCommandHandlerTests
     public async Task Handle_WithParentId_ShouldSetParentId()
     {
         var parentId = Guid.NewGuid();
-        var command = new CreateCategoryCommand("Fast Food", CategoryType.Expense, null, null, parentId);
+        var command = new CreateCategoryCommand("Fast Food", CategoryType.Expense, null, null, parentId, null);
         _repository.SaveChangesAsync(Arg.Any<CancellationToken>()).Returns(1);
 
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -51,7 +51,7 @@ public class CreateCategoryCommandHandlerTests
     [Fact]
     public async Task Handle_WithNullColorAndIcon_ShouldCreateSuccessfully()
     {
-        var command = new CreateCategoryCommand("Salary", CategoryType.Income, null, null, null);
+        var command = new CreateCategoryCommand("Salary", CategoryType.Income, null, null, null, null);
         _repository.SaveChangesAsync(Arg.Any<CancellationToken>()).Returns(1);
 
         var result = await _handler.Handle(command, CancellationToken.None);

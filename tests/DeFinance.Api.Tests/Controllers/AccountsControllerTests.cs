@@ -182,6 +182,105 @@ public class AccountsControllerTests : IClassFixture<DeFinanceWebApplicationFact
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
+    [Fact]
+    public async Task GetAll_WithMultipleItems_ReturnsCorrectPagedMetadata()
+    {
+        await CreateAccountAsync("Checking", AccountType.Checking, 100m);
+        await CreateAccountAsync("Savings", AccountType.Savings, 500m);
+        await CreateAccountAsync("Investment", AccountType.Investment, 1000m);
+
+        var response = await _client.GetAsync("/api/accounts");
+        var body = await response.Content.ReadFromJsonAsync<PagedResult<AccountResponse>>(DeFinanceWebApplicationFactory.JsonOptions);
+
+        body!.TotalCount.Should().Be(3);
+        body.Page.Should().Be(1);
+        body.TotalPages.Should().Be(1);
+        body.HasNextPage.Should().BeFalse();
+        body.HasPreviousPage.Should().BeFalse();
+        body.Items.Should().HaveCount(3);
+    }
+
+    [Fact]
+    public async Task GetAll_WithPageSize1_ReturnsSingleItemAndCorrectTotalPages()
+    {
+        await CreateAccountAsync("Checking", AccountType.Checking, 0m);
+        await CreateAccountAsync("Savings", AccountType.Savings, 0m);
+
+        var response = await _client.GetAsync("/api/accounts?page=1&pageSize=1");
+        var body = await response.Content.ReadFromJsonAsync<PagedResult<AccountResponse>>(DeFinanceWebApplicationFactory.JsonOptions);
+
+        body!.Items.Should().HaveCount(1);
+        body.TotalCount.Should().Be(2);
+        body.TotalPages.Should().Be(2);
+        body.HasNextPage.Should().BeTrue();
+        body.HasPreviousPage.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task GetAll_WithSearchFilter_ReturnsOnlyMatchingItems()
+    {
+        await CreateAccountAsync("My Savings", AccountType.Savings, 0m);
+        await CreateAccountAsync("Credit Card", AccountType.Credit, 0m);
+
+        var response = await _client.GetAsync("/api/accounts?search=savings");
+        var body = await response.Content.ReadFromJsonAsync<PagedResult<AccountResponse>>(DeFinanceWebApplicationFactory.JsonOptions);
+
+        body!.TotalCount.Should().Be(1);
+        body.Items.Single().Name.Should().Be("My Savings");
+    }
+
+    [Fact]
+    public async Task GetAll_WithTypeFilter_ReturnsOnlyMatchingAccounts()
+    {
+        await CreateAccountAsync("Checking 1", AccountType.Checking, 0m);
+        await CreateAccountAsync("Checking 2", AccountType.Checking, 0m);
+        await CreateAccountAsync("Savings 1", AccountType.Savings, 0m);
+
+        var response = await _client.GetAsync("/api/accounts?type=Checking");
+        var body = await response.Content.ReadFromJsonAsync<PagedResult<AccountResponse>>(DeFinanceWebApplicationFactory.JsonOptions);
+
+        body!.TotalCount.Should().Be(2);
+        body.Items.Should().AllSatisfy(a => a.Type.Should().Be(AccountType.Checking));
+    }
+
+    [Fact]
+    public async Task GetAll_WithIsActiveFilter_ReturnsOnlyInactiveAccounts()
+    {
+        var created = await CreateAccountAsync("Old Account", AccountType.Cash, 0m);
+        await CreateAccountAsync("Active Account", AccountType.Checking, 0m);
+        await _client.PatchAsync($"/api/accounts/{created.Id}/deactivate", null);
+
+        var response = await _client.GetAsync("/api/accounts?isActive=false");
+        var body = await response.Content.ReadFromJsonAsync<PagedResult<AccountResponse>>(DeFinanceWebApplicationFactory.JsonOptions);
+
+        body!.TotalCount.Should().Be(1);
+        body.Items.Single().Name.Should().Be("Old Account");
+    }
+
+    [Fact]
+    public async Task GetAll_WithSortByBalance_ReturnsItemsInAscendingOrder()
+    {
+        await CreateAccountAsync("High", AccountType.Savings, 1000m);
+        await CreateAccountAsync("Low", AccountType.Savings, 10m);
+        await CreateAccountAsync("Mid", AccountType.Savings, 500m);
+
+        var response = await _client.GetAsync("/api/accounts?sortBy=balance&sortDirection=Asc");
+        var body = await response.Content.ReadFromJsonAsync<PagedResult<AccountResponse>>(DeFinanceWebApplicationFactory.JsonOptions);
+
+        body!.Items.Select(a => a.Balance).Should().BeInAscendingOrder();
+    }
+
+    [Theory]
+    [InlineData("/api/accounts?page=0")]
+    [InlineData("/api/accounts?pageSize=0")]
+    [InlineData("/api/accounts?pageSize=101")]
+    [InlineData("/api/accounts?sortBy=invalid")]
+    public async Task GetAll_WithInvalidQueryParams_ReturnsBadRequest(string url)
+    {
+        var response = await _client.GetAsync(url);
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
     private async Task<AccountResponse> CreateAccountAsync(string name, AccountType type, decimal balance)
     {
         var response = await _client.PostAsJsonAsync("/api/accounts",

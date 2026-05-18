@@ -20,7 +20,7 @@ public class GetCategoryByIdQueryHandlerTests
     public async Task Handle_WhenCategoryExists_ShouldReturnResponse()
     {
         var id = Guid.NewGuid();
-        var category = Category.Create("Transport", CategoryType.Expense, "#0000FF", "🚗", null);
+        var category = Category.Create("Transport", CategoryType.Expense, "#0000FF", "🚗", null, null);
         _repository.GetByIdAsync(id, Arg.Any<CancellationToken>()).Returns(category);
 
         var result = await _handler.Handle(new GetCategoryByIdQuery(id), CancellationToken.None);
