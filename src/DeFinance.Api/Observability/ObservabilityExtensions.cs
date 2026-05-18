@@ -34,7 +34,7 @@ public static class ObservabilityExtensions
                     opts =>
                     {
                         opts.DataStream = new DataStreamName("logs", "definance", env);
-                        opts.BootstrapMethod = BootstrapMethod.Failure;
+                        opts.BootstrapMethod = BootstrapMethod.Silent;
                     },
                     configureTransport: tc =>
                     {
