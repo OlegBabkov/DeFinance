@@ -1,5 +1,7 @@
 using DeFinance.Application.Categories.Commands;
 using DeFinance.Application.Categories.Queries;
+using DeFinance.Application.Common;
+using DeFinance.Domain.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,8 +12,17 @@ namespace DeFinance.Api.Controllers;
 public class CategoriesController(ISender sender) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> GetAll(CancellationToken ct) =>
-        Ok(await sender.Send(new GetAllCategoriesQuery(), ct));
+    public async Task<IActionResult> GetAll(
+        [FromQuery] string? search,
+        [FromQuery] bool? isActive,
+        [FromQuery] CategoryType? type,
+        [FromQuery] CategoryPaymentObligation? paymentObligation,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        [FromQuery] string? sortBy = null,
+        [FromQuery] SortDirection sortDirection = SortDirection.Asc,
+        CancellationToken ct = default) =>
+        Ok(await sender.Send(new GetAllCategoriesQuery(search, isActive, type, paymentObligation, page, pageSize, sortBy, sortDirection), ct));
 
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetById(Guid id, CancellationToken ct)

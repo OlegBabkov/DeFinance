@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using DeFinance.Api.Tests.Infrastructure;
+using DeFinance.Application.Common;
 using DeFinance.Application.Currencies.Commands;
 using DeFinance.Application.DTOs.Currency;
 using DeFinance.Infrastructure.Persistence;
@@ -36,8 +37,10 @@ public class CurrenciesControllerTests : IClassFixture<DeFinanceWebApplicationFa
         var response = await _client.GetAsync("/api/currencies");
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var body = await response.Content.ReadFromJsonAsync<List<CurrencyResponse>>();
-        body.Should().NotBeNull().And.BeEmpty();
+        var body = await response.Content.ReadFromJsonAsync<PagedResult<CurrencyResponse>>();
+        body.Should().NotBeNull();
+        body!.Items.Should().BeEmpty();
+        body.TotalCount.Should().Be(0);
     }
 
     [Fact]

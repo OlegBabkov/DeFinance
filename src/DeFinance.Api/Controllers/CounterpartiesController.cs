@@ -1,5 +1,7 @@
+using DeFinance.Application.Common;
 using DeFinance.Application.Counterparties.Commands;
 using DeFinance.Application.Counterparties.Queries;
+using DeFinance.Domain.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,8 +12,16 @@ namespace DeFinance.Api.Controllers;
 public class CounterpartiesController(ISender sender) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> GetAll(CancellationToken ct) =>
-        Ok(await sender.Send(new GetAllCounterpartiesQuery(), ct));
+    public async Task<IActionResult> GetAll(
+        [FromQuery] string? search,
+        [FromQuery] bool? isActive,
+        [FromQuery] CounterpartyType? type,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        [FromQuery] string? sortBy = null,
+        [FromQuery] SortDirection sortDirection = SortDirection.Asc,
+        CancellationToken ct = default) =>
+        Ok(await sender.Send(new GetAllCounterpartiesQuery(search, isActive, type, page, pageSize, sortBy, sortDirection), ct));
 
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetById(Guid id, CancellationToken ct)

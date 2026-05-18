@@ -1,3 +1,4 @@
+using DeFinance.Application.Common;
 using DeFinance.Application.PaymentStatuses.Commands;
 using DeFinance.Application.PaymentStatuses.Queries;
 using MediatR;
@@ -10,8 +11,15 @@ namespace DeFinance.Api.Controllers;
 public class PaymentStatusesController(ISender sender) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> GetAll(CancellationToken ct) =>
-        Ok(await sender.Send(new GetAllPaymentStatusesQuery(), ct));
+    public async Task<IActionResult> GetAll(
+        [FromQuery] string? search,
+        [FromQuery] bool? isActive,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        [FromQuery] string? sortBy = null,
+        [FromQuery] SortDirection sortDirection = SortDirection.Asc,
+        CancellationToken ct = default) =>
+        Ok(await sender.Send(new GetAllPaymentStatusesQuery(search, isActive, page, pageSize, sortBy, sortDirection), ct));
 
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetById(Guid id, CancellationToken ct)

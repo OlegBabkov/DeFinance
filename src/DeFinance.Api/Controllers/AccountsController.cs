@@ -1,5 +1,7 @@
 using DeFinance.Application.Accounts.Commands;
 using DeFinance.Application.Accounts.Queries;
+using DeFinance.Application.Common;
+using DeFinance.Domain.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,8 +12,17 @@ namespace DeFinance.Api.Controllers;
 public class AccountsController(ISender sender) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> GetAll(CancellationToken ct) =>
-        Ok(await sender.Send(new GetAllAccountsQuery(), ct));
+    public async Task<IActionResult> GetAll(
+        [FromQuery] string? search,
+        [FromQuery] bool? isActive,
+        [FromQuery] AccountType? type,
+        [FromQuery] Guid? currencyId,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        [FromQuery] string? sortBy = null,
+        [FromQuery] SortDirection sortDirection = SortDirection.Asc,
+        CancellationToken ct = default) =>
+        Ok(await sender.Send(new GetAllAccountsQuery(search, isActive, type, currencyId, page, pageSize, sortBy, sortDirection), ct));
 
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetById(Guid id, CancellationToken ct)

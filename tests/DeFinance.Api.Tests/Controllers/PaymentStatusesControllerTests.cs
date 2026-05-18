@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using DeFinance.Api.Tests.Infrastructure;
+using DeFinance.Application.Common;
 using DeFinance.Application.DTOs.PaymentStatus;
 using DeFinance.Application.PaymentStatuses.Commands;
 using DeFinance.Infrastructure.Persistence;
@@ -36,8 +37,10 @@ public class PaymentStatusesControllerTests : IClassFixture<DeFinanceWebApplicat
         var response = await _client.GetAsync("/api/payment-statuses");
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var body = await response.Content.ReadFromJsonAsync<List<PaymentStatusResponse>>();
-        body.Should().NotBeNull().And.BeEmpty();
+        var body = await response.Content.ReadFromJsonAsync<PagedResult<PaymentStatusResponse>>();
+        body.Should().NotBeNull();
+        body!.Items.Should().BeEmpty();
+        body.TotalCount.Should().Be(0);
     }
 
     [Fact]
