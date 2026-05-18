@@ -3,12 +3,21 @@ import type { PagedQuery, PagedResult } from './common'
 
 export type AccountType = 'Checking' | 'Savings' | 'Credit' | 'Cash' | 'Investment'
 
+export interface AccountCurrency {
+  id: string
+  code: string
+  name: string
+  symbol: string
+  isActive: boolean
+}
+
 export interface Account {
   id: string
   name: string
   type: AccountType
   balance: number
   currencyId: string
+  currency: AccountCurrency | null
   isActive: boolean
 }
 

@@ -125,8 +125,6 @@ export function AccountsPage() {
     refetch()
   }
 
-  const currencySymbol = (id: string) => currencies.find(c => c.id === id)?.symbol ?? ''
-
   const items = result?.items ?? []
 
   if (!result && loading) return <div className="p-8 text-gray-500 dark:text-gray-400">Loading…</div>
@@ -221,7 +219,7 @@ export function AccountsPage() {
                   <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{account.name}</td>
                   <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{account.type}</td>
                   <td className="px-4 py-3 text-gray-900 dark:text-gray-100 font-mono">
-                    {currencySymbol(account.currencyId)} {account.balance.toFixed(2)}
+                    {account.currency?.symbol ?? ''} {account.balance.toFixed(2)}
                   </td>
                   <td className="px-4 py-3">
                     <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${account.isActive ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'}`}>

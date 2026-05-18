@@ -8,7 +8,9 @@ namespace DeFinance.Infrastructure.Persistence.Repositories;
 public class AccountRepository(DeFinanceDbContext dbContext) : IAccountRepository
 {
     public async Task<Account?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
-        await dbContext.Accounts.FindAsync([id], cancellationToken);
+        await dbContext.Accounts
+            .Include(a => a.Currency)
+            .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
 
     public async Task<(IReadOnlyList<Account> Items, int TotalCount)> GetAllAsync(
         string? search,
@@ -21,7 +23,7 @@ public class AccountRepository(DeFinanceDbContext dbContext) : IAccountRepositor
         int pageSize,
         CancellationToken cancellationToken = default)
     {
-        var query = dbContext.Accounts.AsQueryable();
+        var query = dbContext.Accounts.Include(a => a.Currency).AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(search))
         {

@@ -7,16 +7,16 @@ public static class AccountSeeder
 {
     private static readonly IReadOnlyList<(string Name, AccountType Type, string CurrencyCode)> _accounts =
     [
-        ("PrivatBank (UAH)", AccountType.Checking,  "UAH"),
-        ("PrivatBank (EUR)", AccountType.Checking,  "EUR"),
-        ("DeutscheBank",     AccountType.Checking,  "EUR"),
-        ("Monobank (UAH)",   AccountType.Checking,  "UAH"),
-        ("Monobank (EUR)",   AccountType.Checking,  "EUR"),
-        ("C24",              AccountType.Checking,  "EUR"),
-        ("Cash",             AccountType.Cash,      "EUR"),
-        ("Family Fund",      AccountType.Savings,   "EUR"),
-        ("Family Fund (Cash)", AccountType.Cash,    "EUR"),
-        ("Vacation Fund",    AccountType.Savings,   "EUR"),
+        ("PrivatBank (UAH)",      AccountType.Checking, "UAH"),
+        ("PrivatBank (EUR)",      AccountType.Checking, "EUR"),
+        ("DeutscheBank (EUR)",    AccountType.Checking, "EUR"),
+        ("Monobank (UAH)",        AccountType.Checking, "UAH"),
+        ("Monobank (EUR)",        AccountType.Checking, "EUR"),
+        ("C24 (EUR)",             AccountType.Checking, "EUR"),
+        ("Cash (EUR)",            AccountType.Cash,     "EUR"),
+        ("Family Fund (EUR)",     AccountType.Savings,  "EUR"),
+        ("Family Fund Cash (EUR)", AccountType.Cash,    "EUR"),
+        ("Vacation Fund (EUR)",   AccountType.Savings,  "EUR"),
     ];
 
     public static async Task SeedAsync(DeFinanceDbContext context, CancellationToken cancellationToken = default)
