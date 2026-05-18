@@ -18,6 +18,8 @@ public static class ObservabilityExtensions
         {
             var env = ctx.HostingEnvironment.EnvironmentName.ToLower();
             var esUrl = ctx.Configuration["Observability:ElasticsearchUrl"] ?? "http://localhost:9200";
+            var esUsername = ctx.Configuration["Observability:ElasticsearchUsername"];
+            var esPassword = ctx.Configuration["Observability:ElasticsearchPassword"];
 
             lc
                 .ReadFrom.Configuration(ctx.Configuration)
@@ -33,6 +35,11 @@ public static class ObservabilityExtensions
                     {
                         opts.DataStream = new DataStreamName("logs", "definance", env);
                         opts.BootstrapMethod = BootstrapMethod.Failure;
+                    },
+                    configureTransport: tc =>
+                    {
+                        if (!string.IsNullOrWhiteSpace(esUsername))
+                            tc.Authentication(new Elastic.Transport.BasicAuthentication(esUsername, esPassword!));
                     });
         });
 

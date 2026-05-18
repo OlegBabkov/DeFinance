@@ -21,29 +21,49 @@ services:
     container_name: definance-elasticsearch
     environment:
       - discovery.type=single-node
-      - xpack.security.enabled=false
+      - ELASTIC_PASSWORD=definance_elastic
+      - xpack.security.http.ssl.enabled=false
+      - xpack.security.transport.ssl.enabled=false
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
     ports:
       - "9200:9200"
     volumes:
       - elasticsearch_data:/usr/share/elasticsearch/data
     healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health | grep -q '\"status\":\"green\"\\|\"status\":\"yellow\"'"]
+      test: ["CMD-SHELL", "curl -sf -u elastic:definance_elastic http://localhost:9200/_cluster/health | grep -q '\"status\":\"green\"\\|\"status\":\"yellow\"'"]
       interval: 30s
       timeout: 10s
       retries: 10
       start_period: 60s
+
+  elasticsearch-setup:
+    image: curlimages/curl:latest
+    container_name: definance-elasticsearch-setup
+    restart: "no"
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "Setting kibana_system password...";
+        curl -sf -u elastic:definance_elastic -X POST "http://elasticsearch:9200/_security/user/kibana_system/_password" \
+          -H "Content-Type: application/json" \
+          -d '{"password":"definance_kibana"}';
+        echo "Done.";
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
 
   kibana:
     image: docker.elastic.co/kibana/kibana:8.13.4
     container_name: definance-kibana
     environment:
       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - ELASTICSEARCH_USERNAME=kibana_system
+      - ELASTICSEARCH_PASSWORD=definance_kibana
     ports:
       - "5601:5601"
     depends_on:
-      elasticsearch:
-        condition: service_healthy
+      elasticsearch-setup:
+        condition: service_completed_successfully
 
   kibana-setup:
     image: curlimages/curl:latest
@@ -57,10 +77,10 @@ services:
           sleep 10;
         done;
         echo "Initializing Fleet...";
-        curl -sf -X POST "http://kibana:5601/api/fleet/setup" \
+        curl -sf -u elastic:definance_elastic -X POST "http://kibana:5601/api/fleet/setup" \
           -H "kbn-xsrf: true" -H "Content-Type: application/json";
         echo "Installing APM integration...";
-        curl -sf -X POST "http://kibana:5601/api/fleet/epm/packages/apm" \
+        curl -sf -u elastic:definance_elastic -X POST "http://kibana:5601/api/fleet/epm/packages/apm" \
           -H "kbn-xsrf: true" -H "Content-Type: application/json" \
           -d '{"force":true}';
         echo "APM integration installed.";
@@ -75,8 +95,12 @@ services:
     command: >-
       apm-server -e
         -E output.elasticsearch.hosts=["elasticsearch:9200"]
+        -E output.elasticsearch.username=elastic
+        -E output.elasticsearch.password=definance_elastic
         -E apm-server.kibana.enabled=true
         -E apm-server.kibana.host="http://kibana:5601"
+        -E apm-server.kibana.username=elastic
+        -E apm-server.kibana.password=definance_elastic
         -E apm-server.auth.anonymous.enabled=true
         -E apm-server.auth.anonymous.allow_service=["*"]
         -E apm-server.data_streams.wait_for_integration=false
@@ -106,6 +130,8 @@ services:
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__DefaultConnection: "Host=postgres;Database=definance;Username=definance;Password=definance_pass"
       Observability__ElasticsearchUrl: "http://elasticsearch:9200"
+      Observability__ElasticsearchUsername: "elastic"
+      Observability__ElasticsearchPassword: "definance_elastic"
       Observability__OtlpEndpoint: "http://otel-collector:4317"
     ports:
       - "8080:8080"
