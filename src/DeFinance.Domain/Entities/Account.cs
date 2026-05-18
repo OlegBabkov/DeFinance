@@ -7,6 +7,7 @@ public class Account
     public AccountType Type { get; private set; }
     public decimal Balance { get; private set; }
     public Guid CurrencyId { get; private set; }
+    public Currency? Currency { get; private set; }
     public bool IsActive { get; private set; }
 
     private Account() { }

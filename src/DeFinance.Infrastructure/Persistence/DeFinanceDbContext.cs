@@ -10,6 +10,7 @@ public class DeFinanceDbContext(DbContextOptions<DeFinanceDbContext> options) : 
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<Counterparty> Counterparties => Set<Counterparty>();
     public DbSet<PaymentStatus> PaymentStatuses => Set<PaymentStatus>();
+    public DbSet<User> Users => Set<User>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -21,7 +21,7 @@ public class AccountConfiguration : IEntityTypeConfiguration<Account>
             .HasPrecision(18, 2)
             .IsRequired();
 
-        builder.HasOne<Currency>()
+        builder.HasOne(a => a.Currency)
             .WithMany()
             .HasForeignKey(a => a.CurrencyId)
             .OnDelete(DeleteBehavior.Restrict);
