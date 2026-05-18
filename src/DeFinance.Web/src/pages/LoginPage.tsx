@@ -6,7 +6,7 @@ const inputCls =
 const labelCls = 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'
 
 interface Props {
-  onLogin: () => void
+  onLogin: (username: string) => void
 }
 
 export function LoginPage({ onLogin }: Props) {
@@ -15,7 +15,7 @@ export function LoginPage({ onLogin }: Props) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    onLogin()
+    onLogin(username)
   }
 
   return (
