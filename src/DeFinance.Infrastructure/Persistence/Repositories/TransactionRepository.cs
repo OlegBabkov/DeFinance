@@ -52,7 +52,7 @@ public class TransactionRepository(DeFinanceDbContext dbContext) : ITransactionR
             query = query.Where(t => t.DateTime >= dateFrom.Value);
 
         if (dateTo.HasValue)
-            query = query.Where(t => t.DateTime <= dateTo.Value);
+            query = query.Where(t => t.DateTime < dateTo.Value);
 
         if (accountId.HasValue)
             query = query.Where(t => t.AccountId == accountId.Value);

@@ -1,4 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
+import { useNotify } from '../NotificationContext'
+import { useMainCurrency } from '../MainCurrencyContext'
 import { paymentStatusesApi, type PaymentStatus } from '../api/paymentStatuses'
 import { type PagedResult, type PageSize, type SortDirection } from '../api/common'
 import { Modal } from '../components/Modal'
@@ -17,6 +19,7 @@ const filterCls =
   'px-2 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500'
 
 function PaymentStatusesPanel() {
+  const notify = useNotify()
   const [result, setResult] = useState<PagedResult<PaymentStatus> | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -84,8 +87,10 @@ function PaymentStatusesPanel() {
       const description = formDescription.trim() || null
       if (modal === 'create') {
         await paymentStatusesApi.create({ name: formName, description })
+        notify('Payment status created', 'success')
       } else if (modal !== null) {
         await paymentStatusesApi.update(modal.id, { name: formName, description })
+        notify('Payment status updated', 'info')
       }
       closeModal()
       refetch()
@@ -97,8 +102,8 @@ function PaymentStatusesPanel() {
   }
 
   const toggle = async (status: PaymentStatus) => {
-    if (status.isActive) await paymentStatusesApi.deactivate(status.id)
-    else await paymentStatusesApi.activate(status.id)
+    if (status.isActive) { await paymentStatusesApi.deactivate(status.id); notify('Payment status deactivated', 'error') }
+    else { await paymentStatusesApi.activate(status.id); notify('Payment status activated', 'success') }
     refetch()
   }
 
@@ -177,8 +182,8 @@ function PaymentStatusesPanel() {
       {error && <p className="text-sm text-red-500 mb-2">{error}</p>}
 
       <div className="flex flex-col flex-1 min-h-0 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <div className="flex-1 min-h-0 overflow-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-xs">
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
+          <table className="w-full divide-y divide-gray-200 dark:divide-gray-700 text-xs">
             <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0 z-10">
               <tr>
                 <SortableHeader label="Name" field="name" sortBy={sortBy} sortDirection={sortDirection} onSort={handleSort} />
@@ -248,6 +253,39 @@ function PaymentStatusesPanel() {
   )
 }
 
+function MainCurrencyPanel() {
+  const { currencies, mainCurrency, setMainCurrencyId } = useMainCurrency()
+
+  return (
+    <div className="flex flex-col gap-4">
+      <p className="text-xs text-gray-500 dark:text-gray-400">
+        Choose the currency used to display the <strong>In Main Currency</strong> column in the Transactions table. Stored locally in your browser.
+      </p>
+      <div>
+        <label className={labelCls}>Main Currency</label>
+        <select
+          value={mainCurrency?.id ?? ''}
+          onChange={e => setMainCurrencyId(e.target.value)}
+          className={inputCls}
+        >
+          {currencies.map(c => (
+            <option key={c.id} value={c.id}>{c.symbol} {c.code} — {c.name}</option>
+          ))}
+        </select>
+      </div>
+      {mainCurrency && (
+        <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600">
+          <span className="text-2xl font-bold text-gray-700 dark:text-gray-200">{mainCurrency.symbol}</span>
+          <div>
+            <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{mainCurrency.name}</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500">{mainCurrency.code}</p>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function AdministrationPage() {
   return (
     <div className="p-6 h-full flex flex-col">
@@ -258,7 +296,10 @@ export function AdministrationPage() {
           <PaymentStatusesPanel />
         </Panel>
 
-        <Panel title="" empty />
+        <Panel title="Main Currency">
+          <MainCurrencyPanel />
+        </Panel>
+
         <Panel title="" empty />
         <Panel title="" empty />
       </div>

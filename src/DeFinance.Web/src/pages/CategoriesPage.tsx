@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNotify } from '../NotificationContext'
 import {
   categoriesApi,
   type Category,
@@ -35,6 +36,7 @@ const filterCls =
   'px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500'
 
 export function CategoriesPage() {
+  const notify = useNotify()
   const [result, setResult] = useState<PagedResult<Category> | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -122,8 +124,10 @@ export function CategoriesPage() {
       const paymentObligation = formPaymentObligation || null
       if (modal === 'create') {
         await categoriesApi.create({ name: formName, type: tab as CategoryType, color, icon, parentId: formParentId || null, paymentObligation })
+        notify('Category created', 'success')
       } else if (modal !== null) {
         await categoriesApi.update(modal.id, { name: formName, color, icon, paymentObligation })
+        notify('Category updated', 'info')
       }
       closeModal()
       refetch()
@@ -135,8 +139,8 @@ export function CategoriesPage() {
   }
 
   const toggle = async (category: Category) => {
-    if (category.isActive) await categoriesApi.deactivate(category.id)
-    else await categoriesApi.activate(category.id)
+    if (category.isActive) { await categoriesApi.deactivate(category.id); notify('Category deactivated', 'error') }
+    else { await categoriesApi.activate(category.id); notify('Category activated', 'success') }
     refetch()
   }
 
@@ -251,8 +255,8 @@ export function CategoriesPage() {
       )}
 
       <div className="flex flex-col flex-1 min-h-0 mx-8 mb-4 mt-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-        <div className="flex-1 min-h-0 overflow-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
+          <table className="w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
             <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0 z-10">
               <tr>
                 <SortableHeader label="Name" field="name" sortBy={sortBy} sortDirection={sortDirection} onSort={handleSort} />

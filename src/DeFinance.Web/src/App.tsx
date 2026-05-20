@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { ThemeProvider } from './ThemeContext'
+import { NotificationProvider } from './NotificationContext'
+import { Notifications } from './components/Notifications'
+import { MainCurrencyProvider } from './MainCurrencyContext'
 import { Sidebar } from './components/Sidebar'
 import { TopBar } from './components/TopBar'
 import { LoginPage } from './pages/LoginPage'
@@ -17,29 +20,34 @@ function App() {
 
   return (
     <ThemeProvider>
-      {username === null ? (
-        <LoginPage onLogin={setUsername} />
-      ) : (
-        <BrowserRouter>
-          <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
-            <Sidebar />
-            <div className="flex-1 flex flex-col overflow-hidden">
-              <TopBar username={username} />
-              <main className="flex-1 overflow-hidden">
-                <Routes>
-                  <Route path="/" element={<DashboardPage />} />
-                  <Route path="/accounts" element={<AccountsPage />} />
-                  <Route path="/categories" element={<CategoriesPage />} />
-                  <Route path="/currencies" element={<CurrenciesPage />} />
-                  <Route path="/counterparties" element={<CounterpartiesPage />} />
-                  <Route path="/transactions" element={<TransactionsPage />} />
-                  <Route path="/administration" element={<AdministrationPage />} />
-                </Routes>
-              </main>
+      <MainCurrencyProvider>
+      <NotificationProvider>
+        <Notifications />
+        {username === null ? (
+          <LoginPage onLogin={setUsername} />
+        ) : (
+          <BrowserRouter>
+            <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
+              <Sidebar />
+              <div className="flex-1 flex flex-col overflow-hidden">
+                <TopBar username={username} />
+                <main className="flex-1 overflow-hidden">
+                  <Routes>
+                    <Route path="/" element={<DashboardPage />} />
+                    <Route path="/accounts" element={<AccountsPage />} />
+                    <Route path="/categories" element={<CategoriesPage />} />
+                    <Route path="/currencies" element={<CurrenciesPage />} />
+                    <Route path="/counterparties" element={<CounterpartiesPage />} />
+                    <Route path="/transactions" element={<TransactionsPage />} />
+                    <Route path="/administration" element={<AdministrationPage />} />
+                  </Routes>
+                </main>
+              </div>
             </div>
-          </div>
-        </BrowserRouter>
-      )}
+          </BrowserRouter>
+        )}
+      </NotificationProvider>
+      </MainCurrencyProvider>
     </ThemeProvider>
   )
 }
