@@ -47,7 +47,7 @@ function App() {
             <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
               <Sidebar />
               <div className="flex-1 flex flex-col overflow-hidden">
-                <TopBar username={username} onLogout={handleLogout} />
+                <TopBar username={username} onLogout={handleLogout} onUsernameChange={setUsername} />
                 <main className="flex-1 overflow-hidden">
                   <Routes>
                     <Route path="/" element={<DashboardPage />} />

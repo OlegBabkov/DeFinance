@@ -4,11 +4,29 @@ export interface LoginRequest { username: string; password: string }
 export interface LoginResponse { token: string; username: string }
 export interface RegisterRequest { username: string; password: string; confirmPassword: string; email: string }
 
+export interface UserInfo {
+  id: string
+  username: string
+  email: string
+  phoneNumber?: string
+  createdAt: string
+  isActive: boolean
+}
+
+export interface UpdateMeRequest { username: string; email: string; phoneNumber?: string }
+export interface ChangePasswordRequest { currentPassword: string; newPassword: string }
+
 export const authApi = {
   login: (req: LoginRequest) =>
     client.post<LoginResponse>('/auth/login', req).then(r => r.data),
   register: (req: RegisterRequest) =>
     client.post('/auth/register', req).then(r => r.data),
+  me: () =>
+    client.get<UserInfo>('/auth/me').then(r => r.data),
+  updateMe: (req: UpdateMeRequest) =>
+    client.put<UserInfo>('/auth/me', req).then(r => r.data),
+  changePassword: (req: ChangePasswordRequest) =>
+    client.post('/auth/change-password', req),
 }
 
 export const TOKEN_KEY = 'definance_jwt'

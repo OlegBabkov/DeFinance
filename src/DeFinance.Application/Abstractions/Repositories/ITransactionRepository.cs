@@ -9,6 +9,7 @@ public interface ITransactionRepository
     Task AddAsync(Transaction transaction, CancellationToken cancellationToken = default);
     void Remove(Transaction transaction);
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
+    Task<decimal?> GetBalanceBeforeAsync(Guid transactionId, CancellationToken cancellationToken = default);
     Task<(IReadOnlyList<Transaction> Items, int TotalCount)> GetAllAsync(
         DateTime? dateFrom,
         DateTime? dateTo,

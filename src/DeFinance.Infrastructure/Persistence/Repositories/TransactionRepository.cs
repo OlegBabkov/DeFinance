@@ -20,10 +20,37 @@ public class TransactionRepository(DeFinanceDbContext dbContext) : ITransactionR
         await dbContext.Transactions
             .Include(t => t.Account).ThenInclude(a => a!.Currency)
             .Include(t => t.InCurrency)
-            .Include(t => t.Category)
+            .Include(t => t.Category).ThenInclude(c => c!.Parent)
             .Include(t => t.Counterparty)
             .Include(t => t.PaymentStatus)
             .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
+
+    public async Task<decimal?> GetBalanceBeforeAsync(Guid transactionId, CancellationToken cancellationToken = default)
+    {
+        var tx = await dbContext.Transactions
+            .Include(t => t.Account)
+            .Include(t => t.Category).ThenInclude(c => c!.Parent)
+            .FirstOrDefaultAsync(t => t.Id == transactionId, cancellationToken);
+
+        if (tx?.Account is null) return null;
+
+        // Contributions from same-account transactions strictly after this one
+        var laterAdjustment = await dbContext.Transactions
+            .Where(t => t.AccountId == tx.AccountId && t.DateTime > tx.DateTime)
+            .SumAsync(t =>
+                t.Category!.Type == CategoryType.Income  ?  t.Sum :
+                t.Category!.Type == CategoryType.Expense ? -t.Sum : 0m,
+                cancellationToken);
+
+        decimal txContribution = tx.Category?.Type switch
+        {
+            CategoryType.Income  =>  tx.Sum,
+            CategoryType.Expense => -tx.Sum,
+            _                    =>  0m,
+        };
+
+        return tx.Account.Balance - txContribution - laterAdjustment;
+    }
 
     public async Task<(IReadOnlyList<Transaction> Items, int TotalCount)> GetAllAsync(
         DateTime? dateFrom,
@@ -43,7 +70,7 @@ public class TransactionRepository(DeFinanceDbContext dbContext) : ITransactionR
         var query = dbContext.Transactions
             .Include(t => t.Account).ThenInclude(a => a!.Currency)
             .Include(t => t.InCurrency)
-            .Include(t => t.Category)
+            .Include(t => t.Category).ThenInclude(c => c!.Parent)
             .Include(t => t.Counterparty)
             .Include(t => t.PaymentStatus)
             .AsQueryable();
