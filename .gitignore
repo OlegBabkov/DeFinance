@@ -40,3 +40,6 @@ appsettings.*.local.json
 
 # Claude local settings (personal, not shared)
 .claude/settings.local.json
+
+# Database backups (stored locally, never committed)
+/backups/*.sql.gz
