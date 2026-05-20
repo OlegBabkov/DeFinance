@@ -1,6 +1,8 @@
+using DeFinance.Application.Abstractions;
 using DeFinance.Application.Abstractions.Repositories;
 using DeFinance.Infrastructure.Persistence;
 using DeFinance.Infrastructure.Persistence.Repositories;
+using DeFinance.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,6 +23,9 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<IPaymentStatusRepository, PaymentStatusRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<ITransactionRepository, TransactionRepository>();
+
+        services.AddScoped<IPasswordService, BCryptPasswordService>();
+        services.AddScoped<IJwtTokenService, JwtTokenService>();
 
         return services;
     }
