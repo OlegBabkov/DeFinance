@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { useNotify } from '../NotificationContext'
+import { useMainCurrency } from '../MainCurrencyContext'
 import { paymentStatusesApi, type PaymentStatus } from '../api/paymentStatuses'
 import { type PagedResult, type PageSize, type SortDirection } from '../api/common'
 import { Modal } from '../components/Modal'
@@ -252,6 +253,39 @@ function PaymentStatusesPanel() {
   )
 }
 
+function MainCurrencyPanel() {
+  const { currencies, mainCurrency, setMainCurrencyId } = useMainCurrency()
+
+  return (
+    <div className="flex flex-col gap-4">
+      <p className="text-xs text-gray-500 dark:text-gray-400">
+        Choose the currency used to display the <strong>In Main Currency</strong> column in the Transactions table. Stored locally in your browser.
+      </p>
+      <div>
+        <label className={labelCls}>Main Currency</label>
+        <select
+          value={mainCurrency?.id ?? ''}
+          onChange={e => setMainCurrencyId(e.target.value)}
+          className={inputCls}
+        >
+          {currencies.map(c => (
+            <option key={c.id} value={c.id}>{c.symbol} {c.code} — {c.name}</option>
+          ))}
+        </select>
+      </div>
+      {mainCurrency && (
+        <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600">
+          <span className="text-2xl font-bold text-gray-700 dark:text-gray-200">{mainCurrency.symbol}</span>
+          <div>
+            <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{mainCurrency.name}</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500">{mainCurrency.code}</p>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function AdministrationPage() {
   return (
     <div className="p-6 h-full flex flex-col">
@@ -262,7 +296,10 @@ export function AdministrationPage() {
           <PaymentStatusesPanel />
         </Panel>
 
-        <Panel title="" empty />
+        <Panel title="Main Currency">
+          <MainCurrencyPanel />
+        </Panel>
+
         <Panel title="" empty />
         <Panel title="" empty />
       </div>

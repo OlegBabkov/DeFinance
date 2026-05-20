@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNotify } from '../NotificationContext'
+import { useMainCurrency } from '../MainCurrencyContext'
 import { transactionsApi, type Transaction, type CreateTransactionRequest } from '../api/transactions'
 import { accountsApi, type Account } from '../api/accounts'
 import { categoriesApi, type Category } from '../api/categories'
@@ -89,6 +90,7 @@ function txToForm(tx: Transaction): FormState {
 
 export function TransactionsPage() {
   const notify = useNotify()
+  const { mainCurrency } = useMainCurrency()
   const [result, setResult] = useState<PagedResult<Transaction> | null>(null)
   const [accounts, setAccounts] = useState<Account[]>([])
   const [categories, setCategories] = useState<Category[]>([])
@@ -301,23 +303,23 @@ export function TransactionsPage() {
         <div className="flex flex-wrap items-center gap-3">
           <select value={accountId} onChange={e => { setAccountId(e.target.value); setPage(1) }} className={filterCls}>
             <option value="">All accounts</option>
-            {accounts.map(a => <option key={a.id} value={a.id}>{a.name}{a.currency ? ` (${a.currency.code})` : ''}</option>)}
+            {accounts.filter(a => a.isActive).map(a => <option key={a.id} value={a.id}>{a.name}{a.currency ? ` (${a.currency.code})` : ''}</option>)}
           </select>
           <select value={categoryId} onChange={e => { setCategoryId(e.target.value); setPage(1) }} className={filterCls}>
             <option value="">All categories</option>
-            {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            {categories.filter(c => c.isActive).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
           <select value={counterpartyId} onChange={e => { setCounterpartyId(e.target.value); setPage(1) }} className={filterCls}>
             <option value="">All counterparties</option>
-            {counterparties.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            {counterparties.filter(c => c.isActive).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
           <select value={paymentStatusId} onChange={e => { setPaymentStatusId(e.target.value); setPage(1) }} className={filterCls}>
             <option value="">All statuses</option>
-            {paymentStatuses.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+            {paymentStatuses.filter(s => s.isActive).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
           <select value={inCurrencyId} onChange={e => { setInCurrencyId(e.target.value); setPage(1) }} className={filterCls}>
             <option value="">All base currencies</option>
-            {currencies.map(c => <option key={c.id} value={c.id}>{c.symbol} {c.code}</option>)}
+            {currencies.filter(c => c.isActive).map(c => <option key={c.id} value={c.id}>{c.symbol} {c.code}</option>)}
           </select>
         </div>
       </div>
@@ -416,7 +418,7 @@ export function TransactionsPage() {
                 <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Counterparty</th>
                 <SortableHeader label="Sum" field="sum" sortBy={sortBy} sortDirection={sortDirection} onSort={handleSort} />
                 <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Exch. Rate</th>
-                <SortableHeader label="In Currency" field="amountincurrency" sortBy={sortBy} sortDirection={sortDirection} onSort={handleSort} />
+                <SortableHeader label="In Main Currency" field="amountincurrency" sortBy={sortBy} sortDirection={sortDirection} onSort={handleSort} />
                 <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Status</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Notes</th>
                 <th className="px-4 py-3" />
@@ -454,9 +456,9 @@ export function TransactionsPage() {
                     {num(tx.exchangeRate, 4)}
                   </td>
                   <td className="px-4 py-3 text-gray-900 dark:text-gray-100 font-mono text-right">
-                    <span className="text-gray-400 dark:text-gray-500 mr-0.5 text-xs">{tx.inCurrency?.symbol ?? ''}</span>
+                    <span className="text-gray-400 dark:text-gray-500 mr-0.5 text-xs">{mainCurrency?.symbol ?? ''}</span>
                     {num(tx.amountInCurrency)}
-                    {tx.inCurrency && <span className="ml-1 text-xs text-gray-400 dark:text-gray-500">{tx.inCurrency.code}</span>}
+                    {mainCurrency && <span className="ml-1 text-xs text-gray-400 dark:text-gray-500">{mainCurrency.code}</span>}
                   </td>
                   <td className="px-4 py-3">
                     {tx.paymentStatus ? (

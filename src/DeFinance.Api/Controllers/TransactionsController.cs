@@ -24,10 +24,16 @@ public class TransactionsController(ISender sender) : ControllerBase
         [FromQuery] int pageSize = 20,
         [FromQuery] string? sortBy = null,
         [FromQuery] SortDirection sortDirection = SortDirection.Desc,
-        CancellationToken ct = default) =>
-        Ok(await sender.Send(
-            new GetAllTransactionsQuery(dateFrom, dateTo, accountId, categoryId, counterpartyId,
+        CancellationToken ct = default)
+    {
+        // ASP.NET model binding produces DateTimeKind.Unspecified from date strings; Npgsql
+        // requires DateTimeKind.Utc for timestamptz columns.
+        var fromUtc = dateFrom.HasValue ? DateTime.SpecifyKind(dateFrom.Value, DateTimeKind.Utc) : (DateTime?)null;
+        var toUtc = dateTo.HasValue ? DateTime.SpecifyKind(dateTo.Value.Date.AddDays(1), DateTimeKind.Utc) : (DateTime?)null;
+        return Ok(await sender.Send(
+            new GetAllTransactionsQuery(fromUtc, toUtc, accountId, categoryId, counterpartyId,
                 paymentStatusId, inCurrencyId, notes, page, pageSize, sortBy, sortDirection), ct));
+    }
 
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetById(Guid id, CancellationToken ct)

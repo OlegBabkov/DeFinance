@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { ThemeProvider } from './ThemeContext'
 import { NotificationProvider } from './NotificationContext'
 import { Notifications } from './components/Notifications'
+import { MainCurrencyProvider } from './MainCurrencyContext'
 import { Sidebar } from './components/Sidebar'
 import { TopBar } from './components/TopBar'
 import { LoginPage } from './pages/LoginPage'
@@ -19,6 +20,7 @@ function App() {
 
   return (
     <ThemeProvider>
+      <MainCurrencyProvider>
       <NotificationProvider>
         <Notifications />
         {username === null ? (
@@ -45,6 +47,7 @@ function App() {
           </BrowserRouter>
         )}
       </NotificationProvider>
+      </MainCurrencyProvider>
     </ThemeProvider>
   )
 }
