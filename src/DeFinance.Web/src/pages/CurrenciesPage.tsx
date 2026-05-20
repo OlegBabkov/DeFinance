@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNotify } from '../NotificationContext'
 import { currenciesApi, type Currency } from '../api/currencies'
 import { type PagedResult, type PageSize, type SortDirection } from '../api/common'
 import { Modal } from '../components/Modal'
@@ -17,6 +18,7 @@ const filterCls =
   'px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500'
 
 export function CurrenciesPage() {
+  const notify = useNotify()
   const [result, setResult] = useState<PagedResult<Currency> | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -87,8 +89,10 @@ export function CurrenciesPage() {
     try {
       if (modal === 'create') {
         await currenciesApi.create({ code: formCode, name: formName, symbol: formSymbol })
+        notify('Currency created', 'success')
       } else if (modal !== null) {
         await currenciesApi.update(modal.id, { name: formName, symbol: formSymbol })
+        notify('Currency updated', 'info')
       }
       closeModal()
       refetch()
@@ -100,8 +104,8 @@ export function CurrenciesPage() {
   }
 
   const toggle = async (currency: Currency) => {
-    if (currency.isActive) await currenciesApi.deactivate(currency.id)
-    else await currenciesApi.activate(currency.id)
+    if (currency.isActive) { await currenciesApi.deactivate(currency.id); notify('Currency deactivated', 'error') }
+    else { await currenciesApi.activate(currency.id); notify('Currency activated', 'success') }
     refetch()
   }
 
@@ -168,8 +172,8 @@ export function CurrenciesPage() {
       )}
 
       <div className="flex flex-col flex-1 min-h-0 mx-8 mb-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-        <div className="flex-1 min-h-0 overflow-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
+          <table className="w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
             <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0 z-10">
               <tr>
                 <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Symbol</th>

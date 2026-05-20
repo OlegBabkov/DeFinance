@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNotify } from '../NotificationContext'
 import { transactionsApi, type Transaction, type CreateTransactionRequest } from '../api/transactions'
 import { accountsApi, type Account } from '../api/accounts'
 import { categoriesApi, type Category } from '../api/categories'
@@ -33,6 +34,15 @@ function toDateOnly(iso: string) {
 
 function todayDate() {
   return new Date().toISOString().slice(0, 10)
+}
+
+function activeOrCurrent<T extends { id: string; isActive: boolean }>(items: T[], currentId: string): T[] {
+  const active = items.filter(i => i.isActive)
+  if (currentId && !active.some(i => i.id === currentId)) {
+    const cur = items.find(i => i.id === currentId)
+    if (cur) return [...active, cur]
+  }
+  return active
 }
 
 type ModalState = null | 'create' | Transaction
@@ -78,6 +88,7 @@ function txToForm(tx: Transaction): FormState {
 }
 
 export function TransactionsPage() {
+  const notify = useNotify()
   const [result, setResult] = useState<PagedResult<Transaction> | null>(null)
   const [accounts, setAccounts] = useState<Account[]>([])
   const [categories, setCategories] = useState<Category[]>([])
@@ -168,11 +179,15 @@ export function TransactionsPage() {
     counterpartyId || paymentStatusId || inCurrencyId || notes
 
   // modal helpers
-  const defaultForm = () => emptyForm({
-    accountId: accounts[0]?.id,
-    currencyId: accounts[0]?.currencyId,
-    paymentStatusId: paymentStatuses[0]?.id,
-  })
+  const defaultForm = () => {
+    const firstActiveAccount = accounts.find(a => a.isActive)
+    const firstActiveStatus = paymentStatuses.find(s => s.isActive)
+    return emptyForm({
+      accountId: firstActiveAccount?.id,
+      currencyId: firstActiveAccount?.currencyId,
+      paymentStatusId: firstActiveStatus?.id,
+    })
+  }
 
   const openCreate = () => {
     setForm(defaultForm())
@@ -214,8 +229,10 @@ export function TransactionsPage() {
       }
       if (modal === 'create') {
         await transactionsApi.create(req)
+        notify('Transaction created', 'success')
       } else if (modal !== null) {
         await transactionsApi.update(modal.id, { id: modal.id, ...req })
+        notify('Transaction updated', 'info')
       }
       closeModal()
       refetch()
@@ -230,6 +247,7 @@ export function TransactionsPage() {
     if (!confirm(`Delete this transaction (${tx.category?.name ?? ''} ${tx.sum})?`)) return
     try {
       await transactionsApi.remove(tx.id)
+      notify('Transaction deleted', 'error')
       refetch()
     } catch {
       alert('Failed to delete transaction.')
@@ -317,21 +335,21 @@ export function TransactionsPage() {
                 <label className={labelCls}>Account</label>
                 <select required value={form.accountId} onChange={onAccountChange} className={inputCls}>
                   <option value="">Select account</option>
-                  {accounts.map(a => <option key={a.id} value={a.id}>{a.name}{a.currency ? ` (${a.currency.code})` : ''}</option>)}
+                  {activeOrCurrent(accounts, form.accountId).map(a => <option key={a.id} value={a.id}>{a.name}{a.currency ? ` (${a.currency.code})` : ''}</option>)}
                 </select>
               </div>
               <div>
                 <label className={labelCls}>Category</label>
                 <select required value={form.categoryId} onChange={setField('categoryId')} className={inputCls}>
                   <option value="">Select category</option>
-                  {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  {activeOrCurrent(categories, form.categoryId).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
               <div>
                 <label className={labelCls}>Payment Status</label>
                 <select required value={form.paymentStatusId} onChange={setField('paymentStatusId')} className={inputCls}>
                   <option value="">Select status</option>
-                  {paymentStatuses.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                  {activeOrCurrent(paymentStatuses, form.paymentStatusId).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                 </select>
               </div>
               <div>
@@ -362,7 +380,7 @@ export function TransactionsPage() {
                 <label className={labelCls}>Counterparty <span className="text-gray-400 font-normal">(optional)</span></label>
                 <select value={form.counterpartyId} onChange={setField('counterpartyId')} className={inputCls}>
                   <option value="">None</option>
-                  {counterparties.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  {activeOrCurrent(counterparties, form.counterpartyId).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
             </div>
@@ -388,18 +406,18 @@ export function TransactionsPage() {
 
       {/* Table */}
       <div className="flex flex-col flex-1 min-h-0 mx-8 mb-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-        <div className="flex-1 min-h-0 overflow-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
+          <table className="w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
             <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0 z-10">
               <tr>
                 <SortableHeader label="Date & Time" field="datetime" sortBy={sortBy} sortDirection={sortDirection} onSort={handleSort} />
-                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">Account</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Account</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Category</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Counterparty</th>
                 <SortableHeader label="Sum" field="sum" sortBy={sortBy} sortDirection={sortDirection} onSort={handleSort} />
-                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">Exch. Rate</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Exch. Rate</th>
                 <SortableHeader label="In Currency" field="amountincurrency" sortBy={sortBy} sortDirection={sortDirection} onSort={handleSort} />
-                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">Status</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Status</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Notes</th>
                 <th className="px-4 py-3" />
               </tr>
@@ -407,10 +425,10 @@ export function TransactionsPage() {
             <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
               {items.map(tx => (
                 <tr key={tx.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                  <td className="px-4 py-3 text-gray-600 dark:text-gray-400 font-mono text-xs whitespace-nowrap">
+                  <td className="px-4 py-3 text-gray-600 dark:text-gray-400 font-mono text-xs">
                     {fmt(tx.dateTime)}
                   </td>
-                  <td className="px-4 py-3 text-gray-900 dark:text-gray-100 whitespace-nowrap">
+                  <td className="px-4 py-3 text-gray-900 dark:text-gray-100">
                     <span className="font-medium">{tx.account?.name ?? '—'}</span>
                     {tx.account?.currency && (
                       <span className="ml-1 text-xs text-gray-400 dark:text-gray-500">({tx.account.currency.code})</span>
@@ -428,14 +446,14 @@ export function TransactionsPage() {
                   <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
                     {tx.counterparty?.name ?? <span className="text-gray-300 dark:text-gray-600">—</span>}
                   </td>
-                  <td className="px-4 py-3 text-gray-900 dark:text-gray-100 font-mono whitespace-nowrap text-right">
+                  <td className="px-4 py-3 text-gray-900 dark:text-gray-100 font-mono text-right">
                     <span className="text-gray-400 dark:text-gray-500 mr-0.5 text-xs">{tx.account?.currency?.symbol ?? ''}</span>
                     {num(tx.sum)}
                   </td>
                   <td className="px-4 py-3 text-gray-500 dark:text-gray-400 font-mono text-xs text-right">
                     {num(tx.exchangeRate, 4)}
                   </td>
-                  <td className="px-4 py-3 text-gray-900 dark:text-gray-100 font-mono whitespace-nowrap text-right">
+                  <td className="px-4 py-3 text-gray-900 dark:text-gray-100 font-mono text-right">
                     <span className="text-gray-400 dark:text-gray-500 mr-0.5 text-xs">{tx.inCurrency?.symbol ?? ''}</span>
                     {num(tx.amountInCurrency)}
                     {tx.inCurrency && <span className="ml-1 text-xs text-gray-400 dark:text-gray-500">{tx.inCurrency.code}</span>}

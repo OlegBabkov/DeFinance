@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNotify } from '../NotificationContext'
 import { accountsApi, type Account, type AccountType } from '../api/accounts'
 import { currenciesApi, type Currency } from '../api/currencies'
 import { type PagedResult, type PageSize, type SortDirection } from '../api/common'
@@ -20,6 +21,7 @@ const filterCls =
   'px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500'
 
 export function AccountsPage() {
+  const notify = useNotify()
   const [result, setResult] = useState<PagedResult<Account> | null>(null)
   const [currencies, setCurrencies] = useState<Currency[]>([])
   const [loading, setLoading] = useState(true)
@@ -107,8 +109,10 @@ export function AccountsPage() {
     try {
       if (modal === 'create') {
         await accountsApi.create({ name: formName, type: formType, initialBalance: parseFloat(formBalance), currencyId: formCurrencyId })
+        notify('Account created', 'success')
       } else if (modal !== null) {
         await accountsApi.update(modal.id, { name: formName })
+        notify('Account updated', 'info')
       }
       closeModal()
       refetch()
@@ -120,8 +124,8 @@ export function AccountsPage() {
   }
 
   const toggle = async (account: Account) => {
-    if (account.isActive) await accountsApi.deactivate(account.id)
-    else await accountsApi.activate(account.id)
+    if (account.isActive) { await accountsApi.deactivate(account.id); notify('Account deactivated', 'error') }
+    else { await accountsApi.activate(account.id); notify('Account activated', 'success') }
     refetch()
   }
 
@@ -202,8 +206,8 @@ export function AccountsPage() {
       )}
 
       <div className="flex flex-col flex-1 min-h-0 mx-8 mb-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-        <div className="flex-1 min-h-0 overflow-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
+          <table className="w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
             <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0 z-10">
               <tr>
                 <SortableHeader label="Name" field="name" sortBy={sortBy} sortDirection={sortDirection} onSort={handleSort} />
