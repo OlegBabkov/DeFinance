@@ -14,23 +14,40 @@ import { CurrenciesPage } from './pages/CurrenciesPage'
 import { CounterpartiesPage } from './pages/CounterpartiesPage'
 import { AdministrationPage } from './pages/AdministrationPage'
 import { TransactionsPage } from './pages/TransactionsPage'
+import { clearToken, decodeUsername, isTokenExpired, loadToken, saveToken } from './api/auth'
+
+function getInitialUsername(): string | null {
+  const token = loadToken()
+  if (!token || isTokenExpired(token)) { clearToken(); return null }
+  return decodeUsername(token)
+}
 
 function App() {
-  const [username, setUsername] = useState<string | null>(null)
+  const [username, setUsername] = useState<string | null>(getInitialUsername)
+
+  const handleLogin = (name: string, token?: string) => {
+    if (token) saveToken(token)
+    setUsername(name)
+  }
+
+  const handleLogout = () => {
+    clearToken()
+    setUsername(null)
+  }
 
   return (
     <ThemeProvider>
-      <MainCurrencyProvider>
       <NotificationProvider>
         <Notifications />
         {username === null ? (
-          <LoginPage onLogin={setUsername} />
+          <LoginPage onLogin={name => handleLogin(name)} />
         ) : (
+          <MainCurrencyProvider>
           <BrowserRouter>
             <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
               <Sidebar />
               <div className="flex-1 flex flex-col overflow-hidden">
-                <TopBar username={username} />
+                <TopBar username={username} onLogout={handleLogout} />
                 <main className="flex-1 overflow-hidden">
                   <Routes>
                     <Route path="/" element={<DashboardPage />} />
@@ -45,9 +62,9 @@ function App() {
               </div>
             </div>
           </BrowserRouter>
+          </MainCurrencyProvider>
         )}
       </NotificationProvider>
-      </MainCurrencyProvider>
     </ThemeProvider>
   )
 }

@@ -49,6 +49,9 @@ public class UserRepository(DeFinanceDbContext dbContext) : IUserRepository
         return (items, totalCount);
     }
 
+    public Task<User?> GetByUsernameAsync(string username, CancellationToken cancellationToken = default) =>
+        dbContext.Users.FirstOrDefaultAsync(u => u.Username == username, cancellationToken);
+
     public async Task AddAsync(User user, CancellationToken cancellationToken = default) =>
         await dbContext.Users.AddAsync(user, cancellationToken);
 
