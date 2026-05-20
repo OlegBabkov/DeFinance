@@ -57,9 +57,29 @@ export interface TransactionQuery {
   sortDirection?: SortDirection
 }
 
+export interface CreateTransactionRequest {
+  dateTime: string
+  sum: number
+  exchangeRate: number
+  inCurrencyId: string
+  accountId: string
+  categoryId: string
+  counterpartyId: string | null
+  paymentStatusId: string
+  notes: string | null
+}
+
+export type UpdateTransactionRequest = CreateTransactionRequest & { id: string }
+
 export const transactionsApi = {
   getAll: (params?: TransactionQuery) =>
     client.get<PagedResult<Transaction>>('/transactions', { params }).then(r => r.data),
   getById: (id: string) =>
     client.get<Transaction>(`/transactions/${id}`).then(r => r.data),
+  create: (req: CreateTransactionRequest) =>
+    client.post<Transaction>('/transactions', req).then(r => r.data),
+  update: (id: string, req: UpdateTransactionRequest) =>
+    client.put<Transaction>(`/transactions/${id}`, req).then(r => r.data),
+  remove: (id: string) =>
+    client.delete(`/transactions/${id}`),
 }

@@ -7,6 +7,15 @@ namespace DeFinance.Infrastructure.Persistence.Repositories;
 
 public class TransactionRepository(DeFinanceDbContext dbContext) : ITransactionRepository
 {
+    public async Task AddAsync(Transaction transaction, CancellationToken cancellationToken = default) =>
+        await dbContext.Transactions.AddAsync(transaction, cancellationToken);
+
+    public void Remove(Transaction transaction) =>
+        dbContext.Transactions.Remove(transaction);
+
+    public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) =>
+        await dbContext.SaveChangesAsync(cancellationToken);
+
     public async Task<Transaction?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
         await dbContext.Transactions
             .Include(t => t.Account).ThenInclude(a => a!.Currency)

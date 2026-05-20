@@ -24,6 +24,7 @@ public class Account
         };
 
     public void Update(string name) => Name = name;
+    public void AdjustBalance(decimal delta) => Balance += delta;
     public void Activate() => IsActive = true;
     public void Deactivate() => IsActive = false;
 }

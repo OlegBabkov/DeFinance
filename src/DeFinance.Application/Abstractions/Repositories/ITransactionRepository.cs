@@ -6,6 +6,9 @@ namespace DeFinance.Application.Abstractions.Repositories;
 public interface ITransactionRepository
 {
     Task<Transaction?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task AddAsync(Transaction transaction, CancellationToken cancellationToken = default);
+    void Remove(Transaction transaction);
+    Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     Task<(IReadOnlyList<Transaction> Items, int TotalCount)> GetAllAsync(
         DateTime? dateFrom,
         DateTime? dateTo,

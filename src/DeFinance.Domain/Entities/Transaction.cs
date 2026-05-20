@@ -9,7 +9,7 @@ public class Transaction
     /// <summary>Exchange rate from account currency to the base reporting currency.</summary>
     public decimal ExchangeRate { get; private set; }
 
-    /// <summary>Amount expressed in the base reporting currency (Sum * ExchangeRate).</summary>
+    /// <summary>Amount expressed in the base reporting currency (Sum / ExchangeRate).</summary>
     public decimal AmountInCurrency { get; private set; }
 
     public Guid InCurrencyId { get; private set; }
@@ -47,7 +47,7 @@ public class Transaction
             DateTime = dateTime,
             Sum = sum,
             ExchangeRate = exchangeRate,
-            AmountInCurrency = sum * exchangeRate,
+            AmountInCurrency = sum / exchangeRate,
             InCurrencyId = inCurrencyId,
             AccountId = accountId,
             CategoryId = categoryId,
@@ -70,7 +70,7 @@ public class Transaction
         DateTime = dateTime;
         Sum = sum;
         ExchangeRate = exchangeRate;
-        AmountInCurrency = sum * exchangeRate;
+        AmountInCurrency = sum / exchangeRate;
         InCurrencyId = inCurrencyId;
         AccountId = accountId;
         CategoryId = categoryId;

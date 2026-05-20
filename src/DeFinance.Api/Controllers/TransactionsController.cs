@@ -1,4 +1,5 @@
 using DeFinance.Application.Common;
+using DeFinance.Application.Transactions.Commands;
 using DeFinance.Application.Transactions.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -33,5 +34,27 @@ public class TransactionsController(ISender sender) : ControllerBase
     {
         var result = await sender.Send(new GetTransactionByIdQuery(id), ct);
         return result is null ? NotFound() : Ok(result);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Create([FromBody] CreateTransactionCommand command, CancellationToken ct)
+    {
+        var result = await sender.Send(command, ct);
+        return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
+    }
+
+    [HttpPut("{id:guid}")]
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateTransactionCommand command, CancellationToken ct)
+    {
+        if (id != command.Id) return BadRequest();
+        var result = await sender.Send(command, ct);
+        return result is null ? NotFound() : Ok(result);
+    }
+
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
+    {
+        var deleted = await sender.Send(new DeleteTransactionCommand(id), ct);
+        return deleted ? NoContent() : NotFound();
     }
 }
