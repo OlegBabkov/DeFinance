@@ -8,6 +8,7 @@ public class Category
     public string? Color { get; private set; }
     public string? Icon { get; private set; }
     public Guid? ParentId { get; private set; }
+    public Category? Parent { get; private set; }
     public CategoryPaymentObligation? PaymentObligation { get; private set; }
     public bool IsActive { get; private set; }
 

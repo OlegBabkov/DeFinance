@@ -25,7 +25,7 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
 
         builder.Property(c => c.PaymentObligation);
 
-        builder.HasOne<Category>()
+        builder.HasOne(c => c.Parent)
             .WithMany()
             .HasForeignKey(c => c.ParentId)
             .IsRequired(false)

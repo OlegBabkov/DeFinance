@@ -11,7 +11,8 @@ import { type PagedResult, type PageSize } from '../api/common'
 import { Pagination } from '../components/Pagination'
 import { SortableHeader } from '../components/SortableHeader'
 import { Modal } from '../components/Modal'
-import { IconButton, PencilIcon, TrashIcon } from '../components/IconButton'
+import { IconButton, InfoIcon, PencilIcon, TrashIcon } from '../components/IconButton'
+import { TransactionPanel } from '../components/TransactionPanel'
 
 const filterCls =
   'px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500'
@@ -117,6 +118,9 @@ export function TransactionsPage() {
   const [pageSize, setPageSize] = useState<PageSize>(25)
   const [sortBy, setSortBy] = useState<string | null>(null)
   const [sortDirection, setSortDirection] = useState<'Asc' | 'Desc'>('Desc')
+
+  // side panel
+  const [selectedTx, setSelectedTx] = useState<Transaction | null>(null)
 
   // modal
   const [modal, setModal] = useState<ModalState>(null)
@@ -472,6 +476,8 @@ export function TransactionsPage() {
                   </td>
                   <td className="px-4 py-3 text-right whitespace-nowrap">
                     <div className="inline-flex items-center gap-1">
+                      <IconButton icon={<InfoIcon />} label="Details" onClick={() => setSelectedTx(tx)}
+                        className="text-gray-400 hover:text-blue-500 dark:hover:text-blue-400" />
                       <IconButton icon={<PencilIcon />} label="Edit" onClick={() => openEdit(tx)}
                         className="text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400" />
                       <IconButton icon={<TrashIcon />} label="Delete" onClick={() => handleDelete(tx)}
@@ -501,6 +507,7 @@ export function TransactionsPage() {
           />
         )}
       </div>
+      <TransactionPanel transaction={selectedTx} onClose={() => setSelectedTx(null)} />
     </div>
   )
 }

@@ -12,7 +12,10 @@ export interface TransactionAccount {
 
 export interface TransactionCategory {
   id: string; name: string; type: string
-  color: string | null; icon: string | null; parentId: string | null; isActive: boolean
+  color: string | null; icon: string | null
+  parentId: string | null; parentName: string | null
+  paymentObligation: string | null
+  isActive: boolean
 }
 
 export interface TransactionCounterparty {
@@ -76,6 +79,8 @@ export const transactionsApi = {
     client.get<PagedResult<Transaction>>('/transactions', { params }).then(r => r.data),
   getById: (id: string) =>
     client.get<Transaction>(`/transactions/${id}`).then(r => r.data),
+  getBalanceBefore: (id: string) =>
+    client.get<number>(`/transactions/${id}/balance-before`).then(r => r.data),
   create: (req: CreateTransactionRequest) =>
     client.post<Transaction>('/transactions', req).then(r => r.data),
   update: (id: string, req: UpdateTransactionRequest) =>

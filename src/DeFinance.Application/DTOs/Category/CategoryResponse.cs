@@ -9,5 +9,6 @@ public record CategoryResponse(
     string? Color,
     string? Icon,
     Guid? ParentId,
+    string? ParentName,
     CategoryPaymentObligation? PaymentObligation,
     bool IsActive);

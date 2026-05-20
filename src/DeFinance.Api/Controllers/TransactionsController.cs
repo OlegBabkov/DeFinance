@@ -57,6 +57,13 @@ public class TransactionsController(ISender sender) : ControllerBase
         return result is null ? NotFound() : Ok(result);
     }
 
+    [HttpGet("{id:guid}/balance-before")]
+    public async Task<IActionResult> GetBalanceBefore(Guid id, CancellationToken ct)
+    {
+        var result = await sender.Send(new GetBalanceBeforeTransactionQuery(id), ct);
+        return result is null ? NotFound() : Ok(result);
+    }
+
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
