@@ -3,6 +3,7 @@ using System;
 using DeFinance.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DeFinance.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(DeFinanceDbContext))]
-    partial class DeFinanceDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260526141408_AddMandatoryPayment")]
+    partial class AddMandatoryPayment
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -186,9 +189,6 @@ namespace DeFinance.Infrastructure.Persistence.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
-                    b.Property<Guid?>("PaymentStatusId")
-                        .HasColumnType("uuid");
-
                     b.HasKey("Id");
 
                     b.HasIndex("AccountId");
@@ -196,8 +196,6 @@ namespace DeFinance.Infrastructure.Persistence.Migrations
                     b.HasIndex("CategoryId");
 
                     b.HasIndex("CurrencyId");
-
-                    b.HasIndex("PaymentStatusId");
 
                     b.ToTable("MandatoryPayments");
                 });
@@ -362,18 +360,11 @@ namespace DeFinance.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("DeFinance.Domain.Entities.PaymentStatus", "PaymentStatus")
-                        .WithMany()
-                        .HasForeignKey("PaymentStatusId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.Navigation("Account");
 
                     b.Navigation("Category");
 
                     b.Navigation("Currency");
-
-                    b.Navigation("PaymentStatus");
                 });
 
             modelBuilder.Entity("DeFinance.Domain.Entities.Transaction", b =>
