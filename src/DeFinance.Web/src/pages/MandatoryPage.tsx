@@ -81,6 +81,9 @@ export function MandatoryPage() {
   const [sortBy, setSortBy] = useState<string | null>(null)
   const [sortDirection, setSortDirection] = useState<SortDirection>('Asc')
   const [refreshKey, setRefreshKey] = useState(0)
+  const [restBalance, setRestBalance] = useState<{ accountName: string; balance: number; symbol: string; code: string } | null>(null)
+  const [confirmReset, setConfirmReset] = useState(false)
+  const [resetting, setResetting] = useState(false)
 
   useEffect(() => {
     Promise.all([
@@ -126,6 +129,28 @@ export function MandatoryPage() {
   }, [debouncedSearch, isActiveFilter, accountFilter, categoryFilter, paymentStatusFilter, frequencyFilter, page, pageSize, sortBy, sortDirection, refreshKey])
 
   const refetch = () => setRefreshKey(k => k + 1)
+
+  useEffect(() => {
+    if (!accountFilter) { setRestBalance(null); return }
+    const account = accounts.find(a => a.id === accountFilter)
+    if (!account) { setRestBalance(null); return }
+    let cancelled = false
+    mandatoryPaymentsApi.getAll({ accountId: accountFilter, isActive: true, pageSize: 100 })
+      .then(r => {
+        if (cancelled) return
+        const sum = r.items
+          .filter(p => p.paymentStatusId == null && p.currencyId === account.currencyId)
+          .reduce((acc, p) => acc + p.amount, 0)
+        setRestBalance({
+          accountName: account.name,
+          balance: account.balance - sum,
+          symbol: account.currency?.symbol ?? '',
+          code: account.currency?.code ?? '',
+        })
+      })
+      .catch(() => { if (!cancelled) setRestBalance(null) })
+    return () => { cancelled = true }
+  }, [accountFilter, accounts, refreshKey])
 
   const handleSort = (field: string) => {
     if (sortBy === field) setSortDirection(d => d === 'Asc' ? 'Desc' : 'Asc')
@@ -188,6 +213,21 @@ export function MandatoryPage() {
     }
   }
 
+  const handleResetStatuses = async () => {
+    if (!accountFilter) return
+    setResetting(true)
+    try {
+      const { updated } = await mandatoryPaymentsApi.resetPaymentStatuses(accountFilter)
+      notify(`Reset ${updated} payment status${updated !== 1 ? 'es' : ''}`, 'info')
+      refetch()
+    } catch {
+      notify('Failed to reset payment statuses', 'error')
+    } finally {
+      setResetting(false)
+      setConfirmReset(false)
+    }
+  }
+
   const toggle = async (p: MandatoryPayment) => {
     if (p.isActive) { await mandatoryPaymentsApi.deactivate(p.id); notify('Payment deactivated', 'error') }
     else { await mandatoryPaymentsApi.activate(p.id); notify('Payment activated', 'success') }
@@ -204,12 +244,22 @@ export function MandatoryPage() {
       <div className="px-8 pt-8 pb-4 shrink-0">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Mandatory Payments</h1>
-          <button
-            onClick={openCreate}
-            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors"
-          >
-            + New Payment
-          </button>
+          <div className="flex flex-col items-end gap-2">
+            <button
+              onClick={openCreate}
+              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors"
+            >
+              + New Payment
+            </button>
+            {accountFilter && (
+              <button
+                onClick={() => setConfirmReset(true)}
+                className="px-3 py-1.5 text-sm text-red-600 dark:text-red-400 border border-red-300 dark:border-red-700 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors whitespace-nowrap"
+              >
+                Reset payment statuses
+              </button>
+            )}
+          </div>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <input
@@ -240,9 +290,41 @@ export function MandatoryPage() {
             <option value="">All frequencies</option>
             {FREQUENCIES.map(f => <option key={f} value={f}>{FREQUENCY_LABELS[f]}</option>)}
           </select>
+          {restBalance && (
+            <span className="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
+              Rest after {restBalance.accountName}:{' '}
+              <span className={`font-mono font-medium ${restBalance.balance >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>
+                {restBalance.symbol}{restBalance.balance.toFixed(2)}
+              </span>
+              {' '}{restBalance.code}
+            </span>
+          )}
           {loading && <span className="text-xs text-gray-400 dark:text-gray-500">Loading…</span>}
         </div>
       </div>
+
+      {confirmReset && accountFilter && (
+        <Modal title="Reset Payment Statuses" onClose={() => setConfirmReset(false)}>
+          <p className="text-sm text-gray-700 dark:text-gray-300">
+            This will set the payment status to <span className="font-medium">None</span> for all mandatory payments on account{' '}
+            <span className="font-semibold">{accounts.find(a => a.id === accountFilter)?.name}</span>.
+          </p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">This cannot be undone. Continue?</p>
+          <div className="flex justify-end gap-3 pt-4">
+            <button type="button" onClick={() => setConfirmReset(false)} className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100">
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={resetting}
+              onClick={handleResetStatuses}
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors"
+            >
+              {resetting ? 'Resetting…' : 'Yes, reset'}
+            </button>
+          </div>
+        </Modal>
+      )}
 
       {modal !== null && (
         <Modal title={isEditing ? 'Edit Payment' : 'New Mandatory Payment'} onClose={closeModal}>

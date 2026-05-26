@@ -80,6 +80,11 @@ public class MandatoryPaymentRepository(DeFinanceDbContext dbContext) : IMandato
     public async Task AddAsync(MandatoryPayment payment, CancellationToken cancellationToken = default) =>
         await dbContext.MandatoryPayments.AddAsync(payment, cancellationToken);
 
+    public async Task<int> ResetPaymentStatusesByAccountAsync(Guid accountId, CancellationToken cancellationToken = default) =>
+        await dbContext.MandatoryPayments
+            .Where(p => p.AccountId == accountId && p.PaymentStatusId != null)
+            .ExecuteUpdateAsync(s => s.SetProperty(p => p.PaymentStatusId, (Guid?)null), cancellationToken);
+
     public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) =>
         dbContext.SaveChangesAsync(cancellationToken);
 }

@@ -64,4 +64,11 @@ public class MandatoryPaymentsController(ISender sender) : ControllerBase
         var result = await sender.Send(new DeactivateMandatoryPaymentCommand(id), ct);
         return result is null ? NotFound() : Ok(result);
     }
+
+    [HttpPatch("reset-payment-statuses")]
+    public async Task<IActionResult> ResetPaymentStatuses([FromQuery] Guid accountId, CancellationToken ct)
+    {
+        var count = await sender.Send(new ResetMandatoryPaymentStatusesCommand(accountId), ct);
+        return Ok(new { updated = count });
+    }
 }

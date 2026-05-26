@@ -20,5 +20,6 @@ public interface IMandatoryPaymentRepository
         int pageSize,
         CancellationToken cancellationToken = default);
     Task AddAsync(MandatoryPayment payment, CancellationToken cancellationToken = default);
+    Task<int> ResetPaymentStatusesByAccountAsync(Guid accountId, CancellationToken cancellationToken = default);
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
