@@ -18,6 +18,7 @@ public class MandatoryPaymentsController(ISender sender) : ControllerBase
         [FromQuery] Guid? currencyId,
         [FromQuery] Guid? accountId,
         [FromQuery] Guid? categoryId,
+        [FromQuery] Guid? paymentStatusId,
         [FromQuery] PaymentFrequency? frequency,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
@@ -26,7 +27,7 @@ public class MandatoryPaymentsController(ISender sender) : ControllerBase
         CancellationToken ct = default) =>
         Ok(await sender.Send(
             new GetAllMandatoryPaymentsQuery(
-                search, isActive, currencyId, accountId, categoryId, frequency,
+                search, isActive, currencyId, accountId, categoryId, paymentStatusId, frequency,
                 page, pageSize, sortBy, sortDirection), ct));
 
     [HttpGet("{id:guid}")]

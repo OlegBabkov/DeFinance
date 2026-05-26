@@ -11,6 +11,8 @@ public class MandatoryPayment
     public Account? Account { get; private set; }
     public Guid? CategoryId { get; private set; }
     public Category? Category { get; private set; }
+    public Guid? PaymentStatusId { get; private set; }
+    public PaymentStatus? PaymentStatus { get; private set; }
     public PaymentFrequency Frequency { get; private set; }
     public int DayOfPeriod { get; private set; }
     public string? Notes { get; private set; }
@@ -24,6 +26,7 @@ public class MandatoryPayment
         Guid currencyId,
         Guid accountId,
         Guid? categoryId,
+        Guid? paymentStatusId,
         PaymentFrequency frequency,
         int dayOfPeriod,
         string? notes) =>
@@ -35,6 +38,7 @@ public class MandatoryPayment
             CurrencyId = currencyId,
             AccountId = accountId,
             CategoryId = categoryId,
+            PaymentStatusId = paymentStatusId,
             Frequency = frequency,
             DayOfPeriod = dayOfPeriod,
             Notes = notes,
@@ -47,6 +51,7 @@ public class MandatoryPayment
         Guid currencyId,
         Guid accountId,
         Guid? categoryId,
+        Guid? paymentStatusId,
         PaymentFrequency frequency,
         int dayOfPeriod,
         string? notes)
@@ -56,6 +61,7 @@ public class MandatoryPayment
         CurrencyId = currencyId;
         AccountId = accountId;
         CategoryId = categoryId;
+        PaymentStatusId = paymentStatusId;
         Frequency = frequency;
         DayOfPeriod = dayOfPeriod;
         Notes = notes;

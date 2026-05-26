@@ -13,6 +13,7 @@ public record UpdateMandatoryPaymentCommand(
     Guid CurrencyId,
     Guid AccountId,
     Guid? CategoryId,
+    Guid? PaymentStatusId,
     PaymentFrequency Frequency,
     int DayOfPeriod,
     string? Notes
@@ -29,7 +30,7 @@ public class UpdateMandatoryPaymentCommandHandler(IMandatoryPaymentRepository re
 
         payment.Update(
             request.Name, request.Amount,
-            request.CurrencyId, request.AccountId, request.CategoryId,
+            request.CurrencyId, request.AccountId, request.CategoryId, request.PaymentStatusId,
             request.Frequency, request.DayOfPeriod, request.Notes);
 
         await repository.SaveChangesAsync(cancellationToken);

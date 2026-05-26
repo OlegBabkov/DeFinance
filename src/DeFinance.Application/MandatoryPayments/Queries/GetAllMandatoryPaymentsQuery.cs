@@ -13,6 +13,7 @@ public record GetAllMandatoryPaymentsQuery(
     Guid? CurrencyId = null,
     Guid? AccountId = null,
     Guid? CategoryId = null,
+    Guid? PaymentStatusId = null,
     PaymentFrequency? Frequency = null,
     int Page = 1,
     int PageSize = 20,
@@ -28,7 +29,7 @@ public class GetAllMandatoryPaymentsQueryHandler(IMandatoryPaymentRepository rep
     {
         var (items, totalCount) = await repository.GetAllAsync(
             request.Search, request.IsActive,
-            request.CurrencyId, request.AccountId, request.CategoryId, request.Frequency,
+            request.CurrencyId, request.AccountId, request.CategoryId, request.PaymentStatusId, request.Frequency,
             request.SortBy, request.SortDirection,
             request.Page, request.PageSize,
             cancellationToken);

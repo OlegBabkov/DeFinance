@@ -12,6 +12,7 @@ public class MandatoryPaymentRepository(DeFinanceDbContext dbContext) : IMandato
             .Include(p => p.Currency)
             .Include(p => p.Account).ThenInclude(a => a!.Currency)
             .Include(p => p.Category).ThenInclude(c => c!.Parent)
+            .Include(p => p.PaymentStatus)
             .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
 
     public async Task<(IReadOnlyList<MandatoryPayment> Items, int TotalCount)> GetAllAsync(
@@ -20,6 +21,7 @@ public class MandatoryPaymentRepository(DeFinanceDbContext dbContext) : IMandato
         Guid? currencyId,
         Guid? accountId,
         Guid? categoryId,
+        Guid? paymentStatusId,
         PaymentFrequency? frequency,
         string? sortBy,
         SortDirection sortDirection,
@@ -31,6 +33,7 @@ public class MandatoryPaymentRepository(DeFinanceDbContext dbContext) : IMandato
             .Include(p => p.Currency)
             .Include(p => p.Account).ThenInclude(a => a!.Currency)
             .Include(p => p.Category).ThenInclude(c => c!.Parent)
+            .Include(p => p.PaymentStatus)
             .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(search))
@@ -47,6 +50,9 @@ public class MandatoryPaymentRepository(DeFinanceDbContext dbContext) : IMandato
 
         if (categoryId.HasValue)
             query = query.Where(p => p.CategoryId == categoryId.Value);
+
+        if (paymentStatusId.HasValue)
+            query = query.Where(p => p.PaymentStatusId == paymentStatusId.Value);
 
         if (frequency.HasValue)
             query = query.Where(p => p.Frequency == frequency.Value);

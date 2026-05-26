@@ -2,6 +2,10 @@ import client from './client'
 import type { PagedResult, SortDirection } from './common'
 import type { CategoryPaymentObligation } from './categories'
 
+export interface MandatoryPaymentStatus {
+  id: string; name: string; description: string | null; isActive: boolean
+}
+
 export type PaymentFrequency = 'Weekly' | 'Monthly' | 'Quarterly' | 'Yearly'
 
 export const FREQUENCY_LABELS: Record<PaymentFrequency, string> = {
@@ -45,6 +49,8 @@ export interface MandatoryPayment {
   account: MandatoryPaymentAccount | null
   categoryId: string | null
   category: MandatoryPaymentCategory | null
+  paymentStatusId: string | null
+  paymentStatus: MandatoryPaymentStatus | null
   frequency: PaymentFrequency
   dayOfPeriod: number
   notes: string | null
@@ -57,6 +63,7 @@ export interface MandatoryPaymentQuery {
   currencyId?: string
   accountId?: string
   categoryId?: string
+  paymentStatusId?: string
   frequency?: PaymentFrequency
   page?: number
   pageSize?: number
@@ -70,6 +77,7 @@ export interface CreateMandatoryPaymentRequest {
   currencyId: string
   accountId: string
   categoryId: string | null
+  paymentStatusId: string | null
   frequency: PaymentFrequency
   dayOfPeriod: number
   notes: string | null

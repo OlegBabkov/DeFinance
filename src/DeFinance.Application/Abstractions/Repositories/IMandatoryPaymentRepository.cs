@@ -12,6 +12,7 @@ public interface IMandatoryPaymentRepository
         Guid? currencyId,
         Guid? accountId,
         Guid? categoryId,
+        Guid? paymentStatusId,
         PaymentFrequency? frequency,
         string? sortBy,
         SortDirection sortDirection,

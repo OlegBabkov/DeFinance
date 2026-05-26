@@ -12,6 +12,7 @@ public record CreateMandatoryPaymentCommand(
     Guid CurrencyId,
     Guid AccountId,
     Guid? CategoryId,
+    Guid? PaymentStatusId,
     PaymentFrequency Frequency,
     int DayOfPeriod,
     string? Notes
@@ -25,7 +26,7 @@ public class CreateMandatoryPaymentCommandHandler(IMandatoryPaymentRepository re
     {
         var payment = MandatoryPayment.Create(
             request.Name, request.Amount,
-            request.CurrencyId, request.AccountId, request.CategoryId,
+            request.CurrencyId, request.AccountId, request.CategoryId, request.PaymentStatusId,
             request.Frequency, request.DayOfPeriod, request.Notes);
 
         await repository.AddAsync(payment, cancellationToken);

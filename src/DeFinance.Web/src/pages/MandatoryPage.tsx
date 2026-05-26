@@ -11,6 +11,7 @@ import {
 import { accountsApi, type Account } from '../api/accounts'
 import { categoriesApi, type Category, PAYMENT_OBLIGATION_LABELS } from '../api/categories'
 import { currenciesApi, type Currency } from '../api/currencies'
+import { paymentStatusesApi, type PaymentStatus } from '../api/paymentStatuses'
 import { type PagedResult, type PageSize, type SortDirection } from '../api/common'
 import { Modal } from '../components/Modal'
 import { IconButton, PencilIcon, CheckCircleIcon, BanIcon } from '../components/IconButton'
@@ -49,6 +50,7 @@ export function MandatoryPage() {
   const [accounts, setAccounts] = useState<Account[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [currencies, setCurrencies] = useState<Currency[]>([])
+  const [paymentStatuses, setPaymentStatuses] = useState<PaymentStatus[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [modal, setModal] = useState<ModalState>(null)
@@ -61,6 +63,7 @@ export function MandatoryPage() {
   const [formCurrencyId, setFormCurrencyId] = useState('')
   const [formAccountId, setFormAccountId] = useState('')
   const [formCategoryId, setFormCategoryId] = useState('')
+  const [formPaymentStatusId, setFormPaymentStatusId] = useState('')
   const [formFrequency, setFormFrequency] = useState<PaymentFrequency>('Monthly')
   const [formDay, setFormDay] = useState('1')
   const [formNotes, setFormNotes] = useState('')
@@ -71,6 +74,7 @@ export function MandatoryPage() {
   const [isActiveFilter, setIsActiveFilter] = useState('')
   const [accountFilter, setAccountFilter] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState('')
   const [frequencyFilter, setFrequencyFilter] = useState('')
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState<PageSize>(25)
@@ -83,10 +87,12 @@ export function MandatoryPage() {
       accountsApi.getAll({ isActive: true, pageSize: 100 }),
       categoriesApi.getAll({ isActive: true, pageSize: 100 }),
       currenciesApi.getAll({ isActive: true, pageSize: 100 }),
-    ]).then(([acc, cat, cur]) => {
+      paymentStatusesApi.getAll({ isActive: true, pageSize: 100 }),
+    ]).then(([acc, cat, cur, ps]) => {
       setAccounts(acc.items)
       setCategories(cat.items)
       setCurrencies(cur.items)
+      setPaymentStatuses(ps.items)
       if (acc.items.length > 0) setFormAccountId(acc.items[0].id)
       if (cur.items.length > 0) setFormCurrencyId(cur.items[0].id)
     }).catch(() => {})
@@ -105,6 +111,7 @@ export function MandatoryPage() {
       isActive: isActiveFilter !== '' ? isActiveFilter === 'true' : undefined,
       accountId: accountFilter || undefined,
       categoryId: categoryFilter || undefined,
+      paymentStatusId: paymentStatusFilter || undefined,
       frequency: frequencyFilter !== '' ? (frequencyFilter as PaymentFrequency) : undefined,
       page,
       pageSize,
@@ -116,7 +123,7 @@ export function MandatoryPage() {
       .catch(() => { if (!cancelled) setError('Failed to load mandatory payments') })
       .finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
-  }, [debouncedSearch, isActiveFilter, accountFilter, categoryFilter, frequencyFilter, page, pageSize, sortBy, sortDirection, refreshKey])
+  }, [debouncedSearch, isActiveFilter, accountFilter, categoryFilter, paymentStatusFilter, frequencyFilter, page, pageSize, sortBy, sortDirection, refreshKey])
 
   const refetch = () => setRefreshKey(k => k + 1)
 
@@ -129,7 +136,7 @@ export function MandatoryPage() {
   const openCreate = () => {
     setFormName(''); setFormAmount(''); setFormNotes('')
     setFormFrequency('Monthly'); setFormDay('1')
-    setFormCategoryId('')
+    setFormCategoryId(''); setFormPaymentStatusId('')
     setFormAccountId(accounts[0]?.id ?? '')
     setFormCurrencyId(currencies[0]?.id ?? '')
     setFormError(null); setModal('create')
@@ -141,6 +148,7 @@ export function MandatoryPage() {
     setFormCurrencyId(p.currencyId)
     setFormAccountId(p.accountId)
     setFormCategoryId(p.categoryId ?? '')
+    setFormPaymentStatusId(p.paymentStatusId ?? '')
     setFormFrequency(p.frequency)
     setFormDay(String(p.dayOfPeriod))
     setFormNotes(p.notes ?? '')
@@ -160,6 +168,7 @@ export function MandatoryPage() {
         currencyId: formCurrencyId,
         accountId: formAccountId,
         categoryId: formCategoryId || null,
+        paymentStatusId: formPaymentStatusId || null,
         frequency: formFrequency,
         dayOfPeriod: parseInt(formDay, 10),
         notes: formNotes || null,
@@ -223,6 +232,10 @@ export function MandatoryPage() {
             <option value="">All categories</option>
             {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
+          <select value={paymentStatusFilter} onChange={e => { setPaymentStatusFilter(e.target.value); setPage(1) }} className={filterCls}>
+            <option value="">All statuses</option>
+            {paymentStatuses.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+          </select>
           <select value={frequencyFilter} onChange={e => { setFrequencyFilter(e.target.value); setPage(1) }} className={filterCls}>
             <option value="">All frequencies</option>
             {FREQUENCIES.map(f => <option key={f} value={f}>{FREQUENCY_LABELS[f]}</option>)}
@@ -264,6 +277,13 @@ export function MandatoryPage() {
                 {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             </div>
+            <div>
+              <label className={labelCls}>Payment Status (optional)</label>
+              <select value={formPaymentStatusId} onChange={e => setFormPaymentStatusId(e.target.value)} className={inputCls}>
+                <option value="">No status</option>
+                {paymentStatuses.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className={labelCls}>Frequency</label>
@@ -302,6 +322,7 @@ export function MandatoryPage() {
                 <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Frequency</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Day</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Category</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Payment Status</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Notes</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Status</th>
                 <th className="px-4 py-3" />
@@ -341,6 +362,11 @@ export function MandatoryPage() {
                       <span className="text-gray-400 dark:text-gray-500">—</span>
                     )}
                   </td>
+                  <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
+                    {p.paymentStatus
+                      ? <span className="inline-flex items-center rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300 px-2 py-0.5 text-xs font-medium">{p.paymentStatus.name}</span>
+                      : <span className="text-gray-400 dark:text-gray-500">—</span>}
+                  </td>
                   <td className="px-4 py-3 text-gray-500 dark:text-gray-400 max-w-[160px] truncate" title={p.notes ?? ''}>
                     {p.notes || '—'}
                   </td>
@@ -364,7 +390,7 @@ export function MandatoryPage() {
               ))}
               {items.length === 0 && !loading && (
                 <tr>
-                  <td colSpan={9} className="px-4 py-8 text-center text-gray-400 dark:text-gray-500">No mandatory payments found.</td>
+                  <td colSpan={10} className="px-4 py-8 text-center text-gray-400 dark:text-gray-500">No mandatory payments found.</td>
                 </tr>
               )}
             </tbody>
