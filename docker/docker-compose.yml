@@ -181,9 +181,14 @@ services:
       - /bin/sh
       - -c
       - |
-        chmod +x /backup.sh
+        cp /backup.sh /usr/local/bin/backup.sh
+        sed -i 's/\r//' /usr/local/bin/backup.sh
+        chmod +x /usr/local/bin/backup.sh
         mkdir -p /backups
-        echo "0 2 * * 0 /backup.sh >> /var/log/backup.log 2>&1" > /etc/crontabs/root
+        echo "0 2 * * 0 /usr/local/bin/backup.sh >> /var/log/backup.log 2>&1" > /etc/crontabs/root
+        echo "[startup] Running initial backup..."
+        /usr/local/bin/backup.sh
+        echo "[startup] Starting scheduler (every Sunday 02:00)"
         crond -f -l 2
 
 volumes:
