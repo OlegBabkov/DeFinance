@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
-  PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer,
-  BarChart, Bar, XAxis, YAxis, CartesianGrid,
+  PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend,
 } from 'recharts'
 import { transactionsApi, type Transaction } from '../api/transactions'
 import { accountsApi, type Account } from '../api/accounts'
@@ -130,7 +130,12 @@ export function DashboardPage() {
         if (!map[key]) map[key] = { name: t.category?.name ?? 'Unknown', value: 0, color: t.category?.color ?? null }
         map[key].value += t.amountInCurrency
       })
-    return Object.values(map).sort((a, b) => b.value - a.value)
+    const sorted = Object.values(map).sort((a, b) => b.value - a.value)
+    const TOP_N = 8
+    if (sorted.length <= TOP_N) return sorted
+    const top = sorted.slice(0, TOP_N)
+    const otherValue = sorted.slice(TOP_N).reduce((s, c) => s + c.value, 0)
+    return [...top, { name: 'Other', value: otherValue, color: '#6b7280' }]
   }, [transactions, categoryDays])
 
   const barData = useMemo(() => {
@@ -227,35 +232,61 @@ export function DashboardPage() {
             {categoryDays === 365 ? 'Last year' : `Last ${categoryDays} days`} — expenses only
           </p>
           {categoryData.length === 0 ? (
-            <div className="flex items-center justify-center h-64 text-gray-400 dark:text-gray-500 text-sm">
+            <div className="flex items-center justify-center h-56 text-gray-400 dark:text-gray-500 text-sm">
               No expense data for this period
             </div>
-          ) : (
-            <ResponsiveContainer width="100%" height={280}>
-              <PieChart>
-                <Pie
-                  data={categoryData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={75}
-                  outerRadius={115}
-                  paddingAngle={2}
-                  dataKey="value"
-                >
-                  {categoryData.map((entry, index) => (
-                    <Cell key={entry.name} fill={entry.color ?? PALETTE[index % PALETTE.length]} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  formatter={(v) => [fmt(Number(v ?? 0), sym), 'Amount']}
-                  contentStyle={tooltipStyle}
-                />
-                <Legend
-                  formatter={value => <span style={{ color: tickColor, fontSize: 12 }}>{value}</span>}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          )}
+          ) : (() => {
+            const total = categoryData.reduce((s, c) => s + c.value, 0)
+            return (
+              <div className="flex gap-5 items-center">
+                {/* Donut with center total */}
+                <div className="relative flex-shrink-0" style={{ width: 190, height: 190 }}>
+                  <PieChart width={190} height={190}>
+                    <Pie
+                      data={categoryData}
+                      cx={95}
+                      cy={95}
+                      innerRadius={58}
+                      outerRadius={90}
+                      paddingAngle={2}
+                      dataKey="value"
+                      startAngle={90}
+                      endAngle={-270}
+                    >
+                      {categoryData.map((entry, index) => (
+                        <Cell key={entry.name} fill={entry.color ?? PALETTE[index % PALETTE.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      formatter={(v, _n, props) => {
+                        const pct = total > 0 ? ((Number(v) / total) * 100).toFixed(1) : '0'
+                        return [`${fmt(Number(v ?? 0), sym)}  (${pct}%)`, props.payload?.name ?? '']
+                      }}
+                      contentStyle={tooltipStyle}
+                    />
+                  </PieChart>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                    <span className="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-wide">Total</span>
+                    <span className="text-sm font-bold text-gray-800 dark:text-gray-200 mt-0.5">{fmt(total, sym)}</span>
+                  </div>
+                </div>
+                {/* Legend */}
+                <div className="flex-1 min-w-0 space-y-2">
+                  {categoryData.map((entry, index) => {
+                    const pct = total > 0 ? Math.round((entry.value / total) * 100) : 0
+                    return (
+                      <div key={entry.name} className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: entry.color ?? PALETTE[index % PALETTE.length] }} />
+                        <span className="flex-1 text-xs text-gray-600 dark:text-gray-400 truncate">{entry.name}</span>
+                        <span className="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0 w-8 text-right">{pct}%</span>
+                        <span className="text-xs font-medium text-gray-700 dark:text-gray-300 flex-shrink-0 w-20 text-right">{fmt(entry.value, sym)}</span>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )
+          })()}
         </div>
 
         {/* Bar: Monthly Cash Flow */}
