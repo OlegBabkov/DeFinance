@@ -60,7 +60,6 @@ using (var scope = app.Services.CreateScope())
     await CounterpartySeeder.SeedAsync(db);
     await PaymentStatusSeeder.SeedAsync(db);
     await UserSeeder.SeedAsync(db);
-    await TransactionSeeder.SeedAsync(db);
 }
 
 app.UseSerilogRequestLogging();

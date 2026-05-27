@@ -90,16 +90,12 @@ public static class CategorySeeder
 
     public static async Task SeedAsync(DeFinanceDbContext context, CancellationToken cancellationToken = default)
     {
-        var existingNames = await context.Categories
-            .Select(c => c.Name)
-            .ToHashSetAsync(cancellationToken);
+        if (await context.Categories.AnyAsync(cancellationToken))
+            return;
 
         var toAdd = _categories
-            .Where(c => !existingNames.Contains(c.Name))
             .Select(c => Category.Create(c.Name, c.Type, c.Color, c.Icon, null, null))
             .ToList();
-
-        if (toAdd.Count == 0) return;
 
         await context.Categories.AddRangeAsync(toAdd, cancellationToken);
         await context.SaveChangesAsync(cancellationToken);

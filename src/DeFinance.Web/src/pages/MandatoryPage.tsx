@@ -135,11 +135,20 @@ export function MandatoryPage() {
     const account = accounts.find(a => a.id === accountFilter)
     if (!account) { setRestBalance(null); return }
     let cancelled = false
-    mandatoryPaymentsApi.getAll({ accountId: accountFilter, isActive: true, pageSize: 100 })
+    mandatoryPaymentsApi.getAll({
+      accountId: accountFilter,
+      isActive: true,
+      frequency: frequencyFilter !== '' ? (frequencyFilter as PaymentFrequency) : undefined,
+      paymentStatusId: paymentStatusFilter || undefined,
+      pageSize: 100,
+    })
       .then(r => {
         if (cancelled) return
         const sum = r.items
-          .filter(p => p.paymentStatusId == null && p.currencyId === account.currencyId)
+          .filter(p => {
+            const matchesStatus = paymentStatusFilter ? true : p.paymentStatusId == null
+            return matchesStatus && p.currencyId === account.currencyId
+          })
           .reduce((acc, p) => acc + p.amount, 0)
         setRestBalance({
           accountName: account.name,
@@ -150,7 +159,7 @@ export function MandatoryPage() {
       })
       .catch(() => { if (!cancelled) setRestBalance(null) })
     return () => { cancelled = true }
-  }, [accountFilter, accounts, refreshKey])
+  }, [accountFilter, accounts, refreshKey, frequencyFilter, paymentStatusFilter])
 
   const handleSort = (field: string) => {
     if (sortBy === field) setSortDirection(d => d === 'Asc' ? 'Desc' : 'Asc')
