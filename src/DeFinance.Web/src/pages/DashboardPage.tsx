@@ -14,12 +14,18 @@ function fmt(value: number, symbol: string) {
   return `${symbol}${value.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
 }
 
-function getLast6Months() {
+function getLastNMonths(n: number) {
   const now = new Date()
-  return Array.from({ length: 6 }, (_, i) => {
-    const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1)
-    return { year: d.getFullYear(), month: d.getMonth(), label: d.toLocaleDateString('en-US', { month: 'short' }) }
+  return Array.from({ length: n }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - (n - 1 - i), 1)
+    return { year: d.getFullYear(), month: d.getMonth(), label: d.toLocaleDateString('en-US', { month: 'short', year: n > 6 ? '2-digit' : undefined }) }
   })
+}
+
+function getMonthLabel(offset: number) {
+  const d = new Date()
+  d.setMonth(d.getMonth() + offset)
+  return d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' })
 }
 
 interface StatCardProps { label: string; value: string; sub?: string; valueColor?: string }
@@ -33,20 +39,61 @@ function StatCard({ label, value, sub, valueColor = 'text-gray-900 dark:text-gra
   )
 }
 
+const MONTH_OPTIONS  = [1, 3, 6, 12]  as const
+const DAY_OPTIONS    = [30, 60, 90, 180, 365] as const
+const STAT_OFFSETS   = [0, -1, -2, -3] as const
+
+type MonthOption  = typeof MONTH_OPTIONS[number]
+type DayOption    = typeof DAY_OPTIONS[number]
+type StatOffset   = typeof STAT_OFFSETS[number]
+
+function monthLabel(n: MonthOption)    { return n === 12 ? '1Y' : `${n}M` }
+function dayLabel(n: DayOption)        { return n === 365 ? '1Y' : `${n}d` }
+
+interface PeriodTabsProps<T extends number> {
+  options: readonly T[]
+  value: T
+  onChange: (v: T) => void
+  format: (v: T) => string
+}
+function PeriodTabs<T extends number>({ options, value, onChange, format }: PeriodTabsProps<T>) {
+  return (
+    <div className="flex gap-0.5">
+      {options.map(opt => (
+        <button
+          key={opt}
+          onClick={() => onChange(opt)}
+          className={`px-2 py-0.5 text-xs rounded transition-colors ${
+            value === opt
+              ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/60 dark:text-indigo-300 font-medium'
+              : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'
+          }`}
+        >
+          {format(opt)}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 export function DashboardPage() {
   const { mainCurrency } = useMainCurrency()
   const { dark } = useTheme()
   const sym = mainCurrency?.symbol ?? '€'
 
-  const [accounts, setAccounts] = useState<Account[]>([])
+  const [accounts, setAccounts]       = useState<Account[]>([])
   const [transactions, setTransactions] = useState<Transaction[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading]         = useState(true)
+  const [error, setError]             = useState<string | null>(null)
+
+  const [cashFlowMonths, setCashFlowMonths] = useState<MonthOption>(6)
+  const [categoryDays, setCategoryDays]     = useState<DayOption>(30)
+  const [statOffset, setStatOffset]         = useState<StatOffset>(0)
 
   useEffect(() => {
-    const sixMonthsAgo = new Date()
-    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6)
-    const dateFrom = sixMonthsAgo.toISOString().split('T')[0]
+    const twelveMonthsAgo = new Date()
+    twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12)
+    const dateFrom = twelveMonthsAgo.toISOString().split('T')[0]
 
     Promise.all([
       accountsApi.getAll({ isActive: true, pageSize: 100 }),
@@ -58,32 +105,36 @@ export function DashboardPage() {
       .finally(() => setLoading(false))
   }, [])
 
-  const now = new Date()
-  const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+  // Stat cards: transactions for the selected month
+  const selectedMonthTx = useMemo(() => {
+    const now = new Date()
+    const start = new Date(now.getFullYear(), now.getMonth() + statOffset, 1)
+    const end   = new Date(now.getFullYear(), now.getMonth() + statOffset + 1, 1)
+    return transactions.filter(t => { const d = new Date(t.dateTime); return d >= start && d < end })
+  }, [transactions, statOffset])
 
-  const thisMonthTx = transactions.filter(t => new Date(t.dateTime) >= thisMonthStart)
-  const monthIncome   = thisMonthTx.filter(t => t.category?.type === 'Income').reduce((s, t) => s + t.amountInCurrency, 0)
-  const monthExpenses = thisMonthTx.filter(t => t.category?.type === 'Expense').reduce((s, t) => s + t.amountInCurrency, 0)
+  const monthIncome   = selectedMonthTx.filter(t => t.category?.type === 'Income').reduce((s, t) => s + t.amountInCurrency, 0)
+  const monthExpenses = selectedMonthTx.filter(t => t.category?.type === 'Expense').reduce((s, t) => s + t.amountInCurrency, 0)
   const monthNet      = monthIncome - monthExpenses
 
   const uniqueCurrencies = [...new Set(accounts.map(a => a.currency?.code).filter(Boolean))].join(' · ')
 
   const categoryData = useMemo(() => {
-    const thirtyDaysAgo = new Date()
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+    const cutoff = new Date()
+    cutoff.setDate(cutoff.getDate() - categoryDays)
     const map: Record<string, { name: string; value: number; color: string | null }> = {}
     transactions
-      .filter(t => t.category?.type === 'Expense' && new Date(t.dateTime) >= thirtyDaysAgo)
+      .filter(t => t.category?.type === 'Expense' && new Date(t.dateTime) >= cutoff)
       .forEach(t => {
         const key = t.category?.id ?? 'unknown'
         if (!map[key]) map[key] = { name: t.category?.name ?? 'Unknown', value: 0, color: t.category?.color ?? null }
         map[key].value += t.amountInCurrency
       })
     return Object.values(map).sort((a, b) => b.value - a.value)
-  }, [transactions])
+  }, [transactions, categoryDays])
 
   const barData = useMemo(() => {
-    const months = getLast6Months()
+    const months = getLastNMonths(cashFlowMonths)
     return months.map(m => {
       const monthTx = transactions.filter(t => {
         const d = new Date(t.dateTime)
@@ -95,14 +146,14 @@ export function DashboardPage() {
         Expenses: monthTx.filter(t => t.category?.type === 'Expense').reduce((s, t) => s + t.amountInCurrency, 0),
       }
     })
-  }, [transactions])
+  }, [transactions, cashFlowMonths])
 
-  const gridColor = dark ? '#374151' : '#e5e7eb'
-  const tickColor  = dark ? '#9ca3af' : '#6b7280'
+  const gridColor    = dark ? '#374151' : '#e5e7eb'
+  const tickColor    = dark ? '#9ca3af' : '#6b7280'
   const tooltipStyle = {
     backgroundColor: dark ? '#1f2937' : '#fff',
-    borderColor: dark ? '#374151' : '#e5e7eb',
-    color: dark ? '#f3f4f6' : '#111827',
+    borderColor:     dark ? '#374151' : '#e5e7eb',
+    color:           dark ? '#f3f4f6' : '#111827',
     borderRadius: 8,
     fontSize: 12,
   }
@@ -128,28 +179,39 @@ export function DashboardPage() {
       <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Dashboard</h1>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-4 gap-4">
-        <StatCard
-          label="Active Accounts"
-          value={String(accounts.length)}
-          sub={uniqueCurrencies || undefined}
-        />
-        <StatCard
-          label="Income This Month"
-          value={fmt(monthIncome, sym)}
-          valueColor="text-emerald-600 dark:text-emerald-400"
-        />
-        <StatCard
-          label="Expenses This Month"
-          value={fmt(monthExpenses, sym)}
-          valueColor="text-rose-600 dark:text-rose-400"
-        />
-        <StatCard
-          label="Net This Month"
-          value={fmt(monthNet, sym)}
-          valueColor={monthNet >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}
-          sub={monthNet >= 0 ? 'On track' : 'Over budget'}
-        />
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Monthly Summary</span>
+          <PeriodTabs
+            options={STAT_OFFSETS}
+            value={statOffset}
+            onChange={setStatOffset}
+            format={getMonthLabel}
+          />
+        </div>
+        <div className="grid grid-cols-4 gap-4">
+          <StatCard
+            label="Active Accounts"
+            value={String(accounts.length)}
+            sub={uniqueCurrencies || undefined}
+          />
+          <StatCard
+            label="Income"
+            value={fmt(monthIncome, sym)}
+            valueColor="text-emerald-600 dark:text-emerald-400"
+          />
+          <StatCard
+            label="Expenses"
+            value={fmt(monthExpenses, sym)}
+            valueColor="text-rose-600 dark:text-rose-400"
+          />
+          <StatCard
+            label="Net"
+            value={fmt(monthNet, sym)}
+            valueColor={monthNet >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}
+            sub={monthNet >= 0 ? 'On track' : 'Over budget'}
+          />
+        </div>
       </div>
 
       {/* Charts */}
@@ -157,11 +219,16 @@ export function DashboardPage() {
 
         {/* Donut: Spending by Category */}
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
-          <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-0.5">Spending by Category</h2>
-          <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">Last 30 days — expenses only</p>
+          <div className="flex items-start justify-between mb-0.5">
+            <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Spending by Category</h2>
+            <PeriodTabs options={DAY_OPTIONS} value={categoryDays} onChange={setCategoryDays} format={dayLabel} />
+          </div>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">
+            {categoryDays === 365 ? 'Last year' : `Last ${categoryDays} days`} — expenses only
+          </p>
           {categoryData.length === 0 ? (
             <div className="flex items-center justify-center h-64 text-gray-400 dark:text-gray-500 text-sm">
-              No expense data for the last 30 days
+              No expense data for this period
             </div>
           ) : (
             <ResponsiveContainer width="100%" height={280}>
@@ -193,8 +260,13 @@ export function DashboardPage() {
 
         {/* Bar: Monthly Cash Flow */}
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
-          <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-0.5">Monthly Cash Flow</h2>
-          <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">Income vs Expenses — last 6 months</p>
+          <div className="flex items-start justify-between mb-0.5">
+            <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Monthly Cash Flow</h2>
+            <PeriodTabs options={MONTH_OPTIONS} value={cashFlowMonths} onChange={setCashFlowMonths} format={monthLabel} />
+          </div>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">
+            Income vs Expenses — last {cashFlowMonths === 12 ? 'year' : `${cashFlowMonths} month${cashFlowMonths > 1 ? 's' : ''}`}
+          </p>
           <ResponsiveContainer width="100%" height={280}>
             <BarChart data={barData} barCategoryGap="30%">
               <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
