@@ -9,6 +9,7 @@ import {
   type PaymentFrequency,
 } from '../api/mandatoryPayments'
 import { accountsApi, type Account } from '../api/accounts'
+import { useFavorites, sortByFavorites } from '../hooks/useFavorites'
 import { categoriesApi, type Category, PAYMENT_OBLIGATION_LABELS } from '../api/categories'
 import { currenciesApi, type Currency } from '../api/currencies'
 import { paymentStatusesApi, type PaymentStatus } from '../api/paymentStatuses'
@@ -46,6 +47,7 @@ function dayMax(frequency: PaymentFrequency): number {
 
 export function MandatoryPage() {
   const notify = useNotify()
+  const { favorites: favCats } = useFavorites('categories')
   const [result, setResult] = useState<PagedResult<MandatoryPayment> | null>(null)
   const [accounts, setAccounts] = useState<Account[]>([])
   const [categories, setCategories] = useState<Category[]>([])
@@ -289,7 +291,7 @@ export function MandatoryPage() {
           </select>
           <select value={categoryFilter} onChange={e => { setCategoryFilter(e.target.value); setPage(1) }} className={filterCls}>
             <option value="">All categories</option>
-            {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            {sortByFavorites(categories, favCats).map(c => <option key={c.id} value={c.id}>{favCats.has(c.id) ? `★ ${c.name}` : c.name}</option>)}
           </select>
           <select value={paymentStatusFilter} onChange={e => { setPaymentStatusFilter(e.target.value); setPage(1) }} className={filterCls}>
             <option value="">All statuses</option>
@@ -365,7 +367,7 @@ export function MandatoryPage() {
               <label className={labelCls}>Category (optional)</label>
               <select value={formCategoryId} onChange={e => setFormCategoryId(e.target.value)} className={inputCls}>
                 <option value="">No category</option>
-                {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                {sortByFavorites(categories, favCats).map(c => <option key={c.id} value={c.id}>{favCats.has(c.id) ? `★ ${c.name}` : c.name}</option>)}
               </select>
             </div>
             <div>

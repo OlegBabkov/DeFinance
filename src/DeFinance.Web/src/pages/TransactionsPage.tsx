@@ -13,6 +13,7 @@ import { SortableHeader } from '../components/SortableHeader'
 import { Modal } from '../components/Modal'
 import { IconButton, InfoIcon, PencilIcon, TrashIcon } from '../components/IconButton'
 import { TransactionPanel } from '../components/TransactionPanel'
+import { useFavorites, sortByFavorites } from '../hooks/useFavorites'
 
 const filterCls =
   'px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500'
@@ -92,6 +93,8 @@ function txToForm(tx: Transaction): FormState {
 export function TransactionsPage() {
   const notify = useNotify()
   const { mainCurrency } = useMainCurrency()
+  const { favorites: favCats } = useFavorites('categories')
+  const { favorites: favCps }  = useFavorites('counterparties')
   const [result, setResult] = useState<PagedResult<Transaction> | null>(null)
   const [accounts, setAccounts] = useState<Account[]>([])
   const [categories, setCategories] = useState<Category[]>([])
@@ -311,11 +314,11 @@ export function TransactionsPage() {
           </select>
           <select value={categoryId} onChange={e => { setCategoryId(e.target.value); setPage(1) }} className={filterCls}>
             <option value="">All categories</option>
-            {categories.filter(c => c.isActive).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            {sortByFavorites(categories.filter(c => c.isActive), favCats).map(c => <option key={c.id} value={c.id}>{favCats.has(c.id) ? `★ ${c.name}` : c.name}</option>)}
           </select>
           <select value={counterpartyId} onChange={e => { setCounterpartyId(e.target.value); setPage(1) }} className={filterCls}>
             <option value="">All counterparties</option>
-            {counterparties.filter(c => c.isActive).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            {sortByFavorites(counterparties.filter(c => c.isActive), favCps).map(c => <option key={c.id} value={c.id}>{favCps.has(c.id) ? `★ ${c.name}` : c.name}</option>)}
           </select>
           <select value={paymentStatusId} onChange={e => { setPaymentStatusId(e.target.value); setPage(1) }} className={filterCls}>
             <option value="">All statuses</option>
@@ -348,7 +351,7 @@ export function TransactionsPage() {
                 <label className={labelCls}>Category</label>
                 <select required value={form.categoryId} onChange={setField('categoryId')} className={inputCls}>
                   <option value="">Select category</option>
-                  {activeOrCurrent(categories, form.categoryId).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  {sortByFavorites(activeOrCurrent(categories, form.categoryId), favCats).map(c => <option key={c.id} value={c.id}>{favCats.has(c.id) ? `★ ${c.name}` : c.name}</option>)}
                 </select>
               </div>
               <div>
@@ -386,7 +389,7 @@ export function TransactionsPage() {
                 <label className={labelCls}>Counterparty <span className="text-gray-400 font-normal">(optional)</span></label>
                 <select value={form.counterpartyId} onChange={setField('counterpartyId')} className={inputCls}>
                   <option value="">None</option>
-                  {activeOrCurrent(counterparties, form.counterpartyId).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  {sortByFavorites(activeOrCurrent(counterparties, form.counterpartyId), favCps).map(c => <option key={c.id} value={c.id}>{favCps.has(c.id) ? `★ ${c.name}` : c.name}</option>)}
                 </select>
               </div>
             </div>
