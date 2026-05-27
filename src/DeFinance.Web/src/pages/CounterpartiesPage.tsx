@@ -3,10 +3,11 @@ import { useNotify } from '../NotificationContext'
 import { counterpartiesApi, type Counterparty, type CounterpartyType } from '../api/counterparties'
 import { type PagedResult, type PageSize, type SortDirection } from '../api/common'
 import { Modal } from '../components/Modal'
-import { IconButton, PencilIcon, CheckCircleIcon, BanIcon, StarIcon, StarFilledIcon } from '../components/IconButton'
+import { IconButton, PencilIcon, CheckCircleIcon, BanIcon, StarIcon, StarFilledIcon, InfoIcon } from '../components/IconButton'
 import { Pagination } from '../components/Pagination'
 import { SortableHeader } from '../components/SortableHeader'
 import { useFavorites } from '../hooks/useFavorites'
+import { CounterpartyPanel } from '../components/CounterpartyPanel'
 
 type ModalState = null | 'create' | Counterparty
 
@@ -27,6 +28,7 @@ export function CounterpartiesPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [modal, setModal] = useState<ModalState>(null)
+  const [selectedCounterparty, setSelectedCounterparty] = useState<Counterparty | null>(null)
   const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
   const [formName, setFormName] = useState('')
@@ -219,6 +221,7 @@ export function CounterpartiesPage() {
                         }}
                         className={isFavorite(cp.id) ? 'text-amber-400 hover:text-amber-500' : 'text-gray-300 hover:text-amber-400 dark:text-gray-600 dark:hover:text-amber-400'}
                       />
+                      <IconButton icon={<InfoIcon />} label="Details" onClick={() => setSelectedCounterparty(cp)} className="text-gray-400 hover:text-blue-500 dark:hover:text-blue-400" />
                       <IconButton icon={<PencilIcon />} label="Edit" onClick={() => openEdit(cp)} className="text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400" />
                       <IconButton icon={cp.isActive ? <BanIcon /> : <CheckCircleIcon />} label={cp.isActive ? 'Deactivate' : 'Activate'} onClick={() => toggle(cp)} className={cp.isActive ? 'text-gray-400 hover:text-red-500 dark:hover:text-red-400' : 'text-gray-400 hover:text-green-600 dark:hover:text-green-400'} />
                     </div>
@@ -244,6 +247,7 @@ export function CounterpartiesPage() {
           />
         )}
       </div>
+      <CounterpartyPanel counterparty={selectedCounterparty} onClose={() => setSelectedCounterparty(null)} />
     </div>
   )
 }
