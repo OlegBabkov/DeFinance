@@ -15,16 +15,12 @@ public static class PaymentStatusSeeder
 
     public static async Task SeedAsync(DeFinanceDbContext context, CancellationToken cancellationToken = default)
     {
-        var existingNames = await context.PaymentStatuses
-            .Select(p => p.Name)
-            .ToHashSetAsync(cancellationToken);
+        if (await context.PaymentStatuses.AnyAsync(cancellationToken))
+            return;
 
         var toAdd = _statuses
-            .Where(s => !existingNames.Contains(s.Name))
             .Select(s => PaymentStatus.Create(s.Name, s.Description))
             .ToList();
-
-        if (toAdd.Count == 0) return;
 
         await context.PaymentStatuses.AddRangeAsync(toAdd, cancellationToken);
         await context.SaveChangesAsync(cancellationToken);

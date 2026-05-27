@@ -19,21 +19,17 @@ public static class CurrencySeeder
         ("NOK", "Norwegian Krone", "kr"),
         ("PLN", "Polish Złoty", "zł"),
         ("UAH", "Ukrainian Hryvnia", "₴"),
+        ("CZK", "Czech Koruna",      "Kč"),
     ];
 
     public static async Task SeedAsync(DeFinanceDbContext context, CancellationToken cancellationToken = default)
     {
-        var existingCodes = await context.Currencies
-            .Select(c => c.Code)
-            .ToHashSetAsync(cancellationToken);
+        if (await context.Currencies.AnyAsync(cancellationToken))
+            return;
 
         var toAdd = _currencies
-            .Where(c => !existingCodes.Contains(c.Code))
             .Select(c => Currency.Create(c.Code, c.Name, c.Symbol))
             .ToList();
-
-        if (toAdd.Count == 0)
-            return;
 
         await context.Currencies.AddRangeAsync(toAdd, cancellationToken);
         await context.SaveChangesAsync(cancellationToken);

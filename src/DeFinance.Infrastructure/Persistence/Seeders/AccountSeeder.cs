@@ -21,16 +21,15 @@ public static class AccountSeeder
 
     public static async Task SeedAsync(DeFinanceDbContext context, CancellationToken cancellationToken = default)
     {
-        var existingNames = await context.Accounts
-            .Select(a => a.Name)
-            .ToHashSetAsync(cancellationToken);
+        if (await context.Accounts.AnyAsync(cancellationToken))
+            return;
 
         var currencies = await context.Currencies
             .Where(c => new[] { "UAH", "EUR" }.Contains(c.Code))
             .ToDictionaryAsync(c => c.Code, c => c.Id, cancellationToken);
 
         var toAdd = _accounts
-            .Where(a => !existingNames.Contains(a.Name) && currencies.ContainsKey(a.CurrencyCode))
+            .Where(a => currencies.ContainsKey(a.CurrencyCode))
             .Select(a => Account.Create(a.Name, a.Type, 0m, currencies[a.CurrencyCode]))
             .ToList();
 

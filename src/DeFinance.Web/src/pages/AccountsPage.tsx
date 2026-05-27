@@ -4,9 +4,10 @@ import { accountsApi, type Account, type AccountType } from '../api/accounts'
 import { currenciesApi, type Currency } from '../api/currencies'
 import { type PagedResult, type PageSize, type SortDirection } from '../api/common'
 import { Modal } from '../components/Modal'
-import { IconButton, PencilIcon, CheckCircleIcon, BanIcon } from '../components/IconButton'
+import { IconButton, PencilIcon, CheckCircleIcon, BanIcon, InfoIcon } from '../components/IconButton'
 import { Pagination } from '../components/Pagination'
 import { SortableHeader } from '../components/SortableHeader'
+import { AccountPanel } from '../components/AccountPanel'
 
 type ModalState = null | 'create' | Account
 
@@ -27,6 +28,7 @@ export function AccountsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [modal, setModal] = useState<ModalState>(null)
+  const [selectedAccount, setSelectedAccount] = useState<Account | null>(null)
   const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
   const [formName, setFormName] = useState('')
@@ -236,6 +238,7 @@ export function AccountsPage() {
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="inline-flex items-center gap-1">
+                      <IconButton icon={<InfoIcon />} label="Details" onClick={() => setSelectedAccount(account)} className="text-gray-400 hover:text-blue-500 dark:hover:text-blue-400" />
                       <IconButton icon={<PencilIcon />} label="Edit" onClick={() => openEdit(account)} className="text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400" />
                       <IconButton icon={account.isActive ? <BanIcon /> : <CheckCircleIcon />} label={account.isActive ? 'Deactivate' : 'Activate'} onClick={() => toggle(account)} className={account.isActive ? 'text-gray-400 hover:text-red-500 dark:hover:text-red-400' : 'text-gray-400 hover:text-green-600 dark:hover:text-green-400'} />
                     </div>
@@ -261,6 +264,7 @@ export function AccountsPage() {
           />
         )}
       </div>
+      <AccountPanel account={selectedAccount} onClose={() => setSelectedAccount(null)} />
     </div>
   )
 }
