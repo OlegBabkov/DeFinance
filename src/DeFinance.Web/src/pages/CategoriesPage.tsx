@@ -9,10 +9,11 @@ import {
 } from '../api/categories'
 import { type PagedResult, type PageSize, type SortDirection } from '../api/common'
 import { Modal } from '../components/Modal'
-import { IconButton, PencilIcon, CheckCircleIcon, BanIcon, StarIcon, StarFilledIcon } from '../components/IconButton'
+import { IconButton, PencilIcon, CheckCircleIcon, BanIcon, StarIcon, StarFilledIcon, InfoIcon } from '../components/IconButton'
 import { Pagination } from '../components/Pagination'
 import { SortableHeader } from '../components/SortableHeader'
 import { useFavorites } from '../hooks/useFavorites'
+import { CategoryPanel } from '../components/CategoryPanel'
 
 const PAYMENT_OBLIGATIONS: { value: CategoryPaymentObligation; label: string }[] = [
   { value: 'SepaTransfer', label: PAYMENT_OBLIGATION_LABELS.SepaTransfer },
@@ -44,6 +45,7 @@ export function CategoriesPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [tab, setTab] = useState<Tab>('Income')
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null)
   const [modal, setModal] = useState<ModalState>(null)
   const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
@@ -339,6 +341,7 @@ export function CategoriesPage() {
                         }}
                         className={isFavorite(cat.id) ? 'text-amber-400 hover:text-amber-500' : 'text-gray-300 hover:text-amber-400 dark:text-gray-600 dark:hover:text-amber-400'}
                       />
+                      <IconButton icon={<InfoIcon />} label="Details" onClick={() => setSelectedCategory(cat)} className="text-gray-400 hover:text-blue-500 dark:hover:text-blue-400" />
                       <IconButton icon={<PencilIcon />} label="Edit" onClick={() => openEdit(cat)} className="text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400" />
                       <IconButton icon={cat.isActive ? <BanIcon /> : <CheckCircleIcon />} label={cat.isActive ? 'Deactivate' : 'Activate'} onClick={() => toggle(cat)} className={cat.isActive ? 'text-gray-400 hover:text-red-500 dark:hover:text-red-400' : 'text-gray-400 hover:text-green-600 dark:hover:text-green-400'} />
                     </div>
@@ -364,6 +367,7 @@ export function CategoriesPage() {
           />
         )}
       </div>
+      <CategoryPanel category={selectedCategory} onClose={() => setSelectedCategory(null)} />
     </div>
   )
 }
