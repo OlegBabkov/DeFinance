@@ -9,9 +9,10 @@ import {
 } from '../api/categories'
 import { type PagedResult, type PageSize, type SortDirection } from '../api/common'
 import { Modal } from '../components/Modal'
-import { IconButton, PencilIcon, CheckCircleIcon, BanIcon } from '../components/IconButton'
+import { IconButton, PencilIcon, CheckCircleIcon, BanIcon, StarIcon, StarFilledIcon } from '../components/IconButton'
 import { Pagination } from '../components/Pagination'
 import { SortableHeader } from '../components/SortableHeader'
+import { useFavorites } from '../hooks/useFavorites'
 
 const PAYMENT_OBLIGATIONS: { value: CategoryPaymentObligation; label: string }[] = [
   { value: 'SepaTransfer', label: PAYMENT_OBLIGATION_LABELS.SepaTransfer },
@@ -37,6 +38,7 @@ const filterCls =
 
 export function CategoriesPage() {
   const notify = useNotify()
+  const { isFavorite, toggle: toggleFav } = useFavorites('categories')
   const [result, setResult] = useState<PagedResult<Category> | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -301,6 +303,15 @@ export function CategoriesPage() {
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="inline-flex items-center gap-1">
+                      <IconButton
+                        icon={isFavorite(cat.id) ? <StarFilledIcon /> : <StarIcon />}
+                        label={isFavorite(cat.id) ? 'Remove from favourites' : 'Add to favourites'}
+                        onClick={() => {
+                          const added = toggleFav(cat.id)
+                          notify(added ? `"${cat.name}" added to favourites` : `"${cat.name}" removed from favourites`, added ? 'success' : 'info')
+                        }}
+                        className={isFavorite(cat.id) ? 'text-amber-400 hover:text-amber-500' : 'text-gray-300 hover:text-amber-400 dark:text-gray-600 dark:hover:text-amber-400'}
+                      />
                       <IconButton icon={<PencilIcon />} label="Edit" onClick={() => openEdit(cat)} className="text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400" />
                       <IconButton icon={cat.isActive ? <BanIcon /> : <CheckCircleIcon />} label={cat.isActive ? 'Deactivate' : 'Activate'} onClick={() => toggle(cat)} className={cat.isActive ? 'text-gray-400 hover:text-red-500 dark:hover:text-red-400' : 'text-gray-400 hover:text-green-600 dark:hover:text-green-400'} />
                     </div>

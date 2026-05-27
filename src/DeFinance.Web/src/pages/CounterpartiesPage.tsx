@@ -3,9 +3,10 @@ import { useNotify } from '../NotificationContext'
 import { counterpartiesApi, type Counterparty, type CounterpartyType } from '../api/counterparties'
 import { type PagedResult, type PageSize, type SortDirection } from '../api/common'
 import { Modal } from '../components/Modal'
-import { IconButton, PencilIcon, CheckCircleIcon, BanIcon } from '../components/IconButton'
+import { IconButton, PencilIcon, CheckCircleIcon, BanIcon, StarIcon, StarFilledIcon } from '../components/IconButton'
 import { Pagination } from '../components/Pagination'
 import { SortableHeader } from '../components/SortableHeader'
+import { useFavorites } from '../hooks/useFavorites'
 
 type ModalState = null | 'create' | Counterparty
 
@@ -21,6 +22,7 @@ const filterCls =
 
 export function CounterpartiesPage() {
   const notify = useNotify()
+  const { isFavorite, toggle: toggleFav } = useFavorites('counterparties')
   const [result, setResult] = useState<PagedResult<Counterparty> | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -208,6 +210,15 @@ export function CounterpartiesPage() {
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="inline-flex items-center gap-1">
+                      <IconButton
+                        icon={isFavorite(cp.id) ? <StarFilledIcon /> : <StarIcon />}
+                        label={isFavorite(cp.id) ? 'Remove from favourites' : 'Add to favourites'}
+                        onClick={() => {
+                          const added = toggleFav(cp.id)
+                          notify(added ? `"${cp.name}" added to favourites` : `"${cp.name}" removed from favourites`, added ? 'success' : 'info')
+                        }}
+                        className={isFavorite(cp.id) ? 'text-amber-400 hover:text-amber-500' : 'text-gray-300 hover:text-amber-400 dark:text-gray-600 dark:hover:text-amber-400'}
+                      />
                       <IconButton icon={<PencilIcon />} label="Edit" onClick={() => openEdit(cp)} className="text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400" />
                       <IconButton icon={cp.isActive ? <BanIcon /> : <CheckCircleIcon />} label={cp.isActive ? 'Deactivate' : 'Activate'} onClick={() => toggle(cp)} className={cp.isActive ? 'text-gray-400 hover:text-red-500 dark:hover:text-red-400' : 'text-gray-400 hover:text-green-600 dark:hover:text-green-400'} />
                     </div>
