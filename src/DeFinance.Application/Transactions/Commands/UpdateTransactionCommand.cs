@@ -63,9 +63,11 @@ public class UpdateTransactionCommandHandler(
 
     private static decimal BalanceDelta(CategoryType type, decimal sum) => type switch
     {
-        CategoryType.Income  =>  sum,
-        CategoryType.Expense => -sum,
-        _                    =>  0m,
+        CategoryType.Income      =>  sum,
+        CategoryType.Expense     => -sum,
+        CategoryType.TransferIn  =>  sum,
+        CategoryType.TransferOut => -sum,
+        _                        =>  0m,
     };
 }
 

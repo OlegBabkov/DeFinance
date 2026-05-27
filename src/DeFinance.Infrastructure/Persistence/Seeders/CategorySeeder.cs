@@ -88,16 +88,28 @@ public static class CategorySeeder
         ("Expenses for Relatives",CategoryType.Expense, "#F59E0B", "👨‍👩‍👧‍👦"),
     ];
 
+    private static readonly IReadOnlyList<(string Name, CategoryType Type, string Color, string Icon)> _transferCategories =
+    [
+        ("Transfer In",  CategoryType.TransferIn,  "#64748B", "🔄"),
+        ("Transfer Out", CategoryType.TransferOut, "#64748B", "🔄"),
+    ];
+
     public static async Task SeedAsync(DeFinanceDbContext context, CancellationToken cancellationToken = default)
     {
-        if (await context.Categories.AnyAsync(cancellationToken))
-            return;
+        if (!await context.Categories.AnyAsync(cancellationToken))
+        {
+            var toAdd = _categories
+                .Select(c => Category.Create(c.Name, c.Type, c.Color, c.Icon, null, null))
+                .ToList();
+            await context.Categories.AddRangeAsync(toAdd, cancellationToken);
+        }
 
-        var toAdd = _categories
-            .Select(c => Category.Create(c.Name, c.Type, c.Color, c.Icon, null, null))
-            .ToList();
+        // Always ensure transfer categories exist (for existing installations too)
+        if (!await context.Categories.AnyAsync(c => c.Type == CategoryType.TransferIn, cancellationToken))
+            await context.Categories.AddAsync(Category.Create("Transfer In", CategoryType.TransferIn, "#64748B", "🔄", null, null), cancellationToken);
+        if (!await context.Categories.AnyAsync(c => c.Type == CategoryType.TransferOut, cancellationToken))
+            await context.Categories.AddAsync(Category.Create("Transfer Out", CategoryType.TransferOut, "#64748B", "🔄", null, null), cancellationToken);
 
-        await context.Categories.AddRangeAsync(toAdd, cancellationToken);
         await context.SaveChangesAsync(cancellationToken);
     }
 }
