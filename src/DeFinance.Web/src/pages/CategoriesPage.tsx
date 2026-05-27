@@ -20,12 +20,13 @@ const PAYMENT_OBLIGATIONS: { value: CategoryPaymentObligation; label: string }[]
   { value: 'NonMandatory', label: PAYMENT_OBLIGATION_LABELS.NonMandatory },
 ]
 
-type Tab = 'Income' | 'Expense'
+type Tab = 'Income' | 'Expense' | 'Transfer'
 type ModalState = null | 'create' | Category
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'Income', label: 'Income' },
   { id: 'Expense', label: 'Losses' },
+  { id: 'Transfer', label: 'Transfers' },
 ]
 
 const inputCls =
@@ -51,6 +52,7 @@ export function CategoriesPage() {
   const [formIcon, setFormIcon] = useState('')
   const [formParentId, setFormParentId] = useState('')
   const [formPaymentObligation, setFormPaymentObligation] = useState<CategoryPaymentObligation | ''>('')
+  const [formTransferType, setFormTransferType] = useState<'TransferIn' | 'TransferOut'>('TransferIn')
   const [parentOptions, setParentOptions] = useState<Category[]>([])
 
   // filters & pagination
@@ -72,16 +74,25 @@ export function CategoriesPage() {
   useEffect(() => {
     let cancelled = false
     setLoading(true)
-    categoriesApi.getAll({
+    const baseParams = {
       search: debouncedSearch || undefined,
       isActive: isActiveFilter !== '' ? isActiveFilter === 'true' : undefined,
-      type: tab,
       paymentObligation: obligationFilter !== '' ? (obligationFilter as CategoryPaymentObligation) : undefined,
       page,
       pageSize,
       sortBy: sortBy ?? undefined,
       sortDirection,
-    })
+    }
+    const fetch = tab === 'Transfer'
+      ? Promise.all([
+          categoriesApi.getAll({ ...baseParams, type: 'TransferIn' }),
+          categoriesApi.getAll({ ...baseParams, type: 'TransferOut' }),
+        ]).then(([a, b]) => {
+          const items = [...a.items, ...b.items].sort((x, y) => x.name.localeCompare(y.name))
+          return { items, totalCount: items.length, page: 1, pageSize: items.length || 1, totalPages: 1, hasNextPage: false, hasPreviousPage: false }
+        })
+      : categoriesApi.getAll({ ...baseParams, type: tab })
+    fetch
       .then(r => { if (!cancelled) { setResult(r); setError(null) } })
       .catch(() => { if (!cancelled) setError('Failed to load categories') })
       .finally(() => { if (!cancelled) setLoading(false) })
@@ -103,8 +114,12 @@ export function CategoriesPage() {
   const openCreate = async () => {
     setFormName(''); setFormColor('#6366f1'); setFormIcon(''); setFormParentId('')
     setFormPaymentObligation(''); setFormError(null)
-    const r = await categoriesApi.getAll({ type: tab, pageSize: 100 })
-    setParentOptions(r.items)
+    if (tab !== 'Transfer') {
+      const r = await categoriesApi.getAll({ type: tab, pageSize: 100 })
+      setParentOptions(r.items)
+    } else {
+      setParentOptions([])
+    }
     setModal('create')
   }
 
@@ -124,8 +139,9 @@ export function CategoriesPage() {
       const color = formColor || null
       const icon = formIcon.trim() || null
       const paymentObligation = formPaymentObligation || null
+      const categoryType: CategoryType = tab === 'Transfer' ? formTransferType : (tab as CategoryType)
       if (modal === 'create') {
-        await categoriesApi.create({ name: formName, type: tab as CategoryType, color, icon, parentId: formParentId || null, paymentObligation })
+        await categoriesApi.create({ name: formName, type: categoryType, color, icon, parentId: formParentId || null, paymentObligation })
         notify('Category created', 'success')
       } else if (modal !== null) {
         await categoriesApi.update(modal.id, { name: formName, color, icon, paymentObligation })
@@ -179,10 +195,12 @@ export function CategoriesPage() {
             <option value="true">Active only</option>
             <option value="false">Inactive only</option>
           </select>
-          <select value={obligationFilter} onChange={e => handleObligationChange(e.target.value)} className={filterCls}>
-            <option value="">All obligations</option>
-            {PAYMENT_OBLIGATIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-          </select>
+          {tab !== 'Transfer' && (
+            <select value={obligationFilter} onChange={e => handleObligationChange(e.target.value)} className={filterCls}>
+              <option value="">All obligations</option>
+              {PAYMENT_OBLIGATIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+          )}
           {loading && <span className="text-xs text-gray-400 dark:text-gray-500">Loading…</span>}
         </div>
         <div className="flex border-b border-gray-200 dark:border-gray-700">
@@ -208,8 +226,17 @@ export function CategoriesPage() {
       </div>
 
       {modal !== null && (
-        <Modal title={isEditing ? 'Edit Category' : `New ${tab} Category`} onClose={closeModal}>
+        <Modal title={isEditing ? 'Edit Category' : `New ${tab === 'Transfer' ? 'Transfer' : tab} Category`} onClose={closeModal}>
           <form onSubmit={handleSubmit} className="space-y-4">
+            {!isEditing && tab === 'Transfer' && (
+              <div>
+                <label className={labelCls}>Transfer Type</label>
+                <select value={formTransferType} onChange={e => setFormTransferType(e.target.value as 'TransferIn' | 'TransferOut')} className={inputCls}>
+                  <option value="TransferIn">Transfer In (funds arriving)</option>
+                  <option value="TransferOut">Transfer Out (funds leaving)</option>
+                </select>
+              </div>
+            )}
             <div>
               <label className={labelCls}>Name</label>
               <input required maxLength={100} value={formName} onChange={e => setFormName(e.target.value)} className={inputCls} placeholder="Category name" />

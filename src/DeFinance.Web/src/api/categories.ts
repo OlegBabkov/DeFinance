@@ -1,7 +1,7 @@
 import client from './client'
 import type { PagedQuery, PagedResult } from './common'
 
-export type CategoryType = 'Income' | 'Expense'
+export type CategoryType = 'Income' | 'Expense' | 'Transfer' | 'TransferIn' | 'TransferOut'
 export type CategoryPaymentObligation = 'SepaTransfer' | 'Mandatory' | 'NonMandatory'
 
 export const PAYMENT_OBLIGATION_LABELS: Record<CategoryPaymentObligation, string> = {
