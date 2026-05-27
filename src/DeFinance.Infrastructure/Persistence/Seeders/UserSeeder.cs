@@ -15,16 +15,27 @@ public static class UserSeeder
             var admin = User.Create(
                 username: "admin",
                 password: BCrypt.Net.BCrypt.HashPassword(adminPassword),
-                email: "admin@definance.local",
+                email: BCrypt.Net.BCrypt.HashPassword("admin@definance.local"),
                 phoneNumber: null);
 
             await context.Users.AddAsync(admin, cancellationToken);
             await context.SaveChangesAsync(cancellationToken);
         }
-        else if (!existing.Password.StartsWith("$2"))
+        else
         {
-            existing.ChangePassword(BCrypt.Net.BCrypt.HashPassword(adminPassword));
-            await context.SaveChangesAsync(cancellationToken);
+            var changed = false;
+            if (!existing.Password.StartsWith("$2"))
+            {
+                existing.ChangePassword(BCrypt.Net.BCrypt.HashPassword(adminPassword));
+                changed = true;
+            }
+            if (!existing.Email.StartsWith("$2"))
+            {
+                existing.Update(existing.Username, BCrypt.Net.BCrypt.HashPassword(existing.Email), existing.PhoneNumber);
+                changed = true;
+            }
+            if (changed)
+                await context.SaveChangesAsync(cancellationToken);
         }
     }
 }

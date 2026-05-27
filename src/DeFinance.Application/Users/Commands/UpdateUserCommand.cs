@@ -1,3 +1,4 @@
+using DeFinance.Application.Abstractions;
 using DeFinance.Application.Abstractions.Repositories;
 using DeFinance.Application.DTOs.User;
 using FluentValidation;
@@ -12,7 +13,7 @@ public record UpdateUserCommand(
     string? PhoneNumber
 ) : IRequest<UserResponse?>;
 
-public class UpdateUserCommandHandler(IUserRepository repository)
+public class UpdateUserCommandHandler(IUserRepository repository, IPasswordService passwordService)
     : IRequestHandler<UpdateUserCommand, UserResponse?>
 {
     public async Task<UserResponse?> Handle(UpdateUserCommand request, CancellationToken cancellationToken)
@@ -20,7 +21,9 @@ public class UpdateUserCommandHandler(IUserRepository repository)
         var user = await repository.GetByIdAsync(request.Id, cancellationToken);
         if (user is null) return null;
 
-        user.Update(request.Username, request.Email, request.PhoneNumber);
+        var hashedEmail = passwordService.Hash(request.Email);
+        var hashedPhone = request.PhoneNumber is not null ? passwordService.Hash(request.PhoneNumber) : null;
+        user.Update(request.Username, hashedEmail, hashedPhone);
         await repository.SaveChangesAsync(cancellationToken);
         return user.ToResponse();
     }
@@ -32,6 +35,6 @@ public class UpdateUserCommandValidator : AbstractValidator<UpdateUserCommand>
     {
         RuleFor(x => x.Username).NotEmpty().MaximumLength(100);
         RuleFor(x => x.Email).NotEmpty().EmailAddress().MaximumLength(200);
-        RuleFor(x => x.PhoneNumber).MaximumLength(30).When(x => x.PhoneNumber is not null);
+        RuleFor(x => x.PhoneNumber).MaximumLength(50).When(x => x.PhoneNumber is not null);
     }
 }

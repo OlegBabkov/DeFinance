@@ -25,7 +25,9 @@ public class CreateUserCommandHandler(IUserRepository repository, IPasswordServi
                 nameof(request.Username), "Username is already taken.")]);
 
         var hashed = passwordService.Hash(request.Password);
-        var user = User.Create(request.Username, hashed, request.Email, request.PhoneNumber);
+        var hashedEmail = passwordService.Hash(request.Email);
+        var hashedPhone = request.PhoneNumber is not null ? passwordService.Hash(request.PhoneNumber) : null;
+        var user = User.Create(request.Username, hashed, hashedEmail, hashedPhone);
         await repository.AddAsync(user, cancellationToken);
         await repository.SaveChangesAsync(cancellationToken);
         return user.ToResponse();
@@ -39,6 +41,6 @@ public class CreateUserCommandValidator : AbstractValidator<CreateUserCommand>
         RuleFor(x => x.Username).NotEmpty().MaximumLength(100);
         RuleFor(x => x.Password).NotEmpty().MinimumLength(6).MaximumLength(256);
         RuleFor(x => x.Email).NotEmpty().EmailAddress().MaximumLength(200);
-        RuleFor(x => x.PhoneNumber).MaximumLength(30).When(x => x.PhoneNumber is not null);
+        RuleFor(x => x.PhoneNumber).MaximumLength(50).When(x => x.PhoneNumber is not null);
     }
 }
