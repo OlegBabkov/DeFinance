@@ -336,22 +336,29 @@ export function TransactionsPage() {
         const selectedAccount = accountId ? accounts.find(a => a.id === accountId) : null
         const acctCurrency = selectedAccount?.currency ?? null
         const showAccountSum = acctCurrency !== null && mainCurrency !== null && acctCurrency.id !== mainCurrency.id
+        const balanceColor = (v: number) =>
+          v > 0 ? 'text-emerald-600 dark:text-emerald-400' : v < 0 ? 'text-red-500 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'
+        const fmtBalance = (v: number) => (v > 0 ? '+ ' : v < 0 ? '− ' : '') + num(Math.abs(v))
         return (
           <div className="px-8 pb-3 shrink-0 flex items-center gap-5">
             <span className="text-xs text-gray-400 dark:text-gray-500">
               {result.totalCount.toLocaleString()} transaction{result.totalCount !== 1 ? 's' : ''}
             </span>
             {showAccountSum && (
-              <span className="text-sm text-gray-700 dark:text-gray-300">
-                <span className="text-xs text-gray-400 dark:text-gray-500 mr-1">Sum ({acctCurrency!.code})</span>
-                <span className="font-mono font-medium">{acctCurrency!.symbol}{num(result.totalSum)}</span>
+              <span className="text-sm">
+                <span className="text-xs text-gray-400 dark:text-gray-500 mr-1">Balance ({acctCurrency!.code})</span>
+                <span className={`font-mono font-medium ${balanceColor(result.totalSum)}`}>
+                  {acctCurrency!.symbol}{fmtBalance(result.totalSum)}
+                </span>
               </span>
             )}
-            <span className="text-sm text-gray-700 dark:text-gray-300">
+            <span className="text-sm">
               <span className="text-xs text-gray-400 dark:text-gray-500 mr-1">
-                {showAccountSum ? `Total (${mainCurrency?.code ?? ''})` : 'Total'}
+                {showAccountSum ? `Balance (${mainCurrency?.code ?? ''})` : 'Balance'}
               </span>
-              <span className="font-mono font-medium">{mainCurrency?.symbol ?? ''}{num(result.totalAmountInCurrency)}</span>
+              <span className={`font-mono font-medium ${balanceColor(result.totalAmountInCurrency)}`}>
+                {mainCurrency?.symbol ?? ''}{fmtBalance(result.totalAmountInCurrency)}
+              </span>
             </span>
           </div>
         )

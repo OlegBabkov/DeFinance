@@ -100,8 +100,14 @@ public class TransactionRepository(DeFinanceDbContext dbContext) : ITransactionR
             query = query.Where(t => t.Notes != null && t.Notes.ToLower().Contains(notes.ToLower()));
 
         var totalCount = await query.CountAsync(cancellationToken);
-        var totalSum = await query.SumAsync(t => t.Sum, cancellationToken);
-        var totalAmountInCurrency = await query.SumAsync(t => t.AmountInCurrency, cancellationToken);
+        var totalSum = await query.SumAsync(t =>
+            (t.Category!.Type == CategoryType.Income || t.Category!.Type == CategoryType.TransferIn)  ?  t.Sum :
+            (t.Category!.Type == CategoryType.Expense || t.Category!.Type == CategoryType.TransferOut) ? -t.Sum : 0m,
+            cancellationToken);
+        var totalAmountInCurrency = await query.SumAsync(t =>
+            (t.Category!.Type == CategoryType.Income || t.Category!.Type == CategoryType.TransferIn)  ?  t.AmountInCurrency :
+            (t.Category!.Type == CategoryType.Expense || t.Category!.Type == CategoryType.TransferOut) ? -t.AmountInCurrency : 0m,
+            cancellationToken);
 
         query = sortBy?.ToLower() switch
         {
