@@ -217,7 +217,13 @@ export function TransactionsPage() {
 
   const onAccountChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const acct = accounts.find(a => a.id === e.target.value)
-    setForm(f => ({ ...f, accountId: e.target.value, inCurrencyId: acct?.currencyId ?? f.inCurrencyId }))
+    const isSame = acct?.currencyId === mainCurrency?.id
+    setForm(f => ({
+      ...f,
+      accountId: e.target.value,
+      inCurrencyId: acct?.currencyId ?? f.inCurrencyId,
+      exchangeRate: isSame ? '1' : f.exchangeRate,
+    }))
   }
 
   const handleSubmit = async (e: { preventDefault(): void }) => {
@@ -225,6 +231,13 @@ export function TransactionsPage() {
     setSaving(true)
     setFormError(null)
     try {
+      const selectedAccount = accounts.find(a => a.id === form.accountId)
+      const diffCurrency = selectedAccount?.currencyId !== mainCurrency?.id
+      if (diffCurrency && parseFloat(form.exchangeRate) === 1) {
+        setFormError('Exchange rate cannot be 1 when the account currency differs from the main currency.')
+        setSaving(false)
+        return
+      }
       const req: CreateTransactionRequest = {
         dateTime: form.dateTime + 'T00:00:00Z',
         sum: parseFloat(form.sum),
@@ -400,7 +413,21 @@ export function TransactionsPage() {
               </div>
               <div>
                 <label className={labelCls}>Exchange Rate</label>
-                <input required type="number" min="0.000001" step="0.000001" value={form.exchangeRate} onChange={setField('exchangeRate')} className={inputCls} />
+                {(() => {
+                  const sameAsMain = !!form.accountId && accounts.find(a => a.id === form.accountId)?.currencyId === mainCurrency?.id
+                  return (
+                    <input
+                      required
+                      type="number"
+                      min="0.000001"
+                      step="0.000001"
+                      value={form.exchangeRate}
+                      onChange={setField('exchangeRate')}
+                      disabled={sameAsMain}
+                      className={`${inputCls}${sameAsMain ? ' opacity-50 cursor-not-allowed' : ''}`}
+                    />
+                  )
+                })()}
               </div>
               <div>
                 <label className={labelCls}>Currency</label>
