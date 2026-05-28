@@ -52,7 +52,7 @@ public class TransactionRepository(DeFinanceDbContext dbContext) : ITransactionR
         return tx.Account.Balance - txContribution - laterAdjustment;
     }
 
-    public async Task<(IReadOnlyList<Transaction> Items, int TotalCount)> GetAllAsync(
+    public async Task<(IReadOnlyList<Transaction> Items, int TotalCount, decimal TotalSum, decimal TotalAmountInCurrency)> GetAllAsync(
         DateTime? dateFrom,
         DateTime? dateTo,
         Guid? accountId,
@@ -100,6 +100,14 @@ public class TransactionRepository(DeFinanceDbContext dbContext) : ITransactionR
             query = query.Where(t => t.Notes != null && t.Notes.ToLower().Contains(notes.ToLower()));
 
         var totalCount = await query.CountAsync(cancellationToken);
+        var totalSum = await query.SumAsync(t =>
+            (t.Category!.Type == CategoryType.Income || t.Category!.Type == CategoryType.TransferIn)  ?  t.Sum :
+            (t.Category!.Type == CategoryType.Expense || t.Category!.Type == CategoryType.TransferOut) ? -t.Sum : 0m,
+            cancellationToken);
+        var totalAmountInCurrency = await query.SumAsync(t =>
+            (t.Category!.Type == CategoryType.Income || t.Category!.Type == CategoryType.TransferIn)  ?  t.AmountInCurrency :
+            (t.Category!.Type == CategoryType.Expense || t.Category!.Type == CategoryType.TransferOut) ? -t.AmountInCurrency : 0m,
+            cancellationToken);
 
         query = sortBy?.ToLower() switch
         {
@@ -114,6 +122,6 @@ public class TransactionRepository(DeFinanceDbContext dbContext) : ITransactionR
             .Take(pageSize)
             .ToListAsync(cancellationToken);
 
-        return (items, totalCount);
+        return (items, totalCount, totalSum, totalAmountInCurrency);
     }
 }

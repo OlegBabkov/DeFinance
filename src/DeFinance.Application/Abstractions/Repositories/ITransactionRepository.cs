@@ -10,7 +10,7 @@ public interface ITransactionRepository
     void Remove(Transaction transaction);
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     Task<decimal?> GetBalanceBeforeAsync(Guid transactionId, CancellationToken cancellationToken = default);
-    Task<(IReadOnlyList<Transaction> Items, int TotalCount)> GetAllAsync(
+    Task<(IReadOnlyList<Transaction> Items, int TotalCount, decimal TotalSum, decimal TotalAmountInCurrency)> GetAllAsync(
         DateTime? dateFrom,
         DateTime? dateTo,
         Guid? accountId,
