@@ -19,14 +19,14 @@ public record GetAllTransactionsQuery(
     int PageSize = 20,
     string? SortBy = null,
     SortDirection SortDirection = SortDirection.Desc
-) : IRequest<PagedResult<TransactionResponse>>;
+) : IRequest<TransactionListResponse>;
 
 public class GetAllTransactionsQueryHandler(ITransactionRepository repository)
-    : IRequestHandler<GetAllTransactionsQuery, PagedResult<TransactionResponse>>
+    : IRequestHandler<GetAllTransactionsQuery, TransactionListResponse>
 {
-    public async Task<PagedResult<TransactionResponse>> Handle(GetAllTransactionsQuery request, CancellationToken cancellationToken)
+    public async Task<TransactionListResponse> Handle(GetAllTransactionsQuery request, CancellationToken cancellationToken)
     {
-        var (items, totalCount) = await repository.GetAllAsync(
+        var (items, totalCount, totalSum, totalAmountInCurrency) = await repository.GetAllAsync(
             request.DateFrom, request.DateTo,
             request.AccountId, request.CategoryId,
             request.CounterpartyId, request.PaymentStatusId,
@@ -35,7 +35,11 @@ public class GetAllTransactionsQueryHandler(ITransactionRepository repository)
             request.Page, request.PageSize,
             cancellationToken);
 
-        return new PagedResult<TransactionResponse>(items.ToResponse(), totalCount, request.Page, request.PageSize);
+        var paged = new PagedResult<TransactionResponse>(items.ToResponse(), totalCount, request.Page, request.PageSize);
+        return new TransactionListResponse(
+            paged.Items, paged.TotalCount, paged.Page, paged.PageSize,
+            paged.TotalPages, paged.HasNextPage, paged.HasPreviousPage,
+            totalSum, totalAmountInCurrency);
     }
 }
 

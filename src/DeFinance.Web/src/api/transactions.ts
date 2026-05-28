@@ -1,6 +1,11 @@
 import client from './client'
 import type { PagedResult, SortDirection } from './common'
 
+export interface TransactionListResult extends PagedResult<Transaction> {
+  totalSum: number
+  totalAmountInCurrency: number
+}
+
 export interface TransactionCurrency {
   id: string; code: string; name: string; symbol: string; isActive: boolean
 }
@@ -76,7 +81,7 @@ export type UpdateTransactionRequest = CreateTransactionRequest & { id: string }
 
 export const transactionsApi = {
   getAll: (params?: TransactionQuery) =>
-    client.get<PagedResult<Transaction>>('/transactions', { params }).then(r => r.data),
+    client.get<TransactionListResult>('/transactions', { params }).then(r => r.data),
   getById: (id: string) =>
     client.get<Transaction>(`/transactions/${id}`).then(r => r.data),
   getBalanceBefore: (id: string) =>

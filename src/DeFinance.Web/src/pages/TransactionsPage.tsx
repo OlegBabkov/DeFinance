@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useNotify } from '../NotificationContext'
 import { useMainCurrency } from '../MainCurrencyContext'
-import { transactionsApi, type Transaction, type CreateTransactionRequest } from '../api/transactions'
+import { transactionsApi, type Transaction, type TransactionListResult, type CreateTransactionRequest } from '../api/transactions'
 import { accountsApi, type Account } from '../api/accounts'
 import { categoriesApi, type Category } from '../api/categories'
 import { counterpartiesApi, type Counterparty } from '../api/counterparties'
 import { paymentStatusesApi, type PaymentStatus } from '../api/paymentStatuses'
 import { currenciesApi, type Currency } from '../api/currencies'
-import { type PagedResult, type PageSize } from '../api/common'
+import { type PageSize } from '../api/common'
 import { Pagination } from '../components/Pagination'
 import { SortableHeader } from '../components/SortableHeader'
 import { Modal } from '../components/Modal'
@@ -95,7 +95,7 @@ export function TransactionsPage() {
   const { mainCurrency } = useMainCurrency()
   const { favorites: favCats } = useFavorites('categories')
   const { favorites: favCps }  = useFavorites('counterparties')
-  const [result, setResult] = useState<PagedResult<Transaction> | null>(null)
+  const [result, setResult] = useState<TransactionListResult | null>(null)
   const [accounts, setAccounts] = useState<Account[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [counterparties, setCounterparties] = useState<Counterparty[]>([])
@@ -330,6 +330,32 @@ export function TransactionsPage() {
           </select>
         </div>
       </div>
+
+      {/* Totals bar */}
+      {result && (() => {
+        const selectedAccount = accountId ? accounts.find(a => a.id === accountId) : null
+        const acctCurrency = selectedAccount?.currency ?? null
+        const showAccountSum = acctCurrency !== null && mainCurrency !== null && acctCurrency.id !== mainCurrency.id
+        return (
+          <div className="px-8 pb-3 shrink-0 flex items-center gap-5">
+            <span className="text-xs text-gray-400 dark:text-gray-500">
+              {result.totalCount.toLocaleString()} transaction{result.totalCount !== 1 ? 's' : ''}
+            </span>
+            {showAccountSum && (
+              <span className="text-sm text-gray-700 dark:text-gray-300">
+                <span className="text-xs text-gray-400 dark:text-gray-500 mr-1">Sum ({acctCurrency!.code})</span>
+                <span className="font-mono font-medium">{acctCurrency!.symbol}{num(result.totalSum)}</span>
+              </span>
+            )}
+            <span className="text-sm text-gray-700 dark:text-gray-300">
+              <span className="text-xs text-gray-400 dark:text-gray-500 mr-1">
+                {showAccountSum ? `Total (${mainCurrency?.code ?? ''})` : 'Total'}
+              </span>
+              <span className="font-mono font-medium">{mainCurrency?.symbol ?? ''}{num(result.totalAmountInCurrency)}</span>
+            </span>
+          </div>
+        )
+      })()}
 
       {/* Modal */}
       {modal !== null && (
