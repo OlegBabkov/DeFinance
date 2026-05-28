@@ -89,10 +89,10 @@ export function MandatoryPage() {
 
   useEffect(() => {
     Promise.all([
-      accountsApi.getAll({ isActive: true, pageSize: 100 }),
-      categoriesApi.getAll({ isActive: true, pageSize: 100 }),
-      currenciesApi.getAll({ isActive: true, pageSize: 100 }),
-      paymentStatusesApi.getAll({ isActive: true, pageSize: 100 }),
+      accountsApi.getAll({ isActive: true, pageSize: 500 }),
+      categoriesApi.getAll({ isActive: true, pageSize: 500 }),
+      currenciesApi.getAll({ isActive: true, pageSize: 500 }),
+      paymentStatusesApi.getAll({ isActive: true, pageSize: 500 }),
     ]).then(([acc, cat, cur, ps]) => {
       setAccounts(acc.items)
       setCategories(cat.items)
@@ -142,7 +142,7 @@ export function MandatoryPage() {
       isActive: true,
       frequency: frequencyFilter !== '' ? (frequencyFilter as PaymentFrequency) : undefined,
       paymentStatusId: paymentStatusFilter || undefined,
-      pageSize: 100,
+      pageSize: 500,
     })
       .then(r => {
         if (cancelled) return

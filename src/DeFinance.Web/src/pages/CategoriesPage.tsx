@@ -117,7 +117,7 @@ export function CategoriesPage() {
     setFormName(''); setFormColor('#6366f1'); setFormIcon(''); setFormParentId('')
     setFormPaymentObligation(''); setFormError(null)
     if (tab !== 'Transfer') {
-      const r = await categoriesApi.getAll({ type: tab, pageSize: 100 })
+      const r = await categoriesApi.getAll({ type: tab, pageSize: 500 })
       setParentOptions(r.items)
     } else {
       setParentOptions([])

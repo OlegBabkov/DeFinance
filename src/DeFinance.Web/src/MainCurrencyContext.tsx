@@ -18,7 +18,7 @@ export function MainCurrencyProvider({ children }: { children: ReactNode }) {
   )
 
   useEffect(() => {
-    currenciesApi.getAll({ isActive: true, pageSize: 100 })
+    currenciesApi.getAll({ isActive: true, pageSize: 500 })
       .then(r => {
         setCurrencies(r.items)
         const stored = localStorage.getItem(STORAGE_KEY)
