@@ -27,22 +27,35 @@ function amountSign(type: string) {
   return ''
 }
 
+interface MonthSummary { income: number; losses: number; transferIn: number; transferOut: number }
+
 export function AccountPanel({ account, onClose }: Props) {
   const open = account !== null
   const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [monthSummary, setMonthSummary] = useState<MonthSummary | null>(null)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    if (!account) { setTransactions([]); return }
+    if (!account) { setTransactions([]); setMonthSummary(null); return }
     setLoading(true)
-    transactionsApi.getAll({
-      accountId: account.id,
-      pageSize: 10,
-      sortBy: 'dateTime',
-      sortDirection: 'Desc',
-    })
-      .then(r => setTransactions(r.items))
-      .catch(() => setTransactions([]))
+
+    const now = new Date()
+    const monthFrom = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
+    const monthTo = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0]
+
+    Promise.all([
+      transactionsApi.getAll({ accountId: account.id, pageSize: 10, sortBy: 'dateTime', sortDirection: 'Desc' }),
+      transactionsApi.getAll({ accountId: account.id, dateFrom: monthFrom, dateTo: monthTo, pageSize: 500 }),
+    ])
+      .then(([recent, monthly]) => {
+        setTransactions(recent.items)
+        const income      = monthly.items.filter(t => t.category?.type === 'Income').reduce((s, t) => s + t.sum, 0)
+        const losses      = monthly.items.filter(t => t.category?.type === 'Expense').reduce((s, t) => s + t.sum, 0)
+        const transferIn  = monthly.items.filter(t => t.category?.type === 'TransferIn').reduce((s, t) => s + t.sum, 0)
+        const transferOut = monthly.items.filter(t => t.category?.type === 'TransferOut').reduce((s, t) => s + t.sum, 0)
+        setMonthSummary({ income, losses, transferIn, transferOut })
+      })
+      .catch(() => { setTransactions([]); setMonthSummary(null) })
       .finally(() => setLoading(false))
   }, [account?.id])
 
@@ -73,6 +86,49 @@ export function AccountPanel({ account, onClose }: Props) {
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto p-5 space-y-4">
+          {/* This month summary */}
+          <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">This Month</p>
+          {monthSummary ? (() => {
+            const net = monthSummary.income + monthSummary.transferIn - monthSummary.losses - monthSummary.transferOut
+            const netColor = net > 0 ? 'text-emerald-600 dark:text-emerald-400' : net < 0 ? 'text-red-500 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'
+            return (
+              <ul className="space-y-0">
+                <li className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Income</span>
+                  <span className="text-sm font-mono font-medium text-emerald-600 dark:text-emerald-400">
+                    {monthSummary.income > 0 ? `+ ${fmtNum(monthSummary.income, symbol)}` : fmtNum(0, symbol)}
+                  </span>
+                </li>
+                {monthSummary.transferIn > 0 && (
+                  <li className="flex items-center justify-between py-1 border-b border-gray-100 dark:border-gray-700 pl-3">
+                    <span className="text-xs text-gray-400 dark:text-gray-500">Transfer In</span>
+                    <span className="text-xs font-mono text-emerald-500 dark:text-emerald-500">+ {fmtNum(monthSummary.transferIn, symbol)}</span>
+                  </li>
+                )}
+                <li className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Losses</span>
+                  <span className="text-sm font-mono font-medium text-red-500 dark:text-red-400">
+                    {monthSummary.losses > 0 ? `− ${fmtNum(monthSummary.losses, symbol)}` : fmtNum(0, symbol)}
+                  </span>
+                </li>
+                {monthSummary.transferOut > 0 && (
+                  <li className="flex items-center justify-between py-1 border-b border-gray-100 dark:border-gray-700 pl-3">
+                    <span className="text-xs text-gray-400 dark:text-gray-500">Transfer Out</span>
+                    <span className="text-xs font-mono text-red-400 dark:text-red-500">− {fmtNum(monthSummary.transferOut, symbol)}</span>
+                  </li>
+                )}
+                <li className="flex items-center justify-between py-2">
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Net</span>
+                  <span className={`text-sm font-mono font-semibold ${netColor}`}>
+                    {net > 0 ? '+ ' : net < 0 ? '− ' : ''}{fmtNum(Math.abs(net), symbol)}
+                  </span>
+                </li>
+              </ul>
+            )
+          })() : (
+            <p className="text-xs text-gray-400 dark:text-gray-500">Loading…</p>
+          )}
+
           {/* Last transactions */}
           <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
             Last 10 Transactions
