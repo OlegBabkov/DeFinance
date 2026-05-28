@@ -231,6 +231,13 @@ export function TransactionsPage() {
     setSaving(true)
     setFormError(null)
     try {
+      const selectedAccount = accounts.find(a => a.id === form.accountId)
+      const diffCurrency = selectedAccount?.currencyId !== mainCurrency?.id
+      if (diffCurrency && parseFloat(form.exchangeRate) === 1) {
+        setFormError('Exchange rate cannot be 1 when the account currency differs from the main currency.')
+        setSaving(false)
+        return
+      }
       const req: CreateTransactionRequest = {
         dateTime: form.dateTime + 'T00:00:00Z',
         sum: parseFloat(form.sum),
