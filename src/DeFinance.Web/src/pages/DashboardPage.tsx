@@ -96,7 +96,7 @@ export function DashboardPage() {
     const dateFrom = twelveMonthsAgo.toISOString().split('T')[0]
 
     Promise.all([
-      accountsApi.getAll({ isActive: true, pageSize: 100 }),
+      accountsApi.getAll({ isActive: true, pageSize: 500 }),
       transactionsApi.getAll({ dateFrom, pageSize: 500 }),
     ]).then(([accs, txns]) => {
       setAccounts(accs.items)

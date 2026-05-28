@@ -38,7 +38,7 @@ public class GetAllCurrenciesQueryValidator : AbstractValidator<GetAllCurrencies
     public GetAllCurrenciesQueryValidator()
     {
         RuleFor(x => x.Page).GreaterThanOrEqualTo(1);
-        RuleFor(x => x.PageSize).InclusiveBetween(1, 100);
+        RuleFor(x => x.PageSize).InclusiveBetween(1, 500);
         RuleFor(x => x.SortBy)
             .Must(s => ValidSortFields.Contains(s!))
             .WithMessage("SortBy must be one of: name, code, symbol.")

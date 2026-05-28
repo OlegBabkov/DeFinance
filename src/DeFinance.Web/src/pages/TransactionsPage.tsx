@@ -135,11 +135,11 @@ export function TransactionsPage() {
 
   // load filter dropdowns once
   useEffect(() => {
-    accountsApi.getAll({ pageSize: 100 }).then(r => setAccounts(r.items)).catch(() => {})
-    categoriesApi.getAll({ pageSize: 100 }).then(r => setCategories(r.items)).catch(() => {})
-    counterpartiesApi.getAll({ pageSize: 100 }).then(r => setCounterparties(r.items)).catch(() => {})
-    paymentStatusesApi.getAll({ pageSize: 100 }).then(r => setPaymentStatuses(r.items)).catch(() => {})
-    currenciesApi.getAll({ pageSize: 100 }).then(r => setCurrencies(r.items)).catch(() => {})
+    accountsApi.getAll({ pageSize: 500 }).then(r => setAccounts(r.items)).catch(() => {})
+    categoriesApi.getAll({ pageSize: 500 }).then(r => setCategories(r.items)).catch(() => {})
+    counterpartiesApi.getAll({ pageSize: 500 }).then(r => setCounterparties(r.items)).catch(() => {})
+    paymentStatusesApi.getAll({ pageSize: 500 }).then(r => setPaymentStatuses(r.items)).catch(() => {})
+    currenciesApi.getAll({ pageSize: 500 }).then(r => setCurrencies(r.items)).catch(() => {})
   }, [])
 
   // debounce notes search
