@@ -6,7 +6,7 @@ export function Spinner({ size = 'md' }: { size?: 'sm' | 'md' }) {
       {([0, 150, 300] as const).map((delay, i) => (
         <div
           key={i}
-          className={`${dot} rounded-full bg-current animate-bounce`}
+          className={`${dot} rounded-full bg-indigo-400 dark:bg-indigo-500 animate-bounce`}
           style={{ animationDelay: `${delay}ms` }}
         />
       ))}
