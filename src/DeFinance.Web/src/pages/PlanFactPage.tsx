@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNotify } from '../NotificationContext'
 import { planFactApi, type PlanFactCategoryRow, type PlanFactMonthData, type PlanFactSummaryResponse } from '../api/planFact'
 import { Spinner } from '../components/Spinner'
@@ -76,6 +76,11 @@ function PlanCell({
   )
 }
 
+interface PlanRow { id: number; name: string; amount: string }
+
+let rowIdSeq = 0
+const newRow = (): PlanRow => ({ id: ++rowIdSeq, name: '', amount: '' })
+
 function PlanModal({
   state,
   onClose,
@@ -85,38 +90,92 @@ function PlanModal({
   onClose: () => void
   onSave: (value: string) => void
 }) {
-  const [value, setValue] = useState(state.value)
-  const inputRef = useRef<HTMLInputElement>(null)
+  const initialRows: PlanRow[] = state.value
+    ? [{ id: ++rowIdSeq, name: '', amount: state.value }]
+    : [newRow()]
 
-  useEffect(() => {
-    inputRef.current?.select()
-  }, [])
+  const [rows, setRows] = useState<PlanRow[]>(initialRows)
+
+  const total = rows.reduce((s, r) => s + (parseFloat(r.amount) || 0), 0)
+
+  const updateRow = (id: number, field: 'name' | 'amount', value: string) =>
+    setRows(prev => prev.map(r => r.id === id ? { ...r, [field]: value } : r))
+
+  const removeRow = (id: number) =>
+    setRows(prev => prev.length > 1 ? prev.filter(r => r.id !== id) : prev)
+
+  const addRow = () => setRows(prev => [...prev, newRow()])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    onSave(value)
+    onSave(total.toString())
   }
 
+  const inputCls = 'px-2 py-1.5 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500'
+
   return (
-    <Modal title={state.categoryName} onClose={onClose}>
+    <Modal title={state.categoryName} onClose={onClose} wide>
       <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
         {MONTH_NAMES[state.month - 1]} {state.year}
       </p>
       <form onSubmit={handleSubmit}>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-          Plan amount
-        </label>
-        <input
-          ref={inputRef}
-          type="number"
-          min="0"
-          step="0.01"
-          value={value}
-          onChange={e => setValue(e.target.value)}
-          className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-5"
-          placeholder="0.00"
-          autoFocus
-        />
+        {/* Column headers */}
+        <div className="grid grid-cols-[1fr_9rem_2rem] gap-2 mb-1 px-1">
+          <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Name</span>
+          <span className="text-xs font-medium text-gray-500 dark:text-gray-400 text-right">Amount</span>
+          <span />
+        </div>
+
+        {/* Rows */}
+        <div className="space-y-2 mb-3">
+          {rows.map((row, i) => (
+            <div key={row.id} className="grid grid-cols-[1fr_9rem_2rem] gap-2 items-center">
+              <input
+                type="text"
+                value={row.name}
+                onChange={e => updateRow(row.id, 'name', e.target.value)}
+                placeholder={`Item ${i + 1}`}
+                className={`${inputCls} w-full`}
+                autoFocus={i === 0}
+              />
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={row.amount}
+                onChange={e => updateRow(row.id, 'amount', e.target.value)}
+                placeholder="0.00"
+                className={`${inputCls} w-full text-right`}
+              />
+              <button
+                type="button"
+                onClick={() => removeRow(row.id)}
+                disabled={rows.length === 1}
+                className="flex items-center justify-center w-8 h-8 rounded-md text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-25 disabled:cursor-not-allowed transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {/* Add row */}
+        <button
+          type="button"
+          onClick={addRow}
+          className="flex items-center gap-1.5 text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 mb-5 transition-colors"
+        >
+          <span className="text-base leading-none">+</span> Add row
+        </button>
+
+        {/* Total */}
+        <div className="flex justify-end items-center gap-3 border-t border-gray-200 dark:border-gray-700 pt-3 mb-5">
+          <span className="text-sm text-gray-500 dark:text-gray-400">Total</span>
+          <span className="text-base font-semibold text-gray-900 dark:text-gray-100 w-36 text-right font-mono">
+            {fmt(total)}
+          </span>
+        </div>
+
         <div className="flex justify-end gap-3">
           <button
             type="button"
