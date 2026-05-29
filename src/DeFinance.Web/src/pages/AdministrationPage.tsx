@@ -7,6 +7,7 @@ import { Modal } from '../components/Modal'
 import { IconButton, PencilIcon, CheckCircleIcon, BanIcon } from '../components/IconButton'
 import { Pagination } from '../components/Pagination'
 import { SortableHeader } from '../components/SortableHeader'
+import { Spinner } from '../components/Spinner'
 
 type ModalState = null | 'create' | PaymentStatus
 
@@ -170,7 +171,7 @@ function PaymentStatusesPanel() {
           <option value="true">Active only</option>
           <option value="false">Inactive only</option>
         </select>
-        {loading && <span className="text-xs text-gray-400 dark:text-gray-500">Loading…</span>}
+        {loading && <Spinner size="sm" />}
         <button
           onClick={openCreate}
           className="ml-auto px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium rounded-lg transition-colors"

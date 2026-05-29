@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { type Counterparty } from '../api/counterparties'
 import { transactionsApi } from '../api/transactions'
+import { Spinner } from './Spinner'
 
 interface Props {
   counterparty: Counterparty | null
@@ -102,7 +103,7 @@ export function CounterpartyPanel({ counterparty, onClose }: Props) {
           </p>
 
           {loading && (
-            <p className="text-xs text-gray-400 dark:text-gray-500">Loading…</p>
+            <Spinner size="sm" />
           )}
 
           {!loading && (

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { transactionsApi, type Transaction } from '../api/transactions'
+import { Spinner } from './Spinner'
 
 interface Props {
   transaction: Transaction | null
@@ -185,7 +186,7 @@ export function TransactionPanel({ transaction, onClose }: Props) {
     {
       label: 'Balance before',
       value: balanceLoading
-        ? <span className="text-gray-400 dark:text-gray-500 text-xs">Loading…</span>
+        ? <span className="text-gray-400 dark:text-gray-500"><Spinner size="sm" /></span>
         : balanceBefore !== null
           ? (
             <span className="font-mono">
