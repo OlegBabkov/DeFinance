@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { usePersistedState } from '../hooks/usePersistedState'
 import { useNotify } from '../NotificationContext'
 import { currenciesApi, type Currency } from '../api/currencies'
 import { type PagedResult, type PageSize, type SortDirection } from '../api/common'
@@ -29,14 +30,14 @@ export function CurrenciesPage() {
   const [formName, setFormName] = useState('')
   const [formSymbol, setFormSymbol] = useState('')
 
-  // filters & pagination
-  const [search, setSearch] = useState('')
+  // filters & pagination (persisted)
+  const [search, setSearch] = usePersistedState('cur_filter_search', '')
   const [debouncedSearch, setDebouncedSearch] = useState('')
-  const [isActiveFilter, setIsActiveFilter] = useState('')
+  const [isActiveFilter, setIsActiveFilter] = usePersistedState('cur_filter_isActive', '')
   const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState<PageSize>(100)
-  const [sortBy, setSortBy] = useState<string | null>(null)
-  const [sortDirection, setSortDirection] = useState<SortDirection>('Asc')
+  const [pageSize, setPageSize] = usePersistedState<PageSize>('cur_filter_pageSize', 100)
+  const [sortBy, setSortBy] = usePersistedState<string | null>('cur_filter_sortBy', null)
+  const [sortDirection, setSortDirection] = usePersistedState<SortDirection>('cur_filter_sortDirection', 'Asc')
   const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {

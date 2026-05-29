@@ -7,6 +7,7 @@ import { IconButton, PencilIcon, CheckCircleIcon, BanIcon, StarIcon, StarFilledI
 import { Pagination } from '../components/Pagination'
 import { SortableHeader } from '../components/SortableHeader'
 import { useFavorites } from '../hooks/useFavorites'
+import { usePersistedState } from '../hooks/usePersistedState'
 import { CounterpartyPanel } from '../components/CounterpartyPanel'
 
 type ModalState = null | 'create' | Counterparty
@@ -35,15 +36,15 @@ export function CounterpartiesPage() {
   const [formType, setFormType] = useState<CounterpartyType>('Person')
   const [formContactInfo, setFormContactInfo] = useState('')
 
-  // filters & pagination
-  const [search, setSearch] = useState('')
+  // filters & pagination (persisted)
+  const [search, setSearch] = usePersistedState('cp_filter_search', '')
   const [debouncedSearch, setDebouncedSearch] = useState('')
-  const [isActiveFilter, setIsActiveFilter] = useState('')
-  const [typeFilter, setTypeFilter] = useState('')
+  const [isActiveFilter, setIsActiveFilter] = usePersistedState('cp_filter_isActive', '')
+  const [typeFilter, setTypeFilter] = usePersistedState('cp_filter_type', '')
   const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState<PageSize>(100)
-  const [sortBy, setSortBy] = useState<string | null>(null)
-  const [sortDirection, setSortDirection] = useState<SortDirection>('Asc')
+  const [pageSize, setPageSize] = usePersistedState<PageSize>('cp_filter_pageSize', 100)
+  const [sortBy, setSortBy] = usePersistedState<string | null>('cp_filter_sortBy', null)
+  const [sortDirection, setSortDirection] = usePersistedState<SortDirection>('cp_filter_sortDirection', 'Asc')
   const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {

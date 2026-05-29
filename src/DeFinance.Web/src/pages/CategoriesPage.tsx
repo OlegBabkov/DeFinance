@@ -13,6 +13,7 @@ import { IconButton, PencilIcon, CheckCircleIcon, BanIcon, StarIcon, StarFilledI
 import { Pagination } from '../components/Pagination'
 import { SortableHeader } from '../components/SortableHeader'
 import { useFavorites } from '../hooks/useFavorites'
+import { usePersistedState } from '../hooks/usePersistedState'
 import { CategoryPanel } from '../components/CategoryPanel'
 
 const PAYMENT_OBLIGATIONS: { value: CategoryPaymentObligation; label: string }[] = [
@@ -44,7 +45,7 @@ export function CategoriesPage() {
   const [result, setResult] = useState<PagedResult<Category> | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [tab, setTab] = useState<Tab>('Income')
+  const [tab, setTab] = usePersistedState<Tab>('cat_filter_tab', 'Income')
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null)
   const [modal, setModal] = useState<ModalState>(null)
   const [saving, setSaving] = useState(false)
@@ -57,15 +58,15 @@ export function CategoriesPage() {
   const [formTransferType, setFormTransferType] = useState<'TransferIn' | 'TransferOut'>('TransferIn')
   const [parentOptions, setParentOptions] = useState<Category[]>([])
 
-  // filters & pagination
-  const [search, setSearch] = useState('')
+  // filters & pagination (persisted)
+  const [search, setSearch] = usePersistedState('cat_filter_search', '')
   const [debouncedSearch, setDebouncedSearch] = useState('')
-  const [isActiveFilter, setIsActiveFilter] = useState('')
-  const [obligationFilter, setObligationFilter] = useState('')
+  const [isActiveFilter, setIsActiveFilter] = usePersistedState('cat_filter_isActive', '')
+  const [obligationFilter, setObligationFilter] = usePersistedState('cat_filter_obligation', '')
   const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState<PageSize>(100)
-  const [sortBy, setSortBy] = useState<string | null>(null)
-  const [sortDirection, setSortDirection] = useState<SortDirection>('Asc')
+  const [pageSize, setPageSize] = usePersistedState<PageSize>('cat_filter_pageSize', 100)
+  const [sortBy, setSortBy] = usePersistedState<string | null>('cat_filter_sortBy', null)
+  const [sortDirection, setSortDirection] = usePersistedState<SortDirection>('cat_filter_sortDirection', 'Asc')
   const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {
