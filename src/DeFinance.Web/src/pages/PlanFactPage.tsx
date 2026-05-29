@@ -4,6 +4,8 @@ import { useNotify } from '../NotificationContext'
 import { planFactApi, type PlanFactCategoryRow, type PlanFactMonthData, type PlanFactSummaryResponse } from '../api/planFact'
 import { Spinner } from '../components/Spinner'
 import { Modal } from '../components/Modal'
+import { CalculatorModal } from '../components/CalculatorModal'
+import { CalcIcon } from '../components/IconButton'
 
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
@@ -96,6 +98,7 @@ function PlanModal({
     : [newRow()]
 
   const [rows, setRows] = useState<PlanRow[]>(initialRows)
+  const [calcRowId, setCalcRowId] = useState<number | null>(null)
 
   const total = rows.reduce((s, r) => s + (parseFloat(r.amount) || 0), 0)
 
@@ -121,7 +124,7 @@ function PlanModal({
       </p>
       <form onSubmit={handleSubmit}>
         {/* Column headers */}
-        <div className="grid grid-cols-[1fr_9rem_2rem] gap-2 mb-1 px-1">
+        <div className="grid grid-cols-[1fr_10rem_2rem] gap-2 mb-1 px-1">
           <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Name</span>
           <span className="text-xs font-medium text-gray-500 dark:text-gray-400 text-right">Amount</span>
           <span />
@@ -130,7 +133,7 @@ function PlanModal({
         {/* Rows */}
         <div className="space-y-2 mb-3">
           {rows.map((row, i) => (
-            <div key={row.id} className="grid grid-cols-[1fr_9rem_2rem] gap-2 items-center">
+            <div key={row.id} className="grid grid-cols-[1fr_10rem_2rem] gap-2 items-center">
               <input
                 type="text"
                 value={row.name}
@@ -139,15 +142,26 @@ function PlanModal({
                 className={`${inputCls} w-full`}
                 autoFocus={i === 0}
               />
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={row.amount}
-                onChange={e => updateRow(row.id, 'amount', e.target.value)}
-                placeholder="0.00"
-                className={`${inputCls} w-full text-right`}
-              />
+              <div className="relative">
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={row.amount}
+                  onChange={e => updateRow(row.id, 'amount', e.target.value)}
+                  placeholder="0.00"
+                  className={`${inputCls} w-full text-right pr-7 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
+                />
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  onClick={() => setCalcRowId(row.id)}
+                  title="Open calculator"
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                >
+                  <CalcIcon />
+                </button>
+              </div>
               <button
                 type="button"
                 onClick={() => removeRow(row.id)}
@@ -193,6 +207,13 @@ function PlanModal({
           </button>
         </div>
       </form>
+
+      {calcRowId !== null && (
+        <CalculatorModal
+          onApply={value => { updateRow(calcRowId, 'amount', value); setCalcRowId(null) }}
+          onClose={() => setCalcRowId(null)}
+        />
+      )}
     </Modal>
   )
 }
