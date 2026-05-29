@@ -15,6 +15,7 @@ import { CounterpartiesPage } from './pages/CounterpartiesPage'
 import { AdministrationPage } from './pages/AdministrationPage'
 import { TransactionsPage } from './pages/TransactionsPage'
 import { MandatoryPage } from './pages/MandatoryPage'
+import { PlanFactPage } from './pages/PlanFactPage'
 import { clearToken, decodeUsername, isTokenExpired, loadToken, saveToken } from './api/auth'
 
 function getInitialUsername(): string | null {
@@ -57,6 +58,7 @@ function App() {
                     <Route path="/currencies" element={<CurrenciesPage />} />
                     <Route path="/counterparties" element={<CounterpartiesPage />} />
                     <Route path="/transactions" element={<TransactionsPage />} />
+                    <Route path="/plan-fact" element={<PlanFactPage />} />
                     <Route path="/mandatory" element={<MandatoryPage />} />
                     <Route path="/administration" element={<AdministrationPage />} />
                   </Routes>
