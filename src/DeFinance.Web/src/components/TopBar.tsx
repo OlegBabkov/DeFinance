@@ -13,7 +13,7 @@ export function TopBar({ username, onLogout, onUsernameChange }: Props) {
   const avatarRef = useRef<HTMLButtonElement>(null)
 
   return (
-    <header className="h-12 shrink-0 flex items-center justify-end px-6 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+    <header className="h-[62px] shrink-0 flex items-center justify-end px-6 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
       <div className="flex items-center gap-3">
         <div className="relative">
           <button
