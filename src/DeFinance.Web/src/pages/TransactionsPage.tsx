@@ -192,11 +192,13 @@ export function TransactionsPage() {
 
   // modal helpers
   const defaultForm = () => {
+    const filteredAccount = accountId ? accounts.find(a => a.id === accountId) : undefined
     const firstActiveAccount = accounts.find(a => a.isActive)
+    const defaultAccount = filteredAccount ?? firstActiveAccount
     const firstActiveStatus = paymentStatuses.find(s => s.isActive)
     return emptyForm({
-      accountId: firstActiveAccount?.id,
-      currencyId: firstActiveAccount?.currencyId,
+      accountId: defaultAccount?.id,
+      currencyId: defaultAccount?.currencyId,
       paymentStatusId: firstActiveStatus?.id,
     })
   }
