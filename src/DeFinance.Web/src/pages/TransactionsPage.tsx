@@ -238,6 +238,11 @@ export function TransactionsPage() {
     try {
       const selectedAccount = accounts.find(a => a.id === form.accountId)
       const diffCurrency = selectedAccount?.currencyId !== mainCurrency?.id
+      if (form.dateTime > todayDate()) {
+        setFormError('Transaction date cannot be in the future.')
+        setSaving(false)
+        return
+      }
       if (diffCurrency && parseFloat(form.exchangeRate) === 1) {
         setFormError('Exchange rate cannot be 1 when the account currency differs from the main currency.')
         setSaving(false)
@@ -389,7 +394,7 @@ export function TransactionsPage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className={labelCls}>Date</label>
-                <input required type="date" value={form.dateTime} onChange={setField('dateTime')} className={inputCls} />
+                <input required type="date" max={todayDate()} value={form.dateTime} onChange={setField('dateTime')} className={inputCls} />
               </div>
               <div>
                 <label className={labelCls}>Account</label>
