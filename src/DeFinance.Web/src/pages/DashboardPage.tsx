@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend,
@@ -7,6 +7,7 @@ import { transactionsApi, type Transaction } from '../api/transactions'
 import { accountsApi, type Account } from '../api/accounts'
 import { useMainCurrency } from '../MainCurrencyContext'
 import { useTheme } from '../ThemeContext'
+import { useTransactionEvents } from '../hooks/useTransactionEvents'
 
 const PALETTE = ['#6366f1','#f59e0b','#10b981','#ef4444','#3b82f6','#8b5cf6','#ec4899','#14b8a6','#f97316','#84cc16']
 
@@ -85,10 +86,14 @@ export function DashboardPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loading, setLoading]         = useState(true)
   const [error, setError]             = useState<string | null>(null)
+  const [refreshKey, setRefreshKey]   = useState(0)
 
   const [cashFlowMonths, setCashFlowMonths] = useState<MonthOption>(6)
   const [categoryDays, setCategoryDays]     = useState<DayOption>(30)
   const [statOffset, setStatOffset]         = useState<StatOffset>(0)
+
+  const reload = useCallback(() => setRefreshKey(k => k + 1), [])
+  useTransactionEvents(reload)
 
   useEffect(() => {
     const twelveMonthsAgo = new Date()
@@ -114,7 +119,7 @@ export function DashboardPage() {
       setTransactions(txns)
     }).catch(() => setError('Failed to load dashboard data.'))
       .finally(() => setLoading(false))
-  }, [])
+  }, [refreshKey])
 
   // Stat cards: transactions for the selected month
   const selectedMonthTx = useMemo(() => {

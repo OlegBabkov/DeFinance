@@ -1,3 +1,4 @@
+using DeFinance.Application.Abstractions;
 using DeFinance.Application.Abstractions.Repositories;
 using DeFinance.Application.Common;
 using DeFinance.Domain.Entities;
@@ -5,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DeFinance.Infrastructure.Persistence.Repositories;
 
-public class CounterpartyRepository(DeFinanceDbContext dbContext) : ICounterpartyRepository
+public class CounterpartyRepository(DeFinanceDbContext dbContext, ICacheService cache) : ICounterpartyRepository
 {
     public async Task<Counterparty?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
         await dbContext.Counterparties.FindAsync([id], cancellationToken);
@@ -55,6 +56,10 @@ public class CounterpartyRepository(DeFinanceDbContext dbContext) : ICounterpart
     public async Task AddAsync(Counterparty counterparty, CancellationToken cancellationToken = default) =>
         await dbContext.Counterparties.AddAsync(counterparty, cancellationToken);
 
-    public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) =>
-        dbContext.SaveChangesAsync(cancellationToken);
+    public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        var result = await dbContext.SaveChangesAsync(cancellationToken);
+        await cache.RemoveByPrefixAsync("cp:", cancellationToken);
+        return result;
+    }
 }

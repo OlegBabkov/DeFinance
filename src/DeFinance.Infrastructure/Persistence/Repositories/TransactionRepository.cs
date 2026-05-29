@@ -1,3 +1,4 @@
+using DeFinance.Application.Abstractions;
 using DeFinance.Application.Abstractions.Repositories;
 using DeFinance.Application.Common;
 using DeFinance.Domain.Entities;
@@ -5,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DeFinance.Infrastructure.Persistence.Repositories;
 
-public class TransactionRepository(DeFinanceDbContext dbContext) : ITransactionRepository
+public class TransactionRepository(DeFinanceDbContext dbContext, ICacheService cache, IEventPublisher events) : ITransactionRepository
 {
     public async Task<IReadOnlyList<(Guid CategoryId, int Month, decimal Total)>> GetCategoryMonthlyTotalsAsync(
         int year, IReadOnlyList<int> months, CancellationToken cancellationToken = default)
@@ -37,8 +38,13 @@ public class TransactionRepository(DeFinanceDbContext dbContext) : ITransactionR
     public void Remove(Transaction transaction) =>
         dbContext.Transactions.Remove(transaction);
 
-    public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) =>
-        await dbContext.SaveChangesAsync(cancellationToken);
+    public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        var result = await dbContext.SaveChangesAsync(cancellationToken);
+        await cache.RemoveByPrefixAsync("acc:", cancellationToken);
+        await events.PublishAsync("transactions:changed", "updated", cancellationToken);
+        return result;
+    }
 
     public async Task<Transaction?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
         await dbContext.Transactions
