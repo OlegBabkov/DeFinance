@@ -5,6 +5,7 @@ import { useTheme } from '../ThemeContext'
 const links = [
   { to: '/', label: 'Dashboard', icon: '📊' },
   { to: '/transactions', label: 'Transactions', icon: '💳' },
+  { to: '/plan-fact', label: 'Plan/Fact', icon: '📈' },
   { to: '/mandatory', label: 'Mandatory', icon: '📋' },
   { to: '/accounts', label: 'Accounts', icon: '🏦' },
   { to: '/categories', label: 'Categories', icon: '🏷️' },

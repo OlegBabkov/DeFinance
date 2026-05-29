@@ -13,6 +13,7 @@ public class DeFinanceDbContext(DbContextOptions<DeFinanceDbContext> options) : 
     public DbSet<User> Users => Set<User>();
     public DbSet<Transaction> Transactions => Set<Transaction>();
     public DbSet<MandatoryPayment> MandatoryPayments => Set<MandatoryPayment>();
+    public DbSet<BudgetEntry> BudgetEntries => Set<BudgetEntry>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
