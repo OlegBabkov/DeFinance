@@ -54,6 +54,15 @@ public class CategoryRepository(DeFinanceDbContext dbContext) : ICategoryReposit
         return (items, totalCount);
     }
 
+    public async Task<IReadOnlyList<Category>> GetActiveByTypesAsync(IReadOnlyList<CategoryType> types, CancellationToken cancellationToken = default)
+    {
+        var typeList = types.ToList();
+        return await dbContext.Categories
+            .Where(c => c.IsActive && typeList.Contains(c.Type))
+            .OrderBy(c => c.Name)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task AddAsync(Category category, CancellationToken cancellationToken = default) =>
         await dbContext.Categories.AddAsync(category, cancellationToken);
 

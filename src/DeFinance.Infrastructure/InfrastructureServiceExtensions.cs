@@ -24,6 +24,7 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<ITransactionRepository, TransactionRepository>();
         services.AddScoped<IMandatoryPaymentRepository, MandatoryPaymentRepository>();
+        services.AddScoped<IBudgetEntryRepository, BudgetEntryRepository>();
 
         services.AddScoped<IPasswordService, BCryptPasswordService>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();

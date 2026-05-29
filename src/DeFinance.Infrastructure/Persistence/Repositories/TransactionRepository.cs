@@ -7,6 +7,30 @@ namespace DeFinance.Infrastructure.Persistence.Repositories;
 
 public class TransactionRepository(DeFinanceDbContext dbContext) : ITransactionRepository
 {
+    public async Task<IReadOnlyList<(Guid CategoryId, int Month, decimal Total)>> GetCategoryMonthlyTotalsAsync(
+        int year, IReadOnlyList<int> months, CancellationToken cancellationToken = default)
+    {
+        var monthList = months.ToList();
+        var yearStart = DateTime.SpecifyKind(new DateTime(year, 1, 1), DateTimeKind.Utc);
+        var yearEnd = DateTime.SpecifyKind(new DateTime(year + 1, 1, 1), DateTimeKind.Utc);
+
+        var data = await dbContext.Transactions
+            .Where(t => t.DateTime >= yearStart && t.DateTime < yearEnd && monthList.Contains(t.DateTime.Month))
+            .GroupBy(t => new { t.CategoryId, t.DateTime.Month })
+            .Select(g => new { g.Key.CategoryId, g.Key.Month, Total = g.Sum(t => t.AmountInCurrency) })
+            .ToListAsync(cancellationToken);
+
+        return data.Select(d => (d.CategoryId, d.Month, d.Total)).ToList();
+    }
+
+    public async Task<decimal> GetSignedBalanceBeforeAsync(DateTime before, CancellationToken cancellationToken = default) =>
+        await dbContext.Transactions
+            .Where(t => t.DateTime < before)
+            .SumAsync(t =>
+                (t.Category!.Type == CategoryType.Income || t.Category!.Type == CategoryType.TransferIn) ? t.AmountInCurrency :
+                (t.Category!.Type == CategoryType.Expense || t.Category!.Type == CategoryType.TransferOut) ? -t.AmountInCurrency : 0m,
+                cancellationToken);
+
     public async Task AddAsync(Transaction transaction, CancellationToken cancellationToken = default) =>
         await dbContext.Transactions.AddAsync(transaction, cancellationToken);
 

@@ -16,6 +16,7 @@ public interface ICategoryRepository
         int page,
         int pageSize,
         CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Category>> GetActiveByTypesAsync(IReadOnlyList<CategoryType> types, CancellationToken cancellationToken = default);
     Task AddAsync(Category category, CancellationToken cancellationToken = default);
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
