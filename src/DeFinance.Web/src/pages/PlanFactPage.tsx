@@ -112,6 +112,7 @@ export function PlanFactPage() {
   const [data, setData] = useState<PlanFactSummaryResponse | null>(null)
   const [loading, setLoading] = useState(false)
   const [editing, setEditing] = useState<EditState | null>(null)
+  const [hideEmpty, setHideEmpty] = useState(false)
 
   const orderedMonths = [...selectedMonths].sort((a, b) => a - b)
   const showTotal = orderedMonths.length > 1
@@ -209,14 +210,23 @@ export function PlanFactPage() {
   const colGroups = orderedMonths.length + (showTotal ? 1 : 0)
   const totalCols = 1 + colGroups * 3
 
-  // Collect all income/expense category IDs in display order from data
-  const incomeIds: string[] = data?.months[0]?.incomeCategories.map(c => c.categoryId) ?? []
-  const expenseIds: string[] = data?.months[0]?.expenseCategories.map(c => c.categoryId) ?? []
-
   const getCatForMonth = (month: number, id: string, isExpense: boolean): PlanFactCategoryRow | undefined => {
     const md = getMonthData(month)
     return isExpense ? md?.expenseCategories.find(c => c.categoryId === id) : md?.incomeCategories.find(c => c.categoryId === id)
   }
+
+  // Collect all income/expense category IDs in display order from data
+  const allIncomeIds: string[] = data?.months[0]?.incomeCategories.map(c => c.categoryId) ?? []
+  const allExpenseIds: string[] = data?.months[0]?.expenseCategories.map(c => c.categoryId) ?? []
+
+  const hasAnyValue = (id: string, isExpense: boolean) =>
+    orderedMonths.some(m => {
+      const c = getCatForMonth(m, id, isExpense)
+      return (c?.plan ?? 0) > 0 || (c?.fact ?? 0) > 0
+    })
+
+  const incomeIds = hideEmpty ? allIncomeIds.filter(id => hasAnyValue(id, false)) : allIncomeIds
+  const expenseIds = hideEmpty ? allExpenseIds.filter(id => hasAnyValue(id, true)) : allExpenseIds
 
   const getIncomeName = (id: string) => data?.months[0]?.incomeCategories.find(c => c.categoryId === id)?.categoryName ?? ''
   const getExpenseName = (id: string) => data?.months[0]?.expenseCategories.find(c => c.categoryId === id)?.categoryName ?? ''
@@ -277,6 +287,17 @@ export function PlanFactPage() {
               )
             })}
           </div>
+
+          <button
+            onClick={() => setHideEmpty(h => !h)}
+            className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors ${
+              hideEmpty
+                ? 'border-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
+                : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-400'
+            }`}
+          >
+            {hideEmpty ? 'Show all categories' : 'Hide empty categories'}
+          </button>
 
           {loading && <span className="text-xs text-gray-400">Loading…</span>}
         </div>
