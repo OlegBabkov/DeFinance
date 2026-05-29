@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { type Account } from '../api/accounts'
 import { transactionsApi, type Transaction } from '../api/transactions'
+import { Spinner } from './Spinner'
 
 interface Props {
   account: Account | null
@@ -126,7 +127,7 @@ export function AccountPanel({ account, onClose }: Props) {
               </ul>
             )
           })() : (
-            <p className="text-xs text-gray-400 dark:text-gray-500">Loading…</p>
+            <Spinner size="sm" />
           )}
 
           {/* Last transactions */}
@@ -135,7 +136,7 @@ export function AccountPanel({ account, onClose }: Props) {
           </p>
 
           {loading && (
-            <p className="text-xs text-gray-400 dark:text-gray-500">Loading…</p>
+            <Spinner size="sm" />
           )}
 
           {!loading && transactions.length === 0 && (

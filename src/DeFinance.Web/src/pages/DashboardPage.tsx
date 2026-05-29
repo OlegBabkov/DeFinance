@@ -8,6 +8,7 @@ import { accountsApi, type Account } from '../api/accounts'
 import { useMainCurrency } from '../MainCurrencyContext'
 import { useTheme } from '../ThemeContext'
 import { useTransactionEvents } from '../hooks/useTransactionEvents'
+import { Spinner } from '../components/Spinner'
 
 const PALETTE = ['#6366f1','#f59e0b','#10b981','#ef4444','#3b82f6','#8b5cf6','#ec4899','#14b8a6','#f97316','#84cc16']
 
@@ -181,8 +182,8 @@ export function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full text-gray-400 dark:text-gray-500 text-sm">
-        Loading dashboard…
+      <div className="flex items-center justify-center h-full text-gray-400 dark:text-gray-500">
+        <Spinner />
       </div>
     )
   }

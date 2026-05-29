@@ -9,6 +9,7 @@ import { SortableHeader } from '../components/SortableHeader'
 import { useFavorites } from '../hooks/useFavorites'
 import { usePersistedState } from '../hooks/usePersistedState'
 import { CounterpartyPanel } from '../components/CounterpartyPanel'
+import { Spinner } from '../components/Spinner'
 
 type ModalState = null | 'create' | Counterparty
 
@@ -122,7 +123,7 @@ export function CounterpartiesPage() {
 
   const items = result?.items ?? []
 
-  if (!result && loading) return <div className="p-8 text-gray-500 dark:text-gray-400">Loading…</div>
+  if (!result && loading) return <div className="p-8 flex justify-center text-gray-400 dark:text-gray-500"><Spinner /></div>
   if (error && !result) return <div className="p-8 text-red-500">{error}</div>
 
   return (
@@ -154,7 +155,7 @@ export function CounterpartiesPage() {
             <option value="">All types</option>
             {COUNTERPARTY_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
           </select>
-          {loading && <span className="text-xs text-gray-400 dark:text-gray-500">Loading…</span>}
+          {loading && <Spinner size="sm" />}
         </div>
       </div>
 

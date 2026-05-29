@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNotify } from '../NotificationContext'
 import { planFactApi, type PlanFactCategoryRow, type PlanFactMonthData, type PlanFactSummaryResponse } from '../api/planFact'
+import { Spinner } from '../components/Spinner'
 
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
@@ -299,7 +300,7 @@ export function PlanFactPage() {
             {hideEmpty ? 'Show all categories' : 'Hide empty categories'}
           </button>
 
-          {loading && <span className="text-xs text-gray-400">Loading…</span>}
+          {loading && <Spinner size="sm" />}
         </div>
       </div>
 

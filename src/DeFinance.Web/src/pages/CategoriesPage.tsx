@@ -13,6 +13,7 @@ import { IconButton, PencilIcon, CheckCircleIcon, BanIcon, StarIcon, StarFilledI
 import { EmojiPicker } from '../components/EmojiPicker'
 import { Pagination } from '../components/Pagination'
 import { SortableHeader } from '../components/SortableHeader'
+import { Spinner } from '../components/Spinner'
 import { useFavorites } from '../hooks/useFavorites'
 import { usePersistedState } from '../hooks/usePersistedState'
 import { CategoryPanel } from '../components/CategoryPanel'
@@ -171,7 +172,7 @@ export function CategoriesPage() {
 
   const items = result?.items ?? []
 
-  if (!result && loading) return <div className="p-8 text-gray-500 dark:text-gray-400">Loading…</div>
+  if (!result && loading) return <div className="p-8 flex justify-center text-gray-400 dark:text-gray-500"><Spinner /></div>
   if (error && !result) return <div className="p-8 text-red-500">{error}</div>
 
   return (
@@ -205,7 +206,7 @@ export function CategoriesPage() {
               {PAYMENT_OBLIGATIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
           )}
-          {loading && <span className="text-xs text-gray-400 dark:text-gray-500">Loading…</span>}
+          {loading && <Spinner size="sm" />}
         </div>
         <div className="flex border-b border-gray-200 dark:border-gray-700">
           {TABS.map(({ id, label }) => (

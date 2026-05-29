@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { authApi, type UserInfo } from '../api/auth'
 import { useNotify } from '../NotificationContext'
+import { Spinner } from './Spinner'
 
 interface Props {
   onClose: () => void
@@ -107,7 +108,7 @@ export function UserProfileCard({ onClose, onUsernameChange, anchorRef }: Props)
       </div>
 
       {loading ? (
-        <div className="px-4 py-8 text-center text-sm text-gray-400">Loading…</div>
+        <div className="px-4 py-8 flex justify-center text-gray-400 dark:text-gray-500"><Spinner /></div>
       ) : (
         <div className="px-4 py-4 space-y-5">
 

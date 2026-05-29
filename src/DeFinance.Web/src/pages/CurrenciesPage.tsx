@@ -7,6 +7,7 @@ import { Modal } from '../components/Modal'
 import { IconButton, PencilIcon, CheckCircleIcon, BanIcon } from '../components/IconButton'
 import { Pagination } from '../components/Pagination'
 import { SortableHeader } from '../components/SortableHeader'
+import { Spinner } from '../components/Spinner'
 
 type ModalState = null | 'create' | Currency
 
@@ -112,7 +113,7 @@ export function CurrenciesPage() {
 
   const items = result?.items ?? []
 
-  if (!result && loading) return <div className="p-8 text-gray-500 dark:text-gray-400">Loading…</div>
+  if (!result && loading) return <div className="p-8 flex justify-center text-gray-400 dark:text-gray-500"><Spinner /></div>
   if (error && !result) return <div className="p-8 text-red-500">{error}</div>
 
   return (
@@ -140,7 +141,7 @@ export function CurrenciesPage() {
             <option value="true">Active only</option>
             <option value="false">Inactive only</option>
           </select>
-          {loading && <span className="text-xs text-gray-400 dark:text-gray-500">Loading…</span>}
+          {loading && <Spinner size="sm" />}
         </div>
       </div>
 

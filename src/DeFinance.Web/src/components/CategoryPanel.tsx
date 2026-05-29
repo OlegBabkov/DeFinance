@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { type Category } from '../api/categories'
 import { transactionsApi } from '../api/transactions'
+import { Spinner } from './Spinner'
 
 interface Props {
   category: Category | null
@@ -115,7 +116,7 @@ export function CategoryPanel({ category, onClose }: Props) {
           </p>
 
           {loading && (
-            <p className="text-xs text-gray-400 dark:text-gray-500">Loading…</p>
+            <Spinner size="sm" />
           )}
 
           {!loading && (
