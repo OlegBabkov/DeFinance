@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNotify } from '../NotificationContext'
 import { planFactApi, type PlanFactCategoryRow, type PlanFactMonthData, type PlanFactSummaryResponse } from '../api/planFact'
 import { Spinner } from '../components/Spinner'
+import { Modal } from '../components/Modal'
 
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
@@ -15,7 +16,14 @@ const fmt = (n: number) =>
 const pct = (plan: number, fact: number) =>
   plan === 0 ? null : Math.round((fact / plan) * 100)
 
-interface EditState { categoryId: string; year: number; month: number; value: string }
+interface ModalState {
+  categoryId: string
+  categoryName: string
+  year: number
+  month: number
+  value: string
+  isExpense: boolean
+}
 
 interface MonthTotals {
   openingBalance: number
@@ -52,57 +60,80 @@ function PctCell({ plan, fact, isExpense }: { plan: number; fact: number; isExpe
 
 function PlanCell({
   value,
-  categoryId,
-  year,
-  month,
-  editing,
-  onStartEdit,
-  onChangeEdit,
-  onCommit,
+  onClick,
 }: {
   value: number
-  categoryId: string
-  year: number
-  month: number
-  editing: EditState | null
-  onStartEdit: (e: EditState) => void
-  onChangeEdit: (v: string) => void
-  onCommit: () => void
+  onClick: () => void
 }) {
+  return (
+    <td
+      className="px-2 py-2 text-right text-xs text-gray-500 dark:text-gray-400 cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-900/20 hover:text-indigo-700 dark:hover:text-indigo-400 select-none"
+      title="Click to set plan"
+      onClick={onClick}
+    >
+      {value === 0 ? <span className="text-gray-300 dark:text-gray-600">+</span> : fmt(value)}
+    </td>
+  )
+}
+
+function PlanModal({
+  state,
+  onClose,
+  onSave,
+}: {
+  state: ModalState
+  onClose: () => void
+  onSave: (value: string) => void
+}) {
+  const [value, setValue] = useState(state.value)
   const inputRef = useRef<HTMLInputElement>(null)
-  const isEditing =
-    editing?.categoryId === categoryId && editing?.year === year && editing?.month === month
 
   useEffect(() => {
-    if (isEditing) inputRef.current?.select()
-  }, [isEditing])
+    inputRef.current?.select()
+  }, [])
 
-  if (isEditing) {
-    return (
-      <td className="px-1 py-1">
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    onSave(value)
+  }
+
+  return (
+    <Modal title={state.categoryName} onClose={onClose}>
+      <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+        {MONTH_NAMES[state.month - 1]} {state.year}
+      </p>
+      <form onSubmit={handleSubmit}>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Plan amount
+        </label>
         <input
           ref={inputRef}
           type="number"
           min="0"
           step="0.01"
-          value={editing!.value}
-          onChange={e => onChangeEdit(e.target.value)}
-          onBlur={onCommit}
-          onKeyDown={e => { if (e.key === 'Enter') onCommit(); if (e.key === 'Escape') onCommit() }}
-          className="w-20 text-right text-xs px-1 py-0.5 rounded border border-indigo-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          value={value}
+          onChange={e => setValue(e.target.value)}
+          className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-5"
+          placeholder="0.00"
+          autoFocus
         />
-      </td>
-    )
-  }
-
-  return (
-    <td
-      className="px-2 py-2 text-right text-xs text-gray-500 dark:text-gray-400 cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-900/20 hover:text-indigo-700 dark:hover:text-indigo-400 select-none"
-      title="Click to set plan"
-      onClick={() => onStartEdit({ categoryId, year, month, value: value === 0 ? '' : value.toFixed(2) })}
-    >
-      {value === 0 ? <span className="text-gray-300 dark:text-gray-600">+</span> : fmt(value)}
-    </td>
+        <div className="flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="px-4 py-2 text-sm rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium transition-colors"
+          >
+            Save
+          </button>
+        </div>
+      </form>
+    </Modal>
   )
 }
 
@@ -112,7 +143,7 @@ export function PlanFactPage() {
   const [selectedMonths, setSelectedMonths] = useState<number[]>([CURRENT_MONTH])
   const [data, setData] = useState<PlanFactSummaryResponse | null>(null)
   const [loading, setLoading] = useState(false)
-  const [editing, setEditing] = useState<EditState | null>(null)
+  const [modal, setModal] = useState<ModalState | null>(null)
   const [hideEmpty, setHideEmpty] = useState(false)
 
   const orderedMonths = [...selectedMonths].sort((a, b) => a - b)
@@ -134,16 +165,16 @@ export function PlanFactPage() {
       prev.includes(m) ? (prev.length > 1 ? prev.filter(x => x !== m) : prev) : [...prev, m]
     )
 
-  const handleStartEdit = (e: EditState) => setEditing(e)
-  const handleChangeEdit = (v: string) => setEditing(prev => prev ? { ...prev, value: v } : prev)
+  const openModal = (categoryId: string, categoryName: string, year: number, month: number, currentValue: number, isExpense: boolean) => {
+    setModal({ categoryId, categoryName, year, month, value: currentValue === 0 ? '' : currentValue.toFixed(2), isExpense })
+  }
 
-  const handleCommit = async () => {
-    if (!editing) return
-    const amount = parseFloat(editing.value) || 0
-    const { categoryId, year: y, month: m } = editing
-    setEditing(null)
+  const handleSave = async (rawValue: string) => {
+    if (!modal) return
+    const amount = parseFloat(rawValue) || 0
+    const { categoryId, year: y, month: m } = modal
+    setModal(null)
 
-    // Optimistic update
     setData(prev => {
       if (!prev) return prev
       return {
@@ -173,7 +204,6 @@ export function PlanFactPage() {
 
   const getMonthData = (month: number) => data?.months.find(m => m.month === month)
 
-  // Compute combined totals across all selected months
   const combined = (() => {
     if (!data || orderedMonths.length === 0) return null
     const allMonths = orderedMonths.map(m => getMonthData(m)).filter(Boolean) as PlanFactMonthData[]
@@ -216,7 +246,6 @@ export function PlanFactPage() {
     return isExpense ? md?.expenseCategories.find(c => c.categoryId === id) : md?.incomeCategories.find(c => c.categoryId === id)
   }
 
-  // Collect all income/expense category IDs in display order from data
   const allIncomeIds: string[] = data?.months[0]?.incomeCategories.map(c => c.categoryId) ?? []
   const allExpenseIds: string[] = data?.months[0]?.expenseCategories.map(c => c.categoryId) ?? []
 
@@ -380,7 +409,7 @@ export function PlanFactPage() {
                     const fact = c?.fact ?? 0
                     return (
                       <>
-                        <PlanCell key={`${m}-${id}-plan`} value={plan} categoryId={id} year={year} month={m} editing={editing} onStartEdit={handleStartEdit} onChangeEdit={handleChangeEdit} onCommit={handleCommit} />
+                        <PlanCell key={`${m}-${id}-plan`} value={plan} onClick={() => openModal(id, getIncomeName(id), year, m, plan, false)} />
                         <td key={`${m}-${id}-fact`} className="px-2 py-2 text-right text-xs font-mono text-gray-800 dark:text-gray-200">{fact > 0 ? fmt(fact) : <span className="text-gray-300 dark:text-gray-600">—</span>}</td>
                         <PctCell key={`${m}-${id}-pct`} plan={plan} fact={fact} />
                       </>
@@ -446,7 +475,7 @@ export function PlanFactPage() {
                     const fact = c?.fact ?? 0
                     return (
                       <>
-                        <PlanCell key={`${m}-${id}-plan`} value={plan} categoryId={id} year={year} month={m} editing={editing} onStartEdit={handleStartEdit} onChangeEdit={handleChangeEdit} onCommit={handleCommit} />
+                        <PlanCell key={`${m}-${id}-plan`} value={plan} onClick={() => openModal(id, getExpenseName(id), year, m, plan, true)} />
                         <td key={`${m}-${id}-fact`} className="px-2 py-2 text-right text-xs font-mono text-gray-800 dark:text-gray-200">{fact > 0 ? fmt(fact) : <span className="text-gray-300 dark:text-gray-600">—</span>}</td>
                         <PctCell key={`${m}-${id}-pct`} plan={plan} fact={fact} isExpense />
                       </>
@@ -539,6 +568,14 @@ export function PlanFactPage() {
             </tbody>
           </table>
         </div>
+      )}
+
+      {modal && (
+        <PlanModal
+          state={modal}
+          onClose={() => setModal(null)}
+          onSave={handleSave}
+        />
       )}
     </div>
   )
