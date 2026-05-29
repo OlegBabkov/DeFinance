@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { usePersistedState } from '../hooks/usePersistedState'
 import { useNotify } from '../NotificationContext'
 import { planFactApi, type PlanFactCategoryRow, type PlanFactMonthData, type PlanFactSummaryResponse } from '../api/planFact'
 import { Spinner } from '../components/Spinner'
@@ -106,7 +107,7 @@ function PlanModal({
 
   const addRow = () => setRows(prev => [...prev, newRow()])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.SyntheticEvent) => {
     e.preventDefault()
     onSave(total.toString())
   }
@@ -198,8 +199,8 @@ function PlanModal({
 
 export function PlanFactPage() {
   const notify = useNotify()
-  const [year, setYear] = useState(CURRENT_YEAR)
-  const [selectedMonths, setSelectedMonths] = useState<number[]>([CURRENT_MONTH])
+  const [year, setYear] = usePersistedState('planfact:year', CURRENT_YEAR)
+  const [selectedMonths, setSelectedMonths] = usePersistedState<number[]>('planfact:months', [CURRENT_MONTH])
   const [data, setData] = useState<PlanFactSummaryResponse | null>(null)
   const [loading, setLoading] = useState(false)
   const [modal, setModal] = useState<ModalState | null>(null)
