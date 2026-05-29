@@ -1,4 +1,6 @@
 using System.Text;
+using DeFinance.Api.BackgroundServices;
+using DeFinance.Api.Hubs;
 using DeFinance.Api.Observability;
 using DeFinance.Application;
 using DeFinance.Infrastructure;
@@ -34,8 +36,20 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSection["Key"]!)),
             ClockSkew = TimeSpan.Zero,
         };
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = ctx =>
+            {
+                var token = ctx.Request.Query["access_token"].ToString();
+                if (!string.IsNullOrEmpty(token) && ctx.Request.Path.StartsWithSegments("/hubs"))
+                    ctx.Token = token;
+                return Task.CompletedTask;
+            }
+        };
     });
 builder.Services.AddAuthorization();
+builder.Services.AddSignalR();
+builder.Services.AddHostedService<TransactionEventSubscriber>();
 builder.Services.AddOpenTelemetryObservability(builder.Configuration);
 builder.Services.AddObservabilityHealthChecks(builder.Configuration);
 builder.Services.AddControllers(o => o.Filters.Add(new Microsoft.AspNetCore.Mvc.Authorization.AuthorizeFilter()))
@@ -95,6 +109,7 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHub<NotificationsHub>("/hubs/notifications");
 app.MapObservabilityEndpoints();
 
 app.Run();

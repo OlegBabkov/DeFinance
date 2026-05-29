@@ -1,3 +1,4 @@
+using DeFinance.Application.Abstractions;
 using DeFinance.Application.Abstractions.Repositories;
 using DeFinance.Application.Common;
 using DeFinance.Application.DTOs.Category;
@@ -18,11 +19,15 @@ public record GetAllCategoriesQuery(
     SortDirection SortDirection = SortDirection.Asc
 ) : IRequest<PagedResult<CategoryResponse>>;
 
-public class GetAllCategoriesQueryHandler(ICategoryRepository repository)
+public class GetAllCategoriesQueryHandler(ICategoryRepository repository, ICacheService cache)
     : IRequestHandler<GetAllCategoriesQuery, PagedResult<CategoryResponse>>
 {
     public async Task<PagedResult<CategoryResponse>> Handle(GetAllCategoriesQuery request, CancellationToken cancellationToken)
     {
+        var key = $"cat:s={request.Search}&a={request.IsActive}&t={request.Type}&ob={request.PaymentObligation}&p={request.Page}&ps={request.PageSize}&sb={request.SortBy}&sd={request.SortDirection}";
+        var cached = await cache.GetAsync<PagedResult<CategoryResponse>>(key, cancellationToken);
+        if (cached is not null) return cached;
+
         var (items, totalCount) = await repository.GetAllAsync(
             request.Search, request.IsActive,
             request.Type, request.PaymentObligation,
@@ -30,7 +35,9 @@ public class GetAllCategoriesQueryHandler(ICategoryRepository repository)
             request.Page, request.PageSize,
             cancellationToken);
 
-        return new PagedResult<CategoryResponse>(items.ToResponse(), totalCount, request.Page, request.PageSize);
+        var result = new PagedResult<CategoryResponse>(items.ToResponse(), totalCount, request.Page, request.PageSize);
+        await cache.SetAsync(key, result, TimeSpan.FromMinutes(5), cancellationToken);
+        return result;
     }
 }
 

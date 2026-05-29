@@ -1,3 +1,4 @@
+using DeFinance.Application.Abstractions;
 using DeFinance.Application.Abstractions.Repositories;
 using DeFinance.Application.Common;
 using DeFinance.Domain.Entities;
@@ -5,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DeFinance.Infrastructure.Persistence.Repositories;
 
-public class AccountRepository(DeFinanceDbContext dbContext) : IAccountRepository
+public class AccountRepository(DeFinanceDbContext dbContext, ICacheService cache) : IAccountRepository
 {
     public async Task<Account?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
         await dbContext.Accounts
@@ -60,6 +61,10 @@ public class AccountRepository(DeFinanceDbContext dbContext) : IAccountRepositor
     public async Task AddAsync(Account account, CancellationToken cancellationToken = default) =>
         await dbContext.Accounts.AddAsync(account, cancellationToken);
 
-    public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) =>
-        dbContext.SaveChangesAsync(cancellationToken);
+    public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        var result = await dbContext.SaveChangesAsync(cancellationToken);
+        await cache.RemoveByPrefixAsync("acc:", cancellationToken);
+        return result;
+    }
 }

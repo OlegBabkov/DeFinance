@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useNotify } from '../NotificationContext'
 import { useMainCurrency } from '../MainCurrencyContext'
 import { transactionsApi, type Transaction, type TransactionListResult, type CreateTransactionRequest } from '../api/transactions'
@@ -16,6 +16,7 @@ import { TransactionPanel } from '../components/TransactionPanel'
 import { CalculatorModal } from '../components/CalculatorModal'
 import { useFavorites, sortByFavorites } from '../hooks/useFavorites'
 import { usePersistedState } from '../hooks/usePersistedState'
+import { useTransactionEvents } from '../hooks/useTransactionEvents'
 
 const filterCls =
   'px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500'
@@ -134,7 +135,8 @@ export function TransactionsPage() {
   const [formError, setFormError] = useState<string | null>(null)
   const [showCalculator, setShowCalculator] = useState(false)
 
-  const refetch = () => setRefreshKey(k => k + 1)
+  const refetch = useCallback(() => setRefreshKey(k => k + 1), [])
+  useTransactionEvents(refetch)
 
   // load filter dropdowns once
   useEffect(() => {

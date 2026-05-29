@@ -6,6 +6,7 @@ using DeFinance.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using StackExchange.Redis;
 
 namespace DeFinance.Infrastructure;
 
@@ -15,6 +16,12 @@ public static class InfrastructureServiceExtensions
     {
         services.AddDbContext<DeFinanceDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
+
+        var redisConnectionString = configuration["Redis:ConnectionString"]!;
+        services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(redisConnectionString));
+        services.AddStackExchangeRedisCache(opts => opts.Configuration = redisConnectionString);
+        services.AddSingleton<ICacheService, RedisCacheService>();
+        services.AddSingleton<IEventPublisher, RedisEventPublisher>();
 
         services.AddScoped<ICurrencyRepository, CurrencyRepository>();
         services.AddScoped<IAccountRepository, AccountRepository>();

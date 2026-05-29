@@ -121,6 +121,17 @@ services:
     depends_on:
       - apm-server
 
+  redis:
+    image: redis:7-alpine
+    container_name: definance-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   api:
     build:
       context: ..
@@ -129,6 +140,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__DefaultConnection: "Host=postgres;Database=definance;Username=definance;Password=definance_pass"
+      Redis__ConnectionString: "redis:6379"
       Observability__ElasticsearchUrl: "http://elasticsearch:9200"
       Observability__ElasticsearchUsername: "elastic"
       Observability__ElasticsearchPassword: "definance_elastic"
@@ -137,6 +149,8 @@ services:
       - "8080:8080"
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
       elasticsearch:
         condition: service_healthy

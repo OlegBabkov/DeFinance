@@ -1,3 +1,4 @@
+using DeFinance.Application.Abstractions;
 using DeFinance.Application.Abstractions.Repositories;
 using DeFinance.Application.Common;
 using DeFinance.Domain.Entities;
@@ -5,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DeFinance.Infrastructure.Persistence.Repositories;
 
-public class PaymentStatusRepository(DeFinanceDbContext dbContext) : IPaymentStatusRepository
+public class PaymentStatusRepository(DeFinanceDbContext dbContext, ICacheService cache) : IPaymentStatusRepository
 {
     public async Task<PaymentStatus?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
         await dbContext.PaymentStatuses.FindAsync([id], cancellationToken);
@@ -49,6 +50,10 @@ public class PaymentStatusRepository(DeFinanceDbContext dbContext) : IPaymentSta
     public async Task AddAsync(PaymentStatus paymentStatus, CancellationToken cancellationToken = default) =>
         await dbContext.PaymentStatuses.AddAsync(paymentStatus, cancellationToken);
 
-    public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) =>
-        dbContext.SaveChangesAsync(cancellationToken);
+    public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        var result = await dbContext.SaveChangesAsync(cancellationToken);
+        await cache.RemoveByPrefixAsync("ps:", cancellationToken);
+        return result;
+    }
 }

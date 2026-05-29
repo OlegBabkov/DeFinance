@@ -1,3 +1,4 @@
+using DeFinance.Application.Abstractions;
 using DeFinance.Application.Abstractions.Repositories;
 using DeFinance.Application.Common;
 using DeFinance.Application.DTOs.Counterparty;
@@ -17,11 +18,15 @@ public record GetAllCounterpartiesQuery(
     SortDirection SortDirection = SortDirection.Asc
 ) : IRequest<PagedResult<CounterpartyResponse>>;
 
-public class GetAllCounterpartiesQueryHandler(ICounterpartyRepository repository)
+public class GetAllCounterpartiesQueryHandler(ICounterpartyRepository repository, ICacheService cache)
     : IRequestHandler<GetAllCounterpartiesQuery, PagedResult<CounterpartyResponse>>
 {
     public async Task<PagedResult<CounterpartyResponse>> Handle(GetAllCounterpartiesQuery request, CancellationToken cancellationToken)
     {
+        var key = $"cp:s={request.Search}&a={request.IsActive}&t={request.Type}&p={request.Page}&ps={request.PageSize}&sb={request.SortBy}&sd={request.SortDirection}";
+        var cached = await cache.GetAsync<PagedResult<CounterpartyResponse>>(key, cancellationToken);
+        if (cached is not null) return cached;
+
         var (items, totalCount) = await repository.GetAllAsync(
             request.Search, request.IsActive,
             request.Type,
@@ -29,7 +34,9 @@ public class GetAllCounterpartiesQueryHandler(ICounterpartyRepository repository
             request.Page, request.PageSize,
             cancellationToken);
 
-        return new PagedResult<CounterpartyResponse>(items.ToResponse(), totalCount, request.Page, request.PageSize);
+        var result = new PagedResult<CounterpartyResponse>(items.ToResponse(), totalCount, request.Page, request.PageSize);
+        await cache.SetAsync(key, result, TimeSpan.FromMinutes(5), cancellationToken);
+        return result;
     }
 }
 

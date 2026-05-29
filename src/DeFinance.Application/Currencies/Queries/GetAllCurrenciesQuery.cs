@@ -1,3 +1,4 @@
+using DeFinance.Application.Abstractions;
 using DeFinance.Application.Abstractions.Repositories;
 using DeFinance.Application.Common;
 using DeFinance.Application.DTOs.Currency;
@@ -15,18 +16,24 @@ public record GetAllCurrenciesQuery(
     SortDirection SortDirection = SortDirection.Asc
 ) : IRequest<PagedResult<CurrencyResponse>>;
 
-public class GetAllCurrenciesQueryHandler(ICurrencyRepository repository)
+public class GetAllCurrenciesQueryHandler(ICurrencyRepository repository, ICacheService cache)
     : IRequestHandler<GetAllCurrenciesQuery, PagedResult<CurrencyResponse>>
 {
     public async Task<PagedResult<CurrencyResponse>> Handle(GetAllCurrenciesQuery request, CancellationToken cancellationToken)
     {
+        var key = $"cur:s={request.Search}&a={request.IsActive}&p={request.Page}&ps={request.PageSize}&sb={request.SortBy}&sd={request.SortDirection}";
+        var cached = await cache.GetAsync<PagedResult<CurrencyResponse>>(key, cancellationToken);
+        if (cached is not null) return cached;
+
         var (items, totalCount) = await repository.GetAllAsync(
             request.Search, request.IsActive,
             request.SortBy, request.SortDirection,
             request.Page, request.PageSize,
             cancellationToken);
 
-        return new PagedResult<CurrencyResponse>(items.ToResponse(), totalCount, request.Page, request.PageSize);
+        var result = new PagedResult<CurrencyResponse>(items.ToResponse(), totalCount, request.Page, request.PageSize);
+        await cache.SetAsync(key, result, TimeSpan.FromMinutes(10), cancellationToken);
+        return result;
     }
 }
 
