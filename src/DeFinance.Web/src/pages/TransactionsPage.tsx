@@ -11,8 +11,9 @@ import { type PageSize } from '../api/common'
 import { Pagination } from '../components/Pagination'
 import { SortableHeader } from '../components/SortableHeader'
 import { Modal } from '../components/Modal'
-import { IconButton, InfoIcon, PencilIcon, TrashIcon } from '../components/IconButton'
+import { IconButton, InfoIcon, PencilIcon, TrashIcon, CalcIcon } from '../components/IconButton'
 import { TransactionPanel } from '../components/TransactionPanel'
+import { CalculatorModal } from '../components/CalculatorModal'
 import { useFavorites, sortByFavorites } from '../hooks/useFavorites'
 import { usePersistedState } from '../hooks/usePersistedState'
 
@@ -131,6 +132,7 @@ export function TransactionsPage() {
   const [form, setForm] = useState<FormState>(emptyForm({}))
   const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
+  const [showCalculator, setShowCalculator] = useState(false)
 
   const refetch = () => setRefreshKey(k => k + 1)
 
@@ -410,7 +412,27 @@ export function TransactionsPage() {
               </div>
               <div>
                 <label className={labelCls}>Sum</label>
-                <input required type="number" min="0.01" step="0.01" value={form.sum} onChange={setField('sum')} className={inputCls} placeholder="0.00" />
+                <div className="relative">
+                  <input
+                    required
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    value={form.sum}
+                    onChange={setField('sum')}
+                    className={`${inputCls} pr-8 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
+                    placeholder="0.00"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCalculator(true)}
+                    tabIndex={-1}
+                    title="Open calculator"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                  >
+                    <CalcIcon />
+                  </button>
+                </div>
               </div>
               <div>
                 <label className={labelCls}>Exchange Rate</label>
@@ -472,6 +494,13 @@ export function TransactionsPage() {
             </div>
           </form>
         </Modal>
+      )}
+
+      {showCalculator && (
+        <CalculatorModal
+          onApply={value => setForm(f => ({ ...f, sum: value }))}
+          onClose={() => setShowCalculator(false)}
+        />
       )}
 
       {/* Table */}
