@@ -47,14 +47,14 @@ export function Sidebar() {
 
   return (
     <aside
-      className={`${collapsed ? 'w-14' : 'w-56'} shrink-0 min-h-screen bg-gray-900 dark:bg-gray-950 text-white flex flex-col transition-[width] duration-200`}
+      className={`${collapsed ? 'w-14' : 'w-56'} shrink-0 min-h-screen bg-gray-600 dark:bg-gray-950 text-white flex flex-col transition-[width] duration-200`}
     >
       {/* Header */}
-      <div className="flex items-center border-b border-gray-700 dark:border-gray-800 h-[62px] px-3 gap-2">
+      <div className="flex items-center border-b border-gray-500 dark:border-gray-800 h-[62px] px-3 gap-2">
         {collapsed ? (
           <button
             onClick={toggleCollapsed}
-            className="flex items-center justify-center w-full py-1 text-gray-400 hover:text-white transition-colors rounded hover:bg-gray-800"
+            className="flex items-center justify-center w-full py-1 text-gray-300 hover:text-white transition-colors rounded hover:bg-gray-500 dark:hover:bg-gray-800"
             title="Expand sidebar"
           >
             <ChevronRight />
@@ -65,7 +65,7 @@ export function Sidebar() {
             <span className="flex-1 text-xl font-bold tracking-tight whitespace-nowrap overflow-hidden">DeFinance</span>
             <button
               onClick={toggleCollapsed}
-              className="flex-shrink-0 p-1.5 rounded text-gray-400 hover:text-white hover:bg-gray-800 transition-colors"
+              className="flex-shrink-0 p-1.5 rounded text-gray-300 hover:text-white hover:bg-gray-500 dark:hover:bg-gray-800 transition-colors"
               title="Collapse sidebar"
             >
               <ChevronLeft />
@@ -85,7 +85,7 @@ export function Sidebar() {
                 `flex items-center gap-3 py-3 text-sm transition-colors ${collapsed ? 'justify-center px-0' : 'px-6'} ${
                   isActive
                     ? 'bg-indigo-600 text-white'
-                    : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                    : 'text-gray-200 hover:bg-gray-500 dark:hover:bg-gray-800 hover:text-white'
                 }`
               }
             >
@@ -98,11 +98,11 @@ export function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="border-t border-gray-700 dark:border-gray-800 px-3 py-4">
+      <div className="border-t border-gray-500 dark:border-gray-800 px-3 py-4">
         <div className="relative group">
           <button
             onClick={toggle}
-            className={`flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors w-full ${collapsed ? 'justify-center' : ''}`}
+            className={`flex items-center gap-2 text-sm text-gray-200 hover:text-white transition-colors w-full ${collapsed ? 'justify-center' : ''}`}
           >
             <span className="flex-shrink-0">{dark ? '☀️' : '🌙'}</span>
             {!collapsed && <span>{dark ? 'Light mode' : 'Dark mode'}</span>}
