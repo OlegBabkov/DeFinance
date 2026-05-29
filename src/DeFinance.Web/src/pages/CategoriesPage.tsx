@@ -10,6 +10,7 @@ import {
 import { type PagedResult, type PageSize, type SortDirection } from '../api/common'
 import { Modal } from '../components/Modal'
 import { IconButton, PencilIcon, CheckCircleIcon, BanIcon, StarIcon, StarFilledIcon, InfoIcon } from '../components/IconButton'
+import { EmojiPicker } from '../components/EmojiPicker'
 import { Pagination } from '../components/Pagination'
 import { SortableHeader } from '../components/SortableHeader'
 import { useFavorites } from '../hooks/useFavorites'
@@ -247,7 +248,7 @@ export function CategoriesPage() {
             <div className="flex gap-4">
               <div className="flex-1">
                 <label className={labelCls}>Icon (emoji)</label>
-                <input maxLength={50} value={formIcon} onChange={e => setFormIcon(e.target.value)} className={inputCls} placeholder="🍔" />
+                <EmojiPicker value={formIcon} onChange={setFormIcon} />
               </div>
               <div>
                 <label className={labelCls}>Color</label>
