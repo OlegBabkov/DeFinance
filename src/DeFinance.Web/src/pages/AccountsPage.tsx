@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { usePersistedState } from '../hooks/usePersistedState'
 import { useNotify } from '../NotificationContext'
 import { accountsApi, type Account, type AccountType } from '../api/accounts'
 import { currenciesApi, type Currency } from '../api/currencies'
@@ -36,15 +37,15 @@ export function AccountsPage() {
   const [formBalance, setFormBalance] = useState('0')
   const [formCurrencyId, setFormCurrencyId] = useState('')
 
-  // filters & pagination
-  const [search, setSearch] = useState('')
+  // filters & pagination (persisted)
+  const [search, setSearch] = usePersistedState('acc_filter_search', '')
   const [debouncedSearch, setDebouncedSearch] = useState('')
-  const [isActiveFilter, setIsActiveFilter] = useState('')
-  const [typeFilter, setTypeFilter] = useState('')
+  const [isActiveFilter, setIsActiveFilter] = usePersistedState('acc_filter_isActive', '')
+  const [typeFilter, setTypeFilter] = usePersistedState('acc_filter_type', '')
   const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState<PageSize>(100)
-  const [sortBy, setSortBy] = useState<string | null>(null)
-  const [sortDirection, setSortDirection] = useState<SortDirection>('Asc')
+  const [pageSize, setPageSize] = usePersistedState<PageSize>('acc_filter_pageSize', 100)
+  const [sortBy, setSortBy] = usePersistedState<string | null>('acc_filter_sortBy', null)
+  const [sortDirection, setSortDirection] = usePersistedState<SortDirection>('acc_filter_sortDirection', 'Asc')
   const [refreshKey, setRefreshKey] = useState(0)
 
   // load currencies for dropdown once

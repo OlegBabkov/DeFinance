@@ -10,6 +10,7 @@ import {
 } from '../api/mandatoryPayments'
 import { accountsApi, type Account } from '../api/accounts'
 import { useFavorites, sortByFavorites } from '../hooks/useFavorites'
+import { usePersistedState } from '../hooks/usePersistedState'
 import { categoriesApi, type Category, PAYMENT_OBLIGATION_LABELS } from '../api/categories'
 import { currenciesApi, type Currency } from '../api/currencies'
 import { paymentStatusesApi, type PaymentStatus } from '../api/paymentStatuses'
@@ -70,18 +71,18 @@ export function MandatoryPage() {
   const [formDay, setFormDay] = useState('1')
   const [formNotes, setFormNotes] = useState('')
 
-  // filters
-  const [search, setSearch] = useState('')
+  // filters (persisted)
+  const [search, setSearch] = usePersistedState('mp_filter_search', '')
   const [debouncedSearch, setDebouncedSearch] = useState('')
-  const [isActiveFilter, setIsActiveFilter] = useState('')
-  const [accountFilter, setAccountFilter] = useState('')
-  const [categoryFilter, setCategoryFilter] = useState('')
-  const [paymentStatusFilter, setPaymentStatusFilter] = useState('')
-  const [frequencyFilter, setFrequencyFilter] = useState('')
+  const [isActiveFilter, setIsActiveFilter] = usePersistedState('mp_filter_isActive', '')
+  const [accountFilter, setAccountFilter] = usePersistedState('mp_filter_account', '')
+  const [categoryFilter, setCategoryFilter] = usePersistedState('mp_filter_category', '')
+  const [paymentStatusFilter, setPaymentStatusFilter] = usePersistedState('mp_filter_paymentStatus', '')
+  const [frequencyFilter, setFrequencyFilter] = usePersistedState('mp_filter_frequency', '')
   const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState<PageSize>(25)
-  const [sortBy, setSortBy] = useState<string | null>(null)
-  const [sortDirection, setSortDirection] = useState<SortDirection>('Asc')
+  const [pageSize, setPageSize] = usePersistedState<PageSize>('mp_filter_pageSize', 25)
+  const [sortBy, setSortBy] = usePersistedState<string | null>('mp_filter_sortBy', null)
+  const [sortDirection, setSortDirection] = usePersistedState<SortDirection>('mp_filter_sortDirection', 'Asc')
   const [refreshKey, setRefreshKey] = useState(0)
   const [restBalance, setRestBalance] = useState<{ accountName: string; balance: number; symbol: string; code: string } | null>(null)
   const [confirmReset, setConfirmReset] = useState(false)

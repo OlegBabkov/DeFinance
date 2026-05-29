@@ -14,6 +14,7 @@ import { Modal } from '../components/Modal'
 import { IconButton, InfoIcon, PencilIcon, TrashIcon } from '../components/IconButton'
 import { TransactionPanel } from '../components/TransactionPanel'
 import { useFavorites, sortByFavorites } from '../hooks/useFavorites'
+import { usePersistedState } from '../hooks/usePersistedState'
 
 const filterCls =
   'px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500'
@@ -105,22 +106,22 @@ export function TransactionsPage() {
   const [error, setError] = useState<string | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
 
-  // filters
-  const [dateFrom, setDateFrom] = useState('')
-  const [dateTo, setDateTo] = useState('')
-  const [accountId, setAccountId] = useState('')
-  const [categoryId, setCategoryId] = useState('')
-  const [counterpartyId, setCounterpartyId] = useState('')
-  const [paymentStatusId, setPaymentStatusId] = useState('')
-  const [inCurrencyId, setInCurrencyId] = useState('')
-  const [notes, setNotes] = useState('')
+  // filters (persisted)
+  const [dateFrom, setDateFrom] = usePersistedState('tx_filter_dateFrom', '')
+  const [dateTo, setDateTo] = usePersistedState('tx_filter_dateTo', '')
+  const [accountId, setAccountId] = usePersistedState('tx_filter_accountId', '')
+  const [categoryId, setCategoryId] = usePersistedState('tx_filter_categoryId', '')
+  const [counterpartyId, setCounterpartyId] = usePersistedState('tx_filter_counterpartyId', '')
+  const [paymentStatusId, setPaymentStatusId] = usePersistedState('tx_filter_paymentStatusId', '')
+  const [inCurrencyId, setInCurrencyId] = usePersistedState('tx_filter_inCurrencyId', '')
+  const [notes, setNotes] = usePersistedState('tx_filter_notes', '')
   const [debouncedNotes, setDebouncedNotes] = useState('')
 
-  // pagination & sort
+  // pagination & sort (persisted)
   const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState<PageSize>(25)
-  const [sortBy, setSortBy] = useState<string | null>(null)
-  const [sortDirection, setSortDirection] = useState<'Asc' | 'Desc'>('Desc')
+  const [pageSize, setPageSize] = usePersistedState<PageSize>('tx_filter_pageSize', 25)
+  const [sortBy, setSortBy] = usePersistedState<string | null>('tx_filter_sortBy', null)
+  const [sortDirection, setSortDirection] = usePersistedState<'Asc' | 'Desc'>('tx_filter_sortDirection', 'Desc')
 
   // side panel
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null)
