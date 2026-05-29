@@ -95,12 +95,23 @@ export function DashboardPage() {
     twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12)
     const dateFrom = twelveMonthsAgo.toISOString().split('T')[0]
 
+    const fetchAllTransactions = async (df: string): Promise<Transaction[]> => {
+      const first = await transactionsApi.getAll({ dateFrom: df, pageSize: 500, page: 1 })
+      if (!first.hasNextPage) return first.items
+      const rest = await Promise.all(
+        Array.from({ length: first.totalPages - 1 }, (_, i) =>
+          transactionsApi.getAll({ dateFrom: df, pageSize: 500, page: i + 2 })
+        )
+      )
+      return [...first.items, ...rest.flatMap(r => r.items)]
+    }
+
     Promise.all([
       accountsApi.getAll({ isActive: true, pageSize: 500 }),
-      transactionsApi.getAll({ dateFrom, pageSize: 500 }),
+      fetchAllTransactions(dateFrom),
     ]).then(([accs, txns]) => {
       setAccounts(accs.items)
-      setTransactions(txns.items)
+      setTransactions(txns)
     }).catch(() => setError('Failed to load dashboard data.'))
       .finally(() => setLoading(false))
   }, [])
