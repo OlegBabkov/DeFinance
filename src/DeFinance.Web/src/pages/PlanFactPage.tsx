@@ -19,6 +19,9 @@ const fmt = (n: number) =>
 const pct = (plan: number, fact: number) =>
   plan === 0 ? null : Math.round((fact / plan) * 100)
 
+const planColCls = 'bg-indigo-50/80 dark:bg-indigo-900/25'
+const factColCls = 'bg-stone-100/80 dark:bg-stone-700/30'
+
 interface ModalState {
   categoryId: string
   categoryName: string
@@ -86,7 +89,7 @@ function PlanCell({
 }) {
   return (
     <td
-      className="px-2 py-2 text-right text-xs text-indigo-600 dark:text-indigo-400 cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-900/20 hover:text-indigo-800 dark:hover:text-indigo-300 select-none font-mono"
+      className={`px-2 py-2 text-right text-xs text-indigo-600 dark:text-indigo-400 cursor-pointer ${planColCls} hover:brightness-95 dark:hover:brightness-110 hover:text-indigo-800 dark:hover:text-indigo-300 select-none font-mono`}
       title="Click to set plan"
       onClick={onClick}
     >
@@ -453,13 +456,13 @@ export function PlanFactPage() {
                 )}
               </tr>
               {/* Row 2: Plan / Fact / % sub-headers */}
-              <tr className="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600 text-xs text-gray-400 dark:text-gray-500">
+              <tr className="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600 text-xs">
                 <th className="sticky left-0 bg-gray-50 dark:bg-gray-700 z-20 border-r border-gray-200 dark:border-gray-600" />
                 {Array.from({ length: colGroups }).map((_, gi) => (
                   <>
-                    <th key={`${gi}-plan`} className="px-2 py-1 text-right font-medium border-l border-gray-100 dark:border-gray-700 w-24">Plan</th>
-                    <th key={`${gi}-fact`} className="px-2 py-1 text-right font-medium w-24">Fact</th>
-                    <th key={`${gi}-pct`}  className="px-2 py-1 text-right font-medium w-16 cursor-pointer select-none hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors" onClick={() => setShowDiff(d => !d)} title="Toggle % / difference">{showDiff ? 'Diff' : '%'}</th>
+                    <th key={`${gi}-plan`} className={`px-2 py-1 text-right font-semibold border-l border-gray-100 dark:border-gray-700 w-24 text-indigo-600 dark:text-indigo-400 ${planColCls}`}>Plan</th>
+                    <th key={`${gi}-fact`} className={`px-2 py-1 text-right font-semibold w-24 text-gray-500 dark:text-gray-400 ${factColCls}`}>Fact</th>
+                    <th key={`${gi}-pct`}  className="px-2 py-1 text-right font-medium w-16 text-gray-400 dark:text-gray-500 cursor-pointer select-none hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors" onClick={() => setShowDiff(d => !d)} title="Toggle % / difference">{showDiff ? 'Diff' : '%'}</th>
                   </>
                 ))}
               </tr>
@@ -475,16 +478,16 @@ export function PlanFactPage() {
                   const ob = getMonthData(m)?.openingBalance ?? 0
                   return (
                     <>
-                      <td key={`${m}-ob-plan`} className="px-2 py-2.5 text-right text-gray-400 text-xs border-l border-gray-100 dark:border-gray-700">—</td>
-                      <td key={`${m}-ob-fact`} className={`px-2 py-2.5 text-right text-xs font-mono ${signedColor(ob)}`}>{fmt(ob)}</td>
+                      <td key={`${m}-ob-plan`} className={`px-2 py-2.5 text-right text-gray-400 text-xs border-l border-gray-100 dark:border-gray-700 ${planColCls}`}>—</td>
+                      <td key={`${m}-ob-fact`} className={`px-2 py-2.5 text-right text-xs font-mono ${factColCls} ${signedColor(ob)}`}>{fmt(ob)}</td>
                       <td key={`${m}-ob-pct`}  className="px-2 py-2.5 text-center text-gray-400 text-xs">—</td>
                     </>
                   )
                 })}
                 {showTotal && combined && (
                   <>
-                    <td className="px-2 py-2.5 text-right text-gray-400 text-xs border-l border-gray-100 dark:border-gray-700">—</td>
-                    <td className={`px-2 py-2.5 text-right text-xs font-mono ${signedColor(combined.firstOpening)}`}>{fmt(combined.firstOpening)}</td>
+                    <td className={`px-2 py-2.5 text-right text-gray-400 text-xs border-l border-gray-100 dark:border-gray-700 ${planColCls}`}>—</td>
+                    <td className={`px-2 py-2.5 text-right text-xs font-mono ${factColCls} ${signedColor(combined.firstOpening)}`}>{fmt(combined.firstOpening)}</td>
                     <td className="px-2 py-2.5 text-center text-gray-400 text-xs">—</td>
                   </>
                 )}
@@ -508,7 +511,7 @@ export function PlanFactPage() {
                     return (
                       <>
                         <PlanCell key={`${m}-${id}-plan`} value={plan} onClick={() => openModal(id, getIncomeName(id), year, m, plan, false)} />
-                        <td key={`${m}-${id}-fact`} className="px-2 py-2 text-right text-xs font-mono text-teal-700 dark:text-teal-400">{fact > 0 ? fmt(fact) : <span className="text-gray-300 dark:text-gray-600">—</span>}</td>
+                        <td key={`${m}-${id}-fact`} className={`px-2 py-2 text-right text-xs font-mono text-gray-700 dark:text-gray-300 ${factColCls}`}>{fact > 0 ? fmt(fact) : <span className="text-gray-300 dark:text-gray-600">—</span>}</td>
                         <PctCell key={`${m}-${id}-pct`} plan={plan} fact={fact} showDiff={showDiff} />
                       </>
                     )
@@ -519,8 +522,8 @@ export function PlanFactPage() {
                     const f = ct?.fact ?? 0
                     return (
                       <>
-                        <td className="px-2 py-2 text-right text-xs font-mono border-l border-gray-100 dark:border-gray-700 text-indigo-600 dark:text-indigo-400">{p > 0 ? fmt(p) : '—'}</td>
-                        <td className="px-2 py-2 text-right text-xs font-mono text-teal-700 dark:text-teal-400">{f > 0 ? fmt(f) : <span className="text-gray-300 dark:text-gray-600">—</span>}</td>
+                        <td className={`px-2 py-2 text-right text-xs font-mono border-l border-gray-100 dark:border-gray-700 text-indigo-600 dark:text-indigo-400 ${planColCls}`}>{p > 0 ? fmt(p) : '—'}</td>
+                        <td className={`px-2 py-2 text-right text-xs font-mono text-gray-700 dark:text-gray-300 ${factColCls}`}>{f > 0 ? fmt(f) : <span className="text-gray-300 dark:text-gray-600">—</span>}</td>
                         <PctCell plan={p} fact={f} showDiff={showDiff} />
                       </>
                     )
@@ -537,8 +540,8 @@ export function PlanFactPage() {
                   const t = monthTotals(m)
                   return (
                     <>
-                      <td key={`${m}-ti-plan`} className="px-2 py-2 text-right text-xs font-mono border-l border-gray-100 dark:border-gray-700 text-indigo-600 dark:text-indigo-400">{t ? fmt(t.incomePlan) : '—'}</td>
-                      <td key={`${m}-ti-fact`} className="px-2 py-2 text-right text-xs font-mono text-emerald-700 dark:text-emerald-400">{t ? fmt(t.incomeFact) : '—'}</td>
+                      <td key={`${m}-ti-plan`} className={`px-2 py-2 text-right text-xs font-mono border-l border-gray-100 dark:border-gray-700 text-indigo-600 dark:text-indigo-400 ${planColCls}`}>{t ? fmt(t.incomePlan) : '—'}</td>
+                      <td key={`${m}-ti-fact`} className={`px-2 py-2 text-right text-xs font-mono text-emerald-700 dark:text-emerald-400 ${factColCls}`}>{t ? fmt(t.incomeFact) : '—'}</td>
                       <PctCell key={`${m}-ti-pct`} plan={t?.incomePlan ?? 0} fact={t?.incomeFact ?? 0} showDiff={showDiff} />
                     </>
                   )
@@ -548,8 +551,8 @@ export function PlanFactPage() {
                   const f = combined.categories.filter(c => !c.isExpense).reduce((s, c) => s + c.fact, 0)
                   return (
                     <>
-                      <td className="px-2 py-2 text-right text-xs font-mono border-l border-gray-100 dark:border-gray-700 text-indigo-600 dark:text-indigo-400">{fmt(p)}</td>
-                      <td className="px-2 py-2 text-right text-xs font-mono text-emerald-700 dark:text-emerald-400">{fmt(f)}</td>
+                      <td className={`px-2 py-2 text-right text-xs font-mono border-l border-gray-100 dark:border-gray-700 text-indigo-600 dark:text-indigo-400 ${planColCls}`}>{fmt(p)}</td>
+                      <td className={`px-2 py-2 text-right text-xs font-mono text-emerald-700 dark:text-emerald-400 ${factColCls}`}>{fmt(f)}</td>
                       <PctCell plan={p} fact={f} showDiff={showDiff} />
                     </>
                   )
@@ -574,7 +577,7 @@ export function PlanFactPage() {
                     return (
                       <>
                         <PlanCell key={`${m}-${id}-plan`} value={plan} onClick={() => openModal(id, getExpenseName(id), year, m, plan, true)} />
-                        <td key={`${m}-${id}-fact`} className="px-2 py-2 text-right text-xs font-mono text-teal-700 dark:text-teal-400">{fact > 0 ? fmt(fact) : <span className="text-gray-300 dark:text-gray-600">—</span>}</td>
+                        <td key={`${m}-${id}-fact`} className={`px-2 py-2 text-right text-xs font-mono text-gray-700 dark:text-gray-300 ${factColCls}`}>{fact > 0 ? fmt(fact) : <span className="text-gray-300 dark:text-gray-600">—</span>}</td>
                         <PctCell key={`${m}-${id}-pct`} plan={plan} fact={fact} isExpense showDiff={showDiff} />
                       </>
                     )
@@ -585,8 +588,8 @@ export function PlanFactPage() {
                     const f = ct?.fact ?? 0
                     return (
                       <>
-                        <td className="px-2 py-2 text-right text-xs font-mono border-l border-gray-100 dark:border-gray-700 text-indigo-600 dark:text-indigo-400">{p > 0 ? fmt(p) : '—'}</td>
-                        <td className="px-2 py-2 text-right text-xs font-mono text-teal-700 dark:text-teal-400">{f > 0 ? fmt(f) : <span className="text-gray-300 dark:text-gray-600">—</span>}</td>
+                        <td className={`px-2 py-2 text-right text-xs font-mono border-l border-gray-100 dark:border-gray-700 text-indigo-600 dark:text-indigo-400 ${planColCls}`}>{p > 0 ? fmt(p) : '—'}</td>
+                        <td className={`px-2 py-2 text-right text-xs font-mono text-gray-700 dark:text-gray-300 ${factColCls}`}>{f > 0 ? fmt(f) : <span className="text-gray-300 dark:text-gray-600">—</span>}</td>
                         <PctCell plan={p} fact={f} isExpense showDiff={showDiff} />
                       </>
                     )
@@ -603,8 +606,8 @@ export function PlanFactPage() {
                   const t = monthTotals(m)
                   return (
                     <>
-                      <td key={`${m}-tl-plan`} className="px-2 py-2 text-right text-xs font-mono border-l border-gray-100 dark:border-gray-700 text-indigo-600 dark:text-indigo-400">{t ? fmt(t.expensePlan) : '—'}</td>
-                      <td key={`${m}-tl-fact`} className="px-2 py-2 text-right text-xs font-mono text-red-600 dark:text-red-400">{t ? fmt(t.expenseFact) : '—'}</td>
+                      <td key={`${m}-tl-plan`} className={`px-2 py-2 text-right text-xs font-mono border-l border-gray-100 dark:border-gray-700 text-indigo-600 dark:text-indigo-400 ${planColCls}`}>{t ? fmt(t.expensePlan) : '—'}</td>
+                      <td key={`${m}-tl-fact`} className={`px-2 py-2 text-right text-xs font-mono text-red-600 dark:text-red-400 ${factColCls}`}>{t ? fmt(t.expenseFact) : '—'}</td>
                       <PctCell key={`${m}-tl-pct`} plan={t?.expensePlan ?? 0} fact={t?.expenseFact ?? 0} isExpense showDiff={showDiff} />
                     </>
                   )
@@ -614,8 +617,8 @@ export function PlanFactPage() {
                   const f = combined.categories.filter(c => c.isExpense).reduce((s, c) => s + c.fact, 0)
                   return (
                     <>
-                      <td className="px-2 py-2 text-right text-xs font-mono border-l border-gray-100 dark:border-gray-700 text-indigo-600 dark:text-indigo-400">{fmt(p)}</td>
-                      <td className="px-2 py-2 text-right text-xs font-mono text-red-600 dark:text-red-400">{fmt(f)}</td>
+                      <td className={`px-2 py-2 text-right text-xs font-mono border-l border-gray-100 dark:border-gray-700 text-indigo-600 dark:text-indigo-400 ${planColCls}`}>{fmt(p)}</td>
+                      <td className={`px-2 py-2 text-right text-xs font-mono text-red-600 dark:text-red-400 ${factColCls}`}>{fmt(f)}</td>
                       <PctCell plan={p} fact={f} isExpense showDiff={showDiff} />
                     </>
                   )
@@ -631,8 +634,8 @@ export function PlanFactPage() {
                   const t = monthTotals(m)
                   if (!t) return (
                     <>
-                      <td key={`${m}-cb-plan`} className="px-2 py-2.5 text-right text-xs border-l border-gray-100 dark:border-gray-700">—</td>
-                      <td key={`${m}-cb-fact`} className="px-2 py-2.5 text-right text-xs">—</td>
+                      <td key={`${m}-cb-plan`} className={`px-2 py-2.5 text-right text-xs border-l border-gray-100 dark:border-gray-700 ${planColCls}`}>—</td>
+                      <td key={`${m}-cb-fact`} className={`px-2 py-2.5 text-right text-xs ${factColCls}`}>—</td>
                       <td key={`${m}-cb-pct`}  className="px-2 py-2.5 text-right text-xs">—</td>
                     </>
                   )
@@ -640,8 +643,8 @@ export function PlanFactPage() {
                   const factClose = t.openingBalance + t.incomeFact - t.expenseFact
                   return (
                     <>
-                      <td key={`${m}-cb-plan`} className={`px-2 py-2.5 text-right text-xs font-mono border-l border-gray-100 dark:border-gray-700 ${signedColor(planClose)}`}>{fmt(planClose)}</td>
-                      <td key={`${m}-cb-fact`} className={`px-2 py-2.5 text-right text-xs font-mono ${signedColor(factClose)}`}>{fmt(factClose)}</td>
+                      <td key={`${m}-cb-plan`} className={`px-2 py-2.5 text-right text-xs font-mono border-l border-gray-100 dark:border-gray-700 ${planColCls} ${signedColor(planClose)}`}>{fmt(planClose)}</td>
+                      <td key={`${m}-cb-fact`} className={`px-2 py-2.5 text-right text-xs font-mono ${factColCls} ${signedColor(factClose)}`}>{fmt(factClose)}</td>
                       <PctCell key={`${m}-cb-pct`} plan={planClose} fact={factClose} showDiff={showDiff} />
                     </>
                   )
@@ -655,8 +658,8 @@ export function PlanFactPage() {
                   const factClose = combined.firstOpening + incomeFact - expenseFact
                   return (
                     <>
-                      <td className={`px-2 py-2.5 text-right text-xs font-mono border-l border-gray-100 dark:border-gray-700 ${signedColor(planClose)}`}>{fmt(planClose)}</td>
-                      <td className={`px-2 py-2.5 text-right text-xs font-mono ${signedColor(factClose)}`}>{fmt(factClose)}</td>
+                      <td className={`px-2 py-2.5 text-right text-xs font-mono border-l border-gray-100 dark:border-gray-700 ${planColCls} ${signedColor(planClose)}`}>{fmt(planClose)}</td>
+                      <td className={`px-2 py-2.5 text-right text-xs font-mono ${factColCls} ${signedColor(factClose)}`}>{fmt(factClose)}</td>
                       <PctCell plan={planClose} fact={factClose} showDiff={showDiff} />
                     </>
                   )
