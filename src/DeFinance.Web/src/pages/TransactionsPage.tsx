@@ -447,7 +447,7 @@ export function TransactionsPage() {
                       value={form.exchangeRate}
                       onChange={setField('exchangeRate')}
                       disabled={sameAsMain}
-                      className={`${inputCls}${sameAsMain ? ' opacity-50 cursor-not-allowed' : ''}`}
+                      className={`${inputCls} [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none${sameAsMain ? ' opacity-50 cursor-not-allowed' : ''}`}
                     />
                   )
                 })()}
