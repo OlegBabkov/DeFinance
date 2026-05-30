@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
 import { useTheme } from '../ThemeContext'
 
-const links = [
-  { to: '/', label: 'Dashboard', icon: '📊' },
+const links: { to: string; label: string; icon: string; match?: string[] }[] = [
+  { to: '/', label: 'Dashboards', icon: '📊', match: ['/', '/transactions-dashboard'] },
   { to: '/transactions', label: 'Transactions', icon: '💳' },
   { to: '/plan-fact', label: 'Plan/Fact', icon: '📈' },
   { to: '/mandatory', label: 'Mandatory', icon: '📋' },
@@ -36,6 +36,7 @@ function SideTooltip({ label }: { label: string }) {
 
 export function Sidebar() {
   const { dark, toggle } = useTheme()
+  const { pathname } = useLocation()
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem('sidebar_collapsed') === 'true')
 
   const toggleCollapsed = () => {
@@ -76,18 +77,19 @@ export function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 py-4">
-        {links.map(({ to, label, icon }) => (
+        {links.map(({ to, label, icon, match }) => (
           <div key={to} className="relative group">
             <NavLink
               to={to}
-              end={to === '/'}
-              className={({ isActive }) =>
-                `flex items-center gap-3 py-3 text-sm transition-colors ${collapsed ? 'justify-center px-0' : 'px-6'} ${
-                  isActive
+              end={!match}
+              className={({ isActive }) => {
+                const active = match ? match.includes(pathname) : isActive
+                return `flex items-center gap-3 py-3 text-sm transition-colors ${collapsed ? 'justify-center px-0' : 'px-6'} ${
+                  active
                     ? 'bg-indigo-600 text-white'
                     : 'text-gray-200 hover:bg-gray-500 dark:hover:bg-gray-800 hover:text-white'
                 }`
-              }
+              }}
             >
               <span className="flex-shrink-0 leading-none">{icon}</span>
               {!collapsed && <span className="truncate">{label}</span>}
