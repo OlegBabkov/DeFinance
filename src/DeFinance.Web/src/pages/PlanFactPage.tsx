@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { usePersistedState } from '../hooks/usePersistedState'
 import { useNotify } from '../NotificationContext'
-import { planFactApi, type PlanFactCategoryRow, type PlanFactMonthData, type PlanFactSummaryResponse } from '../api/planFact'
+import { planFactApi, type PlanFactCategoryRow, type PlanFactLineRow, type PlanFactMonthData, type PlanFactSummaryResponse } from '../api/planFact'
 import { Spinner } from '../components/Spinner'
 import { Modal } from '../components/Modal'
 import { CalculatorModal } from '../components/CalculatorModal'
@@ -28,6 +28,7 @@ interface ModalState {
   year: number
   month: number
   value: string
+  savedLines: PlanFactLineRow[]
   isExpense: boolean
 }
 
@@ -110,9 +111,11 @@ function PlanModal({
 }: {
   state: ModalState
   onClose: () => void
-  onSave: (value: string) => void
+  onSave: (value: string, rows: PlanRow[]) => void
 }) {
-  const initialRows: PlanRow[] = state.value
+  const initialRows: PlanRow[] = state.savedLines.length > 0
+    ? state.savedLines.map(l => ({ id: ++rowIdSeq, name: l.name, amount: l.amount.toString() }))
+    : state.value
     ? [{ id: ++rowIdSeq, name: '', amount: state.value }]
     : [newRow()]
 
@@ -131,7 +134,7 @@ function PlanModal({
 
   const handleSubmit = (e: React.SyntheticEvent) => {
     e.preventDefault()
-    onSave(total.toString())
+    onSave(total.toString(), rows)
   }
 
   const inputCls = 'px-2 py-1.5 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500'
@@ -266,14 +269,17 @@ export function PlanFactPage() {
       prev.includes(m) ? (prev.length > 1 ? prev.filter(x => x !== m) : prev) : [...prev, m]
     )
 
-  const openModal = (categoryId: string, categoryName: string, year: number, month: number, currentValue: number, isExpense: boolean) => {
-    setModal({ categoryId, categoryName, year, month, value: currentValue === 0 ? '' : currentValue.toFixed(2), isExpense })
+  const openModal = (categoryId: string, categoryName: string, year: number, month: number, currentValue: number, savedLines: PlanFactLineRow[], isExpense: boolean) => {
+    setModal({ categoryId, categoryName, year, month, value: currentValue === 0 ? '' : currentValue.toFixed(2), savedLines, isExpense })
   }
 
-  const handleSave = async (rawValue: string) => {
+  const handleSave = async (rawValue: string, rows: PlanRow[]) => {
     if (!modal) return
     const amount = parseFloat(rawValue) || 0
     const { categoryId, year: y, month: m } = modal
+    const lines = rows
+      .filter(r => parseFloat(r.amount) > 0)
+      .map(r => ({ name: r.name, amount: parseFloat(r.amount) || 0 }))
     setModal(null)
 
     setData(prev => {
@@ -284,10 +290,10 @@ export function PlanFactPage() {
             ? {
                 ...md,
                 incomeCategories: md.incomeCategories.map(c =>
-                  c.categoryId === categoryId ? { ...c, plan: amount } : c
+                  c.categoryId === categoryId ? { ...c, plan: amount, lines } : c
                 ),
                 expenseCategories: md.expenseCategories.map(c =>
-                  c.categoryId === categoryId ? { ...c, plan: amount } : c
+                  c.categoryId === categoryId ? { ...c, plan: amount, lines } : c
                 ),
               }
             : md
@@ -296,7 +302,7 @@ export function PlanFactPage() {
     })
 
     try {
-      await planFactApi.upsertEntry(categoryId, y, m, amount)
+      await planFactApi.upsertEntry(categoryId, y, m, amount, lines)
     } catch {
       notify('Failed to save plan value', 'error')
       fetchData()
@@ -510,7 +516,7 @@ export function PlanFactPage() {
                     const fact = c?.fact ?? 0
                     return (
                       <>
-                        <PlanCell key={`${m}-${id}-plan`} value={plan} onClick={() => openModal(id, getIncomeName(id), year, m, plan, false)} />
+                        <PlanCell key={`${m}-${id}-plan`} value={plan} onClick={() => openModal(id, getIncomeName(id), year, m, plan, c?.lines ?? [], false)} />
                         <td key={`${m}-${id}-fact`} className={`px-2 py-2 text-right text-xs font-mono text-gray-700 dark:text-gray-300 ${factColCls}`}>{fact > 0 ? fmt(fact) : <span className="text-gray-300 dark:text-gray-600">—</span>}</td>
                         <PctCell key={`${m}-${id}-pct`} plan={plan} fact={fact} showDiff={showDiff} />
                       </>
@@ -576,7 +582,7 @@ export function PlanFactPage() {
                     const fact = c?.fact ?? 0
                     return (
                       <>
-                        <PlanCell key={`${m}-${id}-plan`} value={plan} onClick={() => openModal(id, getExpenseName(id), year, m, plan, true)} />
+                        <PlanCell key={`${m}-${id}-plan`} value={plan} onClick={() => openModal(id, getExpenseName(id), year, m, plan, c?.lines ?? [], true)} />
                         <td key={`${m}-${id}-fact`} className={`px-2 py-2 text-right text-xs font-mono text-gray-700 dark:text-gray-300 ${factColCls}`}>{fact > 0 ? fmt(fact) : <span className="text-gray-300 dark:text-gray-600">—</span>}</td>
                         <PctCell key={`${m}-${id}-pct`} plan={plan} fact={fact} isExpense showDiff={showDiff} />
                       </>

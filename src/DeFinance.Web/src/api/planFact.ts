@@ -1,10 +1,16 @@
 import client from './client'
 
+export interface PlanFactLineRow {
+  name: string
+  amount: number
+}
+
 export interface PlanFactCategoryRow {
   categoryId: string
   categoryName: string
   plan: number
   fact: number
+  lines: PlanFactLineRow[]
 }
 
 export interface PlanFactMonthData {
@@ -27,6 +33,12 @@ export const planFactApi = {
     return client.get<PlanFactSummaryResponse>(`/plan-fact/summary?${params.toString()}`).then((r: { data: PlanFactSummaryResponse }) => r.data)
   },
 
-  upsertEntry: (categoryId: string, year: number, month: number, plannedAmount: number): Promise<void> =>
-    client.put('/plan-fact/entry', { categoryId, year, month, plannedAmount }).then(() => undefined),
+  upsertEntry: (
+    categoryId: string,
+    year: number,
+    month: number,
+    plannedAmount: number,
+    lines: PlanFactLineRow[],
+  ): Promise<void> =>
+    client.put('/plan-fact/entry', { categoryId, year, month, plannedAmount, lines }).then(() => undefined),
 }
