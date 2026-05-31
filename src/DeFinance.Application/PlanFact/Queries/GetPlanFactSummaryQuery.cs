@@ -42,27 +42,39 @@ public class GetPlanFactSummaryQueryHandler(
             var monthStart = DateTime.SpecifyKind(new DateTime(request.Year, month, 1), DateTimeKind.Utc);
             var openingBalance = await transactionRepository.GetSignedBalanceBeforeAsync(monthStart, cancellationToken);
 
-            var planByCategory = budgetEntries
+            var entryByCategory = budgetEntries
                 .Where(e => e.Month == month)
-                .ToDictionary(e => e.CategoryId, e => e.PlannedAmount);
+                .ToDictionary(e => e.CategoryId);
 
             var factByCategory = transactionTotals
                 .Where(t => t.Month == month)
                 .ToDictionary(t => t.CategoryId, t => t.Total);
 
-            var incomeRows = incomeCategories.Select(c => new PlanFactCategoryRow(
-                c.Id,
-                c.Name,
-                planByCategory.TryGetValue(c.Id, out var p) ? p : 0m,
-                factByCategory.TryGetValue(c.Id, out var f) ? f : 0m
-            )).ToList();
+            var incomeRows = incomeCategories.Select(c =>
+            {
+                var entry = entryByCategory.GetValueOrDefault(c.Id);
+                var lines = entry?.Lines.OrderBy(l => l.Order)
+                    .Select(l => new PlanFactLineRow(l.Name, l.Amount)).ToList()
+                    ?? (IReadOnlyList<PlanFactLineRow>)[];
+                return new PlanFactCategoryRow(
+                    c.Id, c.Name,
+                    entry?.PlannedAmount ?? 0m,
+                    factByCategory.TryGetValue(c.Id, out var f) ? f : 0m,
+                    lines);
+            }).ToList();
 
-            var expenseRows = expenseCategories.Select(c => new PlanFactCategoryRow(
-                c.Id,
-                c.Name,
-                planByCategory.TryGetValue(c.Id, out var p2) ? p2 : 0m,
-                factByCategory.TryGetValue(c.Id, out var f2) ? f2 : 0m
-            )).ToList();
+            var expenseRows = expenseCategories.Select(c =>
+            {
+                var entry = entryByCategory.GetValueOrDefault(c.Id);
+                var lines = entry?.Lines.OrderBy(l => l.Order)
+                    .Select(l => new PlanFactLineRow(l.Name, l.Amount)).ToList()
+                    ?? (IReadOnlyList<PlanFactLineRow>)[];
+                return new PlanFactCategoryRow(
+                    c.Id, c.Name,
+                    entry?.PlannedAmount ?? 0m,
+                    factByCategory.TryGetValue(c.Id, out var f2) ? f2 : 0m,
+                    lines);
+            }).ToList();
 
             monthDataList.Add(new PlanFactMonthData(request.Year, month, openingBalance, incomeRows, expenseRows));
         }

@@ -9,6 +9,9 @@ public class BudgetEntry
     public int Month { get; private set; }
     public decimal PlannedAmount { get; private set; }
 
+    private readonly List<BudgetEntryLine> _lines = [];
+    public IReadOnlyList<BudgetEntryLine> Lines => _lines.AsReadOnly();
+
     private BudgetEntry() { }
 
     public static BudgetEntry Create(Guid categoryId, int year, int month, decimal plannedAmount) =>
@@ -18,8 +21,16 @@ public class BudgetEntry
             CategoryId = categoryId,
             Year = year,
             Month = month,
-            PlannedAmount = plannedAmount
+            PlannedAmount = plannedAmount,
         };
 
     public void UpdateAmount(decimal plannedAmount) => PlannedAmount = plannedAmount;
+
+    public void UpdateLines(IEnumerable<(string Name, decimal Amount)> lines)
+    {
+        _lines.Clear();
+        var order = 0;
+        foreach (var (name, amount) in lines)
+            _lines.Add(BudgetEntryLine.Create(Id, name, amount, order++));
+    }
 }

@@ -1,10 +1,13 @@
 namespace DeFinance.Application.DTOs.PlanFact;
 
+public record PlanFactLineRow(string Name, decimal Amount);
+
 public record PlanFactCategoryRow(
     Guid CategoryId,
     string CategoryName,
     decimal Plan,
-    decimal Fact
+    decimal Fact,
+    IReadOnlyList<PlanFactLineRow> Lines
 );
 
 public record PlanFactMonthData(

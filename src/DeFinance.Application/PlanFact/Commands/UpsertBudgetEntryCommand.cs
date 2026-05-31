@@ -5,11 +5,14 @@ using MediatR;
 
 namespace DeFinance.Application.PlanFact.Commands;
 
+public record BudgetEntryLineRequest(string Name, decimal Amount);
+
 public record UpsertBudgetEntryCommand(
     Guid CategoryId,
     int Year,
     int Month,
-    decimal PlannedAmount
+    decimal PlannedAmount,
+    IReadOnlyList<BudgetEntryLineRequest> Lines
 ) : IRequest<Unit>;
 
 public class UpsertBudgetEntryCommandHandler(IBudgetEntryRepository repository)
@@ -21,10 +24,12 @@ public class UpsertBudgetEntryCommandHandler(IBudgetEntryRepository repository)
         if (existing is not null)
         {
             existing.UpdateAmount(request.PlannedAmount);
+            existing.UpdateLines(request.Lines.Select(l => (l.Name, l.Amount)));
         }
         else
         {
             var entry = BudgetEntry.Create(request.CategoryId, request.Year, request.Month, request.PlannedAmount);
+            entry.UpdateLines(request.Lines.Select(l => (l.Name, l.Amount)));
             await repository.AddAsync(entry, cancellationToken);
         }
         await repository.SaveChangesAsync(cancellationToken);

@@ -10,12 +10,14 @@ public class BudgetEntryRepository(DeFinanceDbContext dbContext) : IBudgetEntryR
     {
         var monthList = months.ToList();
         return await dbContext.BudgetEntries
+            .Include(e => e.Lines)
             .Where(e => e.Year == year && monthList.Contains(e.Month))
             .ToListAsync(cancellationToken);
     }
 
     public async Task<BudgetEntry?> GetAsync(Guid categoryId, int year, int month, CancellationToken cancellationToken = default) =>
         await dbContext.BudgetEntries
+            .Include(e => e.Lines)
             .FirstOrDefaultAsync(e => e.CategoryId == categoryId && e.Year == year && e.Month == month, cancellationToken);
 
     public async Task AddAsync(BudgetEntry entry, CancellationToken cancellationToken = default) =>
