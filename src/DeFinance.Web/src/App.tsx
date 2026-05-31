@@ -16,6 +16,8 @@ import { AdministrationPage } from './pages/AdministrationPage'
 import { TransactionsPage } from './pages/TransactionsPage'
 import { MandatoryPage } from './pages/MandatoryPage'
 import { PlanFactPage } from './pages/PlanFactPage'
+import { TransactionsDashboardPage } from './pages/TransactionsDashboardPage'
+import { DashboardsLayout } from './pages/DashboardsLayout'
 import { clearToken, decodeUsername, isTokenExpired, loadToken, saveToken } from './api/auth'
 
 function getInitialUsername(): string | null {
@@ -52,7 +54,10 @@ function App() {
                 <TopBar username={username} onLogout={handleLogout} onUsernameChange={setUsername} />
                 <main className="flex-1 overflow-hidden">
                   <Routes>
-                    <Route path="/" element={<DashboardPage />} />
+                    <Route element={<DashboardsLayout />}>
+                      <Route path="/" element={<DashboardPage />} />
+                      <Route path="/transactions-dashboard" element={<TransactionsDashboardPage />} />
+                    </Route>
                     <Route path="/accounts" element={<AccountsPage />} />
                     <Route path="/categories" element={<CategoriesPage />} />
                     <Route path="/currencies" element={<CurrenciesPage />} />
