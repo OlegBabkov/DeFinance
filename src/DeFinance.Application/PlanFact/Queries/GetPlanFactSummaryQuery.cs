@@ -29,10 +29,10 @@ public class GetPlanFactSummaryQueryHandler(
 
         var incomeCategories = categories
             .Where(c => c.Type == CategoryType.Income || c.Type == CategoryType.TransferIn)
-            .OrderBy(c => c.Name).ToList();
+            .OrderByDescending(c => c.IsImportant).ThenBy(c => c.Name).ToList();
         var expenseCategories = categories
             .Where(c => c.Type == CategoryType.Expense || c.Type == CategoryType.TransferOut)
-            .OrderBy(c => c.Name).ToList();
+            .OrderByDescending(c => c.IsImportant).ThenBy(c => c.Name).ToList();
 
         var budgetEntries = await budgetEntryRepository.GetByPeriodAsync(request.Year, months, cancellationToken);
         var transactionTotals = await transactionRepository.GetCategoryMonthlyTotalsAsync(request.Year, months, request.ExcludeSavings, cancellationToken);
@@ -75,7 +75,7 @@ public class GetPlanFactSummaryQueryHandler(
                     c.Id, c.Name,
                     entry?.PlannedAmount ?? 0m,
                     factByCategory.TryGetValue(c.Id, out var f) ? f : 0m,
-                    lines);
+                    lines, c.IsImportant);
             }).ToList();
 
             var expenseRows = expenseCategories.Select(c =>
@@ -88,7 +88,7 @@ public class GetPlanFactSummaryQueryHandler(
                     c.Id, c.Name,
                     entry?.PlannedAmount ?? 0m,
                     factByCategory.TryGetValue(c.Id, out var f2) ? f2 : 0m,
-                    lines);
+                    lines, c.IsImportant);
             }).ToList();
 
             monthDataList.Add(new PlanFactMonthData(request.Year, month, openingBalance, openingIsOverride, incomeRows, expenseRows));

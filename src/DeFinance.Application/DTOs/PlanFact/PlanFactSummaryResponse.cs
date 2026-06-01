@@ -7,7 +7,8 @@ public record PlanFactCategoryRow(
     string CategoryName,
     decimal Plan,
     decimal Fact,
-    IReadOnlyList<PlanFactLineRow> Lines
+    IReadOnlyList<PlanFactLineRow> Lines,
+    bool IsImportant
 );
 
 public record PlanFactMonthData(

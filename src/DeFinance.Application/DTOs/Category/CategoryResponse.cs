@@ -11,4 +11,5 @@ public record CategoryResponse(
     Guid? ParentId,
     string? ParentName,
     CategoryPaymentObligation? PaymentObligation,
-    bool IsActive);
+    bool IsActive,
+    bool IsImportant);

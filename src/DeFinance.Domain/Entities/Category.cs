@@ -11,6 +11,7 @@ public class Category
     public Category? Parent { get; private set; }
     public CategoryPaymentObligation? PaymentObligation { get; private set; }
     public bool IsActive { get; private set; }
+    public bool IsImportant { get; private set; }
 
     private Category() { }
 
@@ -37,4 +38,5 @@ public class Category
 
     public void Activate() => IsActive = true;
     public void Deactivate() => IsActive = false;
+    public void SetImportant(bool important) => IsImportant = important;
 }
