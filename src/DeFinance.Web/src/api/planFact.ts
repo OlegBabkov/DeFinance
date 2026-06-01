@@ -11,6 +11,7 @@ export interface PlanFactCategoryRow {
   plan: number
   fact: number
   lines: PlanFactLineRow[]
+  isImportant: boolean
 }
 
 export interface PlanFactMonthData {

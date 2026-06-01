@@ -58,4 +58,13 @@ public class CategoriesController(ISender sender) : ControllerBase
         var result = await sender.Send(new DeactivateCategoryCommand(id), ct);
         return result is null ? NotFound() : Ok(result);
     }
+
+    [HttpPatch("{id:guid}/importance")]
+    public async Task<IActionResult> SetImportance(Guid id, [FromBody] SetImportanceRequest body, CancellationToken ct)
+    {
+        var result = await sender.Send(new SetCategoryImportanceCommand(id, body.IsImportant), ct);
+        return result is null ? NotFound() : Ok(result);
+    }
 }
+
+public record SetImportanceRequest(bool IsImportant);

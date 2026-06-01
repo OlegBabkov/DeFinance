@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { usePersistedState } from '../hooks/usePersistedState'
 import { useNotify } from '../NotificationContext'
 import { planFactApi, type PlanFactCategoryRow, type PlanFactLineRow, type PlanFactMonthData, type PlanFactSummaryResponse } from '../api/planFact'
+import { categoriesApi } from '../api/categories'
 import { Spinner } from '../components/Spinner'
 import { Modal } from '../components/Modal'
 import { CalculatorModal } from '../components/CalculatorModal'
@@ -21,6 +22,23 @@ const pct = (plan: number, fact: number) =>
 
 const planColCls = 'bg-indigo-50/80 dark:bg-indigo-900/25'
 const factColCls = 'bg-stone-100/80 dark:bg-stone-700/30'
+
+function StarButton({ isImportant, onClick }: { isImportant: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={e => { e.stopPropagation(); onClick() }}
+      title={isImportant ? 'Remove from important' : 'Mark as important'}
+      className={`flex items-center justify-center w-5 h-5 transition-colors ${
+        isImportant
+          ? 'text-amber-400 hover:text-amber-300'
+          : 'text-gray-300 dark:text-gray-600 hover:text-amber-400 dark:hover:text-amber-400'
+      }`}
+    >
+      {isImportant ? '★' : '☆'}
+    </button>
+  )
+}
 
 interface ModalState {
   categoryId: string
@@ -368,6 +386,28 @@ export function PlanFactPage() {
     }
   }
 
+  const handleToggleImportance = async (categoryId: string, currentlyImportant: boolean) => {
+    const next = !currentlyImportant
+    setData(prev => {
+      if (!prev) return prev
+      const toggleIn = (rows: PlanFactCategoryRow[]) =>
+        rows.map(c => c.categoryId === categoryId ? { ...c, isImportant: next } : c)
+      return {
+        months: prev.months.map(md => ({
+          ...md,
+          incomeCategories: toggleIn(md.incomeCategories),
+          expenseCategories: toggleIn(md.expenseCategories),
+        })),
+      }
+    })
+    try {
+      await categoriesApi.setImportance(categoryId, next)
+    } catch {
+      notify('Failed to update importance', 'error')
+      fetchData()
+    }
+  }
+
   const handleObSave = async (amount: number) => {
     if (!obModal) return
     const { year: y, month: m } = obModal
@@ -450,6 +490,8 @@ export function PlanFactPage() {
 
   const getIncomeName = (id: string) => data?.months[0]?.incomeCategories.find(c => c.categoryId === id)?.categoryName ?? ''
   const getExpenseName = (id: string) => data?.months[0]?.expenseCategories.find(c => c.categoryId === id)?.categoryName ?? ''
+  const getIncomeImportant = (id: string) => data?.months[0]?.incomeCategories.find(c => c.categoryId === id)?.isImportant ?? false
+  const getExpenseImportant = (id: string) => data?.months[0]?.expenseCategories.find(c => c.categoryId === id)?.isImportant ?? false
 
   const monthTotals = (month: number): MonthTotals | null => {
     const md = getMonthData(month)
@@ -611,7 +653,10 @@ export function PlanFactPage() {
               {incomeIds.map(id => (
                 <tr key={id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                   <td className="px-4 py-2 text-gray-700 dark:text-gray-300 sticky left-0 bg-white dark:bg-gray-800 z-10 border-r border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                    {getIncomeName(id)}
+                    <div className="flex items-center gap-1.5">
+                      <StarButton isImportant={getIncomeImportant(id)} onClick={() => handleToggleImportance(id, getIncomeImportant(id))} />
+                      {getIncomeName(id)}
+                    </div>
                   </td>
                   {orderedMonths.map(m => {
                     const c = getCatForMonth(m, id, false)
@@ -677,7 +722,10 @@ export function PlanFactPage() {
               {expenseIds.map(id => (
                 <tr key={id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                   <td className="px-4 py-2 text-gray-700 dark:text-gray-300 sticky left-0 bg-white dark:bg-gray-800 z-10 border-r border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                    {getExpenseName(id)}
+                    <div className="flex items-center gap-1.5">
+                      <StarButton isImportant={getExpenseImportant(id)} onClick={() => handleToggleImportance(id, getExpenseImportant(id))} />
+                      {getExpenseName(id)}
+                    </div>
                   </td>
                   {orderedMonths.map(m => {
                     const c = getCatForMonth(m, id, true)

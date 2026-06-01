@@ -50,4 +50,6 @@ export const categoriesApi = {
   update: (id: string, req: UpdateCategoryRequest) => client.put<Category>(`/categories/${id}`, req).then(r => r.data),
   activate: (id: string) => client.patch<Category>(`/categories/${id}/activate`).then(r => r.data),
   deactivate: (id: string) => client.patch<Category>(`/categories/${id}/deactivate`).then(r => r.data),
+  setImportance: (id: string, isImportant: boolean) =>
+    client.patch<Category>(`/categories/${id}/importance`, { isImportant }).then(r => r.data),
 }
