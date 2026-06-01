@@ -15,6 +15,7 @@ public class DeFinanceDbContext(DbContextOptions<DeFinanceDbContext> options) : 
     public DbSet<MandatoryPayment> MandatoryPayments => Set<MandatoryPayment>();
     public DbSet<BudgetEntry> BudgetEntries => Set<BudgetEntry>();
     public DbSet<BudgetEntryLine> BudgetEntryLines => Set<BudgetEntryLine>();
+    public DbSet<OpeningBalanceOverride> OpeningBalanceOverrides => Set<OpeningBalanceOverride>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

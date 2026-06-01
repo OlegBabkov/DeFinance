@@ -10,8 +10,8 @@ public interface ITransactionRepository
     void Remove(Transaction transaction);
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     Task<decimal?> GetBalanceBeforeAsync(Guid transactionId, CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<(Guid CategoryId, int Month, decimal Total)>> GetCategoryMonthlyTotalsAsync(int year, IReadOnlyList<int> months, CancellationToken cancellationToken = default);
-    Task<decimal> GetSignedBalanceBeforeAsync(DateTime before, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<(Guid CategoryId, int Month, decimal Total)>> GetCategoryMonthlyTotalsAsync(int year, IReadOnlyList<int> months, bool excludeSavings = false, CancellationToken cancellationToken = default);
+    Task<decimal> GetSignedBalanceBeforeAsync(DateTime before, bool excludeSavings = false, CancellationToken cancellationToken = default);
     Task<(IReadOnlyList<Transaction> Items, int TotalCount, decimal TotalSum, decimal TotalAmountInCurrency)> GetAllAsync(
         DateTime? dateFrom,
         DateTime? dateTo,

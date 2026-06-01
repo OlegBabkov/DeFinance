@@ -8,13 +8,15 @@ namespace DeFinance.Application.PlanFact.Queries;
 
 public record GetPlanFactSummaryQuery(
     int Year,
-    IReadOnlyList<int> Months
+    IReadOnlyList<int> Months,
+    bool ExcludeSavings = false
 ) : IRequest<PlanFactSummaryResponse>;
 
 public class GetPlanFactSummaryQueryHandler(
     ICategoryRepository categoryRepository,
     IBudgetEntryRepository budgetEntryRepository,
-    ITransactionRepository transactionRepository)
+    ITransactionRepository transactionRepository,
+    IOpeningBalanceOverrideRepository openingBalanceOverrideRepository)
     : IRequestHandler<GetPlanFactSummaryQuery, PlanFactSummaryResponse>
 {
     public async Task<PlanFactSummaryResponse> Handle(GetPlanFactSummaryQuery request, CancellationToken cancellationToken)
@@ -33,14 +35,27 @@ public class GetPlanFactSummaryQueryHandler(
             .OrderBy(c => c.Name).ToList();
 
         var budgetEntries = await budgetEntryRepository.GetByPeriodAsync(request.Year, months, cancellationToken);
-        var transactionTotals = await transactionRepository.GetCategoryMonthlyTotalsAsync(request.Year, months, cancellationToken);
+        var transactionTotals = await transactionRepository.GetCategoryMonthlyTotalsAsync(request.Year, months, request.ExcludeSavings, cancellationToken);
+        var openingOverrides = await openingBalanceOverrideRepository.GetByYearAsync(request.Year, months, cancellationToken);
+        var overrideByMonth = openingOverrides.ToDictionary(o => o.Month);
 
         var monthDataList = new List<PlanFactMonthData>();
 
         foreach (var month in months)
         {
-            var monthStart = DateTime.SpecifyKind(new DateTime(request.Year, month, 1), DateTimeKind.Utc);
-            var openingBalance = await transactionRepository.GetSignedBalanceBeforeAsync(monthStart, cancellationToken);
+            decimal openingBalance;
+            bool openingIsOverride;
+            if (overrideByMonth.TryGetValue(month, out var ov))
+            {
+                openingBalance = ov.Amount;
+                openingIsOverride = true;
+            }
+            else
+            {
+                var monthStart = DateTime.SpecifyKind(new DateTime(request.Year, month, 1), DateTimeKind.Utc);
+                openingBalance = await transactionRepository.GetSignedBalanceBeforeAsync(monthStart, request.ExcludeSavings, cancellationToken);
+                openingIsOverride = false;
+            }
 
             var entryByCategory = budgetEntries
                 .Where(e => e.Month == month)
@@ -76,7 +91,7 @@ public class GetPlanFactSummaryQueryHandler(
                     lines);
             }).ToList();
 
-            monthDataList.Add(new PlanFactMonthData(request.Year, month, openingBalance, incomeRows, expenseRows));
+            monthDataList.Add(new PlanFactMonthData(request.Year, month, openingBalance, openingIsOverride, incomeRows, expenseRows));
         }
 
         return new PlanFactSummaryResponse(monthDataList);

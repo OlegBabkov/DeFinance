@@ -240,6 +240,63 @@ function PlanModal({
   )
 }
 
+interface OpeningBalanceModalState {
+  year: number
+  month: number
+  currentValue: number
+}
+
+function OpeningBalanceModal({
+  state,
+  onClose,
+  onSave,
+}: {
+  state: OpeningBalanceModalState
+  onClose: () => void
+  onSave: (amount: number) => void
+}) {
+  const [value, setValue] = useState(state.currentValue === 0 ? '' : state.currentValue.toFixed(2))
+
+  const handleSubmit = (e: React.SyntheticEvent) => {
+    e.preventDefault()
+    onSave(parseFloat(value) || 0)
+  }
+
+  return (
+    <Modal title="Opening Balance Override" onClose={onClose}>
+      <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+        {MONTH_NAMES[state.month - 1]} {state.year}
+      </p>
+      <form onSubmit={handleSubmit}>
+        <input
+          type="number"
+          step="0.01"
+          autoFocus
+          value={value}
+          onChange={e => setValue(e.target.value)}
+          placeholder="0.00"
+          className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm text-right font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-5 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+        />
+        <div className="flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="px-4 py-2 text-sm rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium transition-colors"
+          >
+            Save
+          </button>
+        </div>
+      </form>
+    </Modal>
+  )
+}
+
 export function PlanFactPage() {
   const notify = useNotify()
   const [year, setYear] = usePersistedState('planfact:year', CURRENT_YEAR)
@@ -247,8 +304,10 @@ export function PlanFactPage() {
   const [data, setData] = useState<PlanFactSummaryResponse | null>(null)
   const [loading, setLoading] = useState(false)
   const [modal, setModal] = useState<ModalState | null>(null)
+  const [obModal, setObModal] = useState<OpeningBalanceModalState | null>(null)
   const [hideEmpty, setHideEmpty] = useState(false)
   const [showDiff, setShowDiff] = useState(false)
+  const [excludeSavings, setExcludeSavings] = usePersistedState('planfact:excludeSavings', false)
 
   const orderedMonths = [...selectedMonths].sort((a, b) => a - b)
   const showTotal = orderedMonths.length > 1
@@ -256,13 +315,13 @@ export function PlanFactPage() {
   const fetchData = () => {
     if (orderedMonths.length === 0) return
     setLoading(true)
-    planFactApi.getSummary(year, orderedMonths)
+    planFactApi.getSummary(year, orderedMonths, excludeSavings)
       .then(setData)
       .catch(() => notify('Failed to load plan/fact data', 'error'))
       .finally(() => setLoading(false))
   }
 
-  useEffect(() => { fetchData() }, [year, JSON.stringify(orderedMonths)])
+  useEffect(() => { fetchData() }, [year, JSON.stringify(orderedMonths), excludeSavings])
 
   const toggleMonth = (m: number) =>
     setSelectedMonths(prev =>
@@ -305,6 +364,30 @@ export function PlanFactPage() {
       await planFactApi.upsertEntry(categoryId, y, m, amount, lines)
     } catch {
       notify('Failed to save plan value', 'error')
+      fetchData()
+    }
+  }
+
+  const handleObSave = async (amount: number) => {
+    if (!obModal) return
+    const { year: y, month: m } = obModal
+    setObModal(null)
+
+    setData(prev => {
+      if (!prev) return prev
+      return {
+        months: prev.months.map(md =>
+          md.year === y && md.month === m
+            ? { ...md, openingBalance: amount, openingBalanceIsOverride: true }
+            : md
+        ),
+      }
+    })
+
+    try {
+      await planFactApi.upsertOpeningBalance(y, m, amount)
+    } catch {
+      notify('Failed to save opening balance', 'error')
       fetchData()
     }
   }
@@ -436,6 +519,17 @@ export function PlanFactPage() {
             {hideEmpty ? 'Show all categories' : 'Hide empty categories'}
           </button>
 
+          <button
+            onClick={() => setExcludeSavings(v => !v)}
+            className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors ${
+              excludeSavings
+                ? 'border-amber-400 bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
+                : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-400'
+            }`}
+          >
+            {excludeSavings ? 'Include saving accounts' : 'Exclude saving accounts'}
+          </button>
+
           {loading && <Spinner size="sm" />}
         </div>
       </div>
@@ -481,11 +575,20 @@ export function PlanFactPage() {
                   Opening Balance
                 </td>
                 {orderedMonths.map(m => {
-                  const ob = getMonthData(m)?.openingBalance ?? 0
+                  const md = getMonthData(m)
+                  const ob = md?.openingBalance ?? 0
+                  const isOverride = md?.openingBalanceIsOverride ?? false
                   return (
                     <>
                       <td key={`${m}-ob-plan`} className={`px-2 py-2.5 text-right text-gray-400 text-xs border-l border-gray-100 dark:border-gray-700 ${planColCls}`}>—</td>
-                      <td key={`${m}-ob-fact`} className={`px-2 py-2.5 text-right text-xs font-mono ${factColCls} ${signedColor(ob)}`}>{fmt(ob)}</td>
+                      <td
+                        key={`${m}-ob-fact`}
+                        className={`px-2 py-2.5 text-right text-xs font-mono cursor-pointer select-none ${factColCls} ${isOverride ? 'text-amber-600 dark:text-amber-400' : signedColor(ob)} hover:brightness-95 dark:hover:brightness-110`}
+                        title="Click to override opening balance"
+                        onClick={() => setObModal({ year, month: m, currentValue: ob })}
+                      >
+                        {fmt(ob)}{isOverride && <span className="ml-1 text-[10px] opacity-70">✎</span>}
+                      </td>
                       <td key={`${m}-ob-pct`}  className="px-2 py-2.5 text-center text-gray-400 text-xs">—</td>
                     </>
                   )
@@ -682,6 +785,14 @@ export function PlanFactPage() {
           state={modal}
           onClose={() => setModal(null)}
           onSave={handleSave}
+        />
+      )}
+
+      {obModal && (
+        <OpeningBalanceModal
+          state={obModal}
+          onClose={() => setObModal(null)}
+          onSave={handleObSave}
         />
       )}
     </div>
