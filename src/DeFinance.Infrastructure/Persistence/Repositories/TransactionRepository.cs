@@ -9,7 +9,7 @@ namespace DeFinance.Infrastructure.Persistence.Repositories;
 public class TransactionRepository(DeFinanceDbContext dbContext, ICacheService cache, IEventPublisher events) : ITransactionRepository
 {
     public async Task<IReadOnlyList<(Guid CategoryId, int Month, decimal Total)>> GetCategoryMonthlyTotalsAsync(
-        int year, IReadOnlyList<int> months, CancellationToken cancellationToken = default)
+        int year, IReadOnlyList<int> months, bool excludeSavings = false, CancellationToken cancellationToken = default)
     {
         var monthList = months.ToList();
         var yearStart = DateTime.SpecifyKind(new DateTime(year, 1, 1), DateTimeKind.Utc);
@@ -17,6 +17,7 @@ public class TransactionRepository(DeFinanceDbContext dbContext, ICacheService c
 
         var data = await dbContext.Transactions
             .Where(t => t.DateTime >= yearStart && t.DateTime < yearEnd && monthList.Contains(t.DateTime.Month))
+            .Where(t => !excludeSavings || t.Account!.Type != AccountType.Savings)
             .GroupBy(t => new { t.CategoryId, t.DateTime.Month })
             .Select(g => new { g.Key.CategoryId, g.Key.Month, Total = g.Sum(t => t.AmountInCurrency) })
             .ToListAsync(cancellationToken);
@@ -24,9 +25,10 @@ public class TransactionRepository(DeFinanceDbContext dbContext, ICacheService c
         return data.Select(d => (d.CategoryId, d.Month, d.Total)).ToList();
     }
 
-    public async Task<decimal> GetSignedBalanceBeforeAsync(DateTime before, CancellationToken cancellationToken = default) =>
+    public async Task<decimal> GetSignedBalanceBeforeAsync(DateTime before, bool excludeSavings = false, CancellationToken cancellationToken = default) =>
         await dbContext.Transactions
             .Where(t => t.DateTime < before)
+            .Where(t => !excludeSavings || t.Account!.Type != AccountType.Savings)
             .SumAsync(t =>
                 (t.Category!.Type == CategoryType.Income || t.Category!.Type == CategoryType.TransferIn) ? t.AmountInCurrency :
                 (t.Category!.Type == CategoryType.Expense || t.Category!.Type == CategoryType.TransferOut) ? -t.AmountInCurrency : 0m,
