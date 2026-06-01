@@ -26,6 +26,7 @@ function getLastNMonths(n: number) {
 
 function getMonthLabel(offset: number) {
   const d = new Date()
+  d.setDate(1)
   d.setMonth(d.getMonth() + offset)
   return d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' })
 }
