@@ -24,6 +24,8 @@ public class BudgetEntryConfiguration : IEntityTypeConfiguration<BudgetEntry>
             .HasForeignKey(l => l.BudgetEntryId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        builder.Navigation(e => e.Lines).HasField("_lines");
+
         builder.HasIndex(e => new { e.CategoryId, e.Year, e.Month }).IsUnique();
     }
 }

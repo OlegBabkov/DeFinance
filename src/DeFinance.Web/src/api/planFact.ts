@@ -19,6 +19,8 @@ export interface PlanFactMonthData {
   month: number
   openingBalance: number
   openingBalanceIsOverride: boolean
+  planOpeningBalance: number | null
+  planOpeningBalanceIsOverride: boolean
   incomeCategories: PlanFactCategoryRow[]
   expenseCategories: PlanFactCategoryRow[]
 }
@@ -47,4 +49,7 @@ export const planFactApi = {
 
   upsertOpeningBalance: (year: number, month: number, amount: number): Promise<void> =>
     client.put('/plan-fact/opening-balance', { year, month, amount }).then(() => undefined),
+
+  upsertPlanOpeningBalance: (year: number, month: number, amount: number): Promise<void> =>
+    client.put('/plan-fact/plan-opening-balance', { year, month, amount }).then(() => undefined),
 }

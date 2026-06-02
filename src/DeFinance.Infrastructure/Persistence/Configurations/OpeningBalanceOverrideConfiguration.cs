@@ -11,7 +11,8 @@ public class OpeningBalanceOverrideConfiguration : IEntityTypeConfiguration<Open
         builder.HasKey(e => e.Id);
         builder.Property(e => e.Year).IsRequired();
         builder.Property(e => e.Month).IsRequired();
-        builder.Property(e => e.Amount).HasPrecision(18, 4).IsRequired();
+        builder.Property(e => e.Amount).HasPrecision(18, 4);
+        builder.Property(e => e.PlanAmount).HasPrecision(18, 4);
         builder.HasIndex(e => new { e.Year, e.Month }).IsUnique();
     }
 }

@@ -45,16 +45,32 @@ public class GetPlanFactSummaryQueryHandler(
         {
             decimal openingBalance;
             bool openingIsOverride;
+            decimal? planOpeningBalance;
+            bool planOpeningIsOverride;
+
+            var monthStart = DateTime.SpecifyKind(new DateTime(request.Year, month, 1), DateTimeKind.Utc);
+
             if (overrideByMonth.TryGetValue(month, out var ov))
             {
-                openingBalance = ov.Amount;
-                openingIsOverride = true;
+                if (ov.Amount.HasValue)
+                {
+                    openingBalance = ov.Amount.Value;
+                    openingIsOverride = true;
+                }
+                else
+                {
+                    openingBalance = await transactionRepository.GetSignedBalanceBeforeAsync(monthStart, request.ExcludeSavings, cancellationToken);
+                    openingIsOverride = false;
+                }
+                planOpeningBalance = ov.PlanAmount;
+                planOpeningIsOverride = ov.PlanAmount.HasValue;
             }
             else
             {
-                var monthStart = DateTime.SpecifyKind(new DateTime(request.Year, month, 1), DateTimeKind.Utc);
                 openingBalance = await transactionRepository.GetSignedBalanceBeforeAsync(monthStart, request.ExcludeSavings, cancellationToken);
                 openingIsOverride = false;
+                planOpeningBalance = null;
+                planOpeningIsOverride = false;
             }
 
             var entryByCategory = budgetEntries
@@ -91,7 +107,7 @@ public class GetPlanFactSummaryQueryHandler(
                     lines, c.IsImportant);
             }).ToList();
 
-            monthDataList.Add(new PlanFactMonthData(request.Year, month, openingBalance, openingIsOverride, incomeRows, expenseRows));
+            monthDataList.Add(new PlanFactMonthData(request.Year, month, openingBalance, openingIsOverride, planOpeningBalance, planOpeningIsOverride, incomeRows, expenseRows));
         }
 
         return new PlanFactSummaryResponse(monthDataList);

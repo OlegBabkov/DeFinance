@@ -16,6 +16,8 @@ public record PlanFactMonthData(
     int Month,
     decimal OpeningBalance,
     bool OpeningBalanceIsOverride,
+    decimal? PlanOpeningBalance,
+    bool PlanOpeningBalanceIsOverride,
     IReadOnlyList<PlanFactCategoryRow> IncomeCategories,
     IReadOnlyList<PlanFactCategoryRow> ExpenseCategories
 );
