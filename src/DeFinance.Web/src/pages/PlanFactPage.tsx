@@ -52,6 +52,7 @@ interface ModalState {
 
 interface MonthTotals {
   openingBalance: number
+  planOpeningBalance: number
   incomePlan: number
   incomeFact: number
   expensePlan: number
@@ -63,7 +64,11 @@ function calcMonthTotals(m: PlanFactMonthData): MonthTotals {
   const incomeFact = m.incomeCategories.reduce((s, c) => s + c.fact, 0)
   const expensePlan = m.expenseCategories.reduce((s, c) => s + c.plan, 0)
   const expenseFact = m.expenseCategories.reduce((s, c) => s + c.fact, 0)
-  return { openingBalance: m.openingBalance, incomePlan, incomeFact, expensePlan, expenseFact }
+  return {
+    openingBalance: m.openingBalance,
+    planOpeningBalance: m.planOpeningBalance ?? m.openingBalance,
+    incomePlan, incomeFact, expensePlan, expenseFact,
+  }
 }
 
 function PctCell({ plan, fact, isExpense, showDiff }: { plan: number; fact: number; isExpense?: boolean; showDiff?: boolean }) {
@@ -266,10 +271,12 @@ interface OpeningBalanceModalState {
 
 function OpeningBalanceModal({
   state,
+  title = 'Opening Balance Override',
   onClose,
   onSave,
 }: {
   state: OpeningBalanceModalState
+  title?: string
   onClose: () => void
   onSave: (amount: number) => void
 }) {
@@ -281,7 +288,7 @@ function OpeningBalanceModal({
   }
 
   return (
-    <Modal title="Opening Balance Override" onClose={onClose}>
+    <Modal title={title} onClose={onClose}>
       <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
         {MONTH_NAMES[state.month - 1]} {state.year}
       </p>
@@ -323,6 +330,7 @@ export function PlanFactPage() {
   const [loading, setLoading] = useState(false)
   const [modal, setModal] = useState<ModalState | null>(null)
   const [obModal, setObModal] = useState<OpeningBalanceModalState | null>(null)
+  const [planObModal, setPlanObModal] = useState<OpeningBalanceModalState | null>(null)
   const [hideEmpty, setHideEmpty] = useState(false)
   const [showDiff, setShowDiff] = useState(false)
   const [excludeSavings, setExcludeSavings] = usePersistedState('planfact:excludeSavings', false)
@@ -408,6 +416,30 @@ export function PlanFactPage() {
     }
   }
 
+  const handlePlanObSave = async (amount: number) => {
+    if (!planObModal) return
+    const { year: y, month: m } = planObModal
+    setPlanObModal(null)
+
+    setData(prev => {
+      if (!prev) return prev
+      return {
+        months: prev.months.map(md =>
+          md.year === y && md.month === m
+            ? { ...md, planOpeningBalance: amount, planOpeningBalanceIsOverride: true }
+            : md
+        ),
+      }
+    })
+
+    try {
+      await planFactApi.upsertPlanOpeningBalance(y, m, amount)
+    } catch {
+      notify('Failed to save plan opening balance', 'error')
+      fetchData()
+    }
+  }
+
   const handleObSave = async (amount: number) => {
     if (!obModal) return
     const { year: y, month: m } = obModal
@@ -457,6 +489,7 @@ export function PlanFactPage() {
     }
 
     const firstOpening = allMonths[0].openingBalance
+    const firstPlanOpening = allMonths[0].planOpeningBalance ?? allMonths[0].openingBalance
     const totals = Array.from(allCategories.entries()).map(([id, v]) => ({
       categoryId: id,
       categoryName: v.name,
@@ -465,7 +498,7 @@ export function PlanFactPage() {
       fact: Array.from(v.factByMonth.values()).reduce((s, x) => s + x, 0),
     }))
 
-    return { firstOpening, categories: totals }
+    return { firstOpening, firstPlanOpening, categories: totals }
   })()
 
   const colGroups = orderedMonths.length + (showTotal ? 1 : 0)
@@ -620,9 +653,18 @@ export function PlanFactPage() {
                   const md = getMonthData(m)
                   const ob = md?.openingBalance ?? 0
                   const isOverride = md?.openingBalanceIsOverride ?? false
+                  const planOb = md?.planOpeningBalance
+                  const planIsOverride = md?.planOpeningBalanceIsOverride ?? false
                   return (
                     <>
-                      <td key={`${m}-ob-plan`} className={`px-2 py-2.5 text-right text-gray-400 text-xs border-l border-gray-100 dark:border-gray-700 ${planColCls}`}>—</td>
+                      <td
+                        key={`${m}-ob-plan`}
+                        className={`px-2 py-2.5 text-right text-xs font-mono cursor-pointer select-none border-l border-gray-100 dark:border-gray-700 ${planColCls} ${planIsOverride ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-400 dark:text-gray-500'} hover:brightness-95 dark:hover:brightness-110`}
+                        title="Click to set plan opening balance"
+                        onClick={() => setPlanObModal({ year, month: m, currentValue: planOb ?? ob })}
+                      >
+                        {planIsOverride ? <>{fmt(planOb!)}<span className="ml-1 text-[10px] opacity-70">✎</span></> : '—'}
+                      </td>
                       <td
                         key={`${m}-ob-fact`}
                         className={`px-2 py-2.5 text-right text-xs font-mono cursor-pointer select-none ${factColCls} ${isOverride ? 'text-amber-600 dark:text-amber-400' : signedColor(ob)} hover:brightness-95 dark:hover:brightness-110`}
@@ -631,13 +673,13 @@ export function PlanFactPage() {
                       >
                         {fmt(ob)}{isOverride && <span className="ml-1 text-[10px] opacity-70">✎</span>}
                       </td>
-                      <td key={`${m}-ob-pct`}  className="px-2 py-2.5 text-center text-gray-400 text-xs">—</td>
+                      <td key={`${m}-ob-pct`} className="px-2 py-2.5 text-center text-gray-400 text-xs">—</td>
                     </>
                   )
                 })}
                 {showTotal && combined && (
                   <>
-                    <td className={`px-2 py-2.5 text-right text-gray-400 text-xs border-l border-gray-100 dark:border-gray-700 ${planColCls}`}>—</td>
+                    <td className={`px-2 py-2.5 text-right text-xs font-mono border-l border-gray-100 dark:border-gray-700 ${planColCls} ${signedColor(combined.firstPlanOpening)}`}>{fmt(combined.firstPlanOpening)}</td>
                     <td className={`px-2 py-2.5 text-right text-xs font-mono ${factColCls} ${signedColor(combined.firstOpening)}`}>{fmt(combined.firstOpening)}</td>
                     <td className="px-2 py-2.5 text-center text-gray-400 text-xs">—</td>
                   </>
@@ -796,7 +838,7 @@ export function PlanFactPage() {
                       <td key={`${m}-cb-pct`}  className="px-2 py-2.5 text-right text-xs">—</td>
                     </>
                   )
-                  const planClose = t.openingBalance + t.incomePlan - t.expensePlan
+                  const planClose = t.planOpeningBalance + t.incomePlan - t.expensePlan
                   const factClose = t.openingBalance + t.incomeFact - t.expenseFact
                   return (
                     <>
@@ -811,7 +853,7 @@ export function PlanFactPage() {
                   const incomeFact = combined.categories.filter(c => !c.isExpense).reduce((s, c) => s + c.fact, 0)
                   const expensePlan = combined.categories.filter(c => c.isExpense).reduce((s, c) => s + c.plan, 0)
                   const expenseFact = combined.categories.filter(c => c.isExpense).reduce((s, c) => s + c.fact, 0)
-                  const planClose = combined.firstOpening + incomePlan - expensePlan
+                  const planClose = combined.firstPlanOpening + incomePlan - expensePlan
                   const factClose = combined.firstOpening + incomeFact - expenseFact
                   return (
                     <>
@@ -841,6 +883,15 @@ export function PlanFactPage() {
           state={obModal}
           onClose={() => setObModal(null)}
           onSave={handleObSave}
+        />
+      )}
+
+      {planObModal && (
+        <OpeningBalanceModal
+          state={planObModal}
+          title="Plan Opening Balance"
+          onClose={() => setPlanObModal(null)}
+          onSave={handlePlanObSave}
         />
       )}
     </div>

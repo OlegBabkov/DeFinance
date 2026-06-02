@@ -34,4 +34,13 @@ public class PlanFactController(ISender sender) : ControllerBase
         await sender.Send(command, ct);
         return NoContent();
     }
+
+    [HttpPut("plan-opening-balance")]
+    public async Task<IActionResult> UpsertPlanOpeningBalance(
+        [FromBody] UpsertPlanOpeningBalanceCommand command,
+        CancellationToken ct = default)
+    {
+        await sender.Send(command, ct);
+        return NoContent();
+    }
 }
