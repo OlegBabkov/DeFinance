@@ -9,8 +9,8 @@ public class BudgetEntry
     public int Month { get; private set; }
     public decimal PlannedAmount { get; private set; }
 
-    private readonly List<BudgetEntryLine> _lines = [];
-    public IReadOnlyList<BudgetEntryLine> Lines => _lines.AsReadOnly();
+    private ICollection<BudgetEntryLine> _lines = [];
+    public IReadOnlyList<BudgetEntryLine> Lines => _lines.ToList();
 
     private BudgetEntry() { }
 
