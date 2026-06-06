@@ -29,6 +29,7 @@ function PaymentStatusesPanel() {
   const [formError, setFormError] = useState<string | null>(null)
   const [formName, setFormName] = useState('')
   const [formDescription, setFormDescription] = useState('')
+  const [formColor, setFormColor] = useState<string | null>(null)
 
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
@@ -70,11 +71,11 @@ function PaymentStatusesPanel() {
   }
 
   const openCreate = () => {
-    setFormName(''); setFormDescription(''); setFormError(null); setModal('create')
+    setFormName(''); setFormDescription(''); setFormColor(null); setFormError(null); setModal('create')
   }
 
   const openEdit = (s: PaymentStatus) => {
-    setFormName(s.name); setFormDescription(s.description ?? ''); setFormError(null); setModal(s)
+    setFormName(s.name); setFormDescription(s.description ?? ''); setFormColor(s.color ?? null); setFormError(null); setModal(s)
   }
 
   const closeModal = () => setModal(null)
@@ -87,10 +88,10 @@ function PaymentStatusesPanel() {
     try {
       const description = formDescription.trim() || null
       if (modal === 'create') {
-        await paymentStatusesApi.create({ name: formName, description })
+        await paymentStatusesApi.create({ name: formName, description, color: formColor })
         notify('Payment status created', 'success')
       } else if (modal !== null) {
-        await paymentStatusesApi.update(modal.id, { name: formName, description })
+        await paymentStatusesApi.update(modal.id, { name: formName, description, color: formColor })
         notify('Payment status updated', 'info')
       }
       closeModal()
@@ -136,6 +137,36 @@ function PaymentStatusesPanel() {
                 rows={2}
                 placeholder="Short description…"
               />
+            </div>
+            <div>
+              <label className={labelCls}>Color (optional)</label>
+              <div className="flex items-center gap-3">
+                <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={formColor !== null}
+                    onChange={e => setFormColor(e.target.checked ? '#6366f1' : null)}
+                    className="rounded"
+                  />
+                  Custom color
+                </label>
+                {formColor !== null && (
+                  <>
+                    <input
+                      type="color"
+                      value={formColor}
+                      onChange={e => setFormColor(e.target.value)}
+                      className="w-10 h-8 rounded cursor-pointer border border-gray-300 dark:border-gray-600 bg-transparent"
+                    />
+                    <span
+                      className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+                      style={{ backgroundColor: formColor + '25', color: formColor }}
+                    >
+                      {formName || 'Preview'}
+                    </span>
+                  </>
+                )}
+              </div>
             </div>
             {formError && <p className="text-sm text-red-500">{formError}</p>}
             <div className="flex justify-end gap-3 pt-2">
@@ -196,7 +227,15 @@ function PaymentStatusesPanel() {
             <tbody className="divide-y divide-gray-100 dark:divide-gray-700 bg-white dark:bg-gray-800">
               {items.map(s => (
                 <tr key={s.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                  <td className="px-3 py-2 font-medium text-gray-900 dark:text-gray-100">{s.name}</td>
+                  <td className="px-3 py-2 font-medium text-gray-900 dark:text-gray-100">
+                    <div className="flex items-center gap-2">
+                      {s.color
+                        ? <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: s.color }} />
+                        : <span className="w-3 h-3 rounded-full flex-shrink-0 border border-gray-300 dark:border-gray-600" />
+                      }
+                      {s.name}
+                    </div>
+                  </td>
                   <td className="px-3 py-2 text-gray-500 dark:text-gray-400 max-w-xs truncate">
                     {s.description ?? <span className="text-gray-300 dark:text-gray-600">—</span>}
                   </td>

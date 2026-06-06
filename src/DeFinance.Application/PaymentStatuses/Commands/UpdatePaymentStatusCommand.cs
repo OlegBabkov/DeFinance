@@ -5,7 +5,7 @@ using MediatR;
 
 namespace DeFinance.Application.PaymentStatuses.Commands;
 
-public record UpdatePaymentStatusCommand(Guid Id, string Name, string? Description) : IRequest<PaymentStatusResponse?>;
+public record UpdatePaymentStatusCommand(Guid Id, string Name, string? Description, string? Color = null) : IRequest<PaymentStatusResponse?>;
 
 public class UpdatePaymentStatusCommandHandler(IPaymentStatusRepository repository)
     : IRequestHandler<UpdatePaymentStatusCommand, PaymentStatusResponse?>
@@ -14,7 +14,7 @@ public class UpdatePaymentStatusCommandHandler(IPaymentStatusRepository reposito
     {
         var status = await repository.GetByIdAsync(request.Id, cancellationToken);
         if (status is null) return null;
-        status.Update(request.Name, request.Description);
+        status.Update(request.Name, request.Description, request.Color);
         await repository.SaveChangesAsync(cancellationToken);
         return status.ToResponse();
     }

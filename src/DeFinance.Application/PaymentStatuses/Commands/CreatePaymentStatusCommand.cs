@@ -6,14 +6,14 @@ using MediatR;
 
 namespace DeFinance.Application.PaymentStatuses.Commands;
 
-public record CreatePaymentStatusCommand(string Name, string? Description) : IRequest<PaymentStatusResponse>;
+public record CreatePaymentStatusCommand(string Name, string? Description, string? Color = null) : IRequest<PaymentStatusResponse>;
 
 public class CreatePaymentStatusCommandHandler(IPaymentStatusRepository repository)
     : IRequestHandler<CreatePaymentStatusCommand, PaymentStatusResponse>
 {
     public async Task<PaymentStatusResponse> Handle(CreatePaymentStatusCommand request, CancellationToken cancellationToken)
     {
-        var status = PaymentStatus.Create(request.Name, request.Description);
+        var status = PaymentStatus.Create(request.Name, request.Description, request.Color);
         await repository.AddAsync(status, cancellationToken);
         await repository.SaveChangesAsync(cancellationToken);
         return status.ToResponse();

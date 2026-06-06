@@ -5,17 +5,20 @@ export interface PaymentStatus {
   id: string
   name: string
   description: string | null
+  color: string | null
   isActive: boolean
 }
 
 export interface CreatePaymentStatusRequest {
   name: string
   description: string | null
+  color: string | null
 }
 
 export interface UpdatePaymentStatusRequest {
   name: string
   description: string | null
+  color: string | null
 }
 
 export interface PaymentStatusQuery extends PagedQuery {}
