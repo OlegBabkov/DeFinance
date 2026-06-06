@@ -28,7 +28,7 @@ export interface TransactionCounterparty {
 }
 
 export interface TransactionPaymentStatus {
-  id: string; name: string; description: string | null; isActive: boolean
+  id: string; name: string; description: string | null; color: string | null; isActive: boolean
 }
 
 export interface Transaction {

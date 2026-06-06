@@ -102,9 +102,9 @@ export function TransactionPanel({ transaction, onClose }: Props) {
     {
       label: 'Payment Status',
       value: tx.paymentStatus ? (
-        <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300">
-          {tx.paymentStatus.name}
-        </span>
+        tx.paymentStatus.color
+          ? <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium" style={{ backgroundColor: tx.paymentStatus.color + '25', color: tx.paymentStatus.color }}>{tx.paymentStatus.name}</span>
+          : <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300">{tx.paymentStatus.name}</span>
       ) : '—',
     },
     ...(tx.notes ? [{

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNotify } from '../NotificationContext'
 import { useMainCurrency } from '../MainCurrencyContext'
-import { transactionsApi, type Transaction, type TransactionListResult, type CreateTransactionRequest } from '../api/transactions'
+import { transactionsApi, type Transaction, type TransactionListResult, type CreateTransactionRequest, type TransactionPaymentStatus } from '../api/transactions'
 import { accountsApi, type Account } from '../api/accounts'
 import { categoriesApi, type Category } from '../api/categories'
 import { counterpartiesApi, type Counterparty } from '../api/counterparties'
@@ -50,6 +50,24 @@ function activeOrCurrent<T extends { id: string; isActive: boolean }>(items: T[]
     if (cur) return [...active, cur]
   }
   return active
+}
+
+function StatusBadge({ status }: { status: TransactionPaymentStatus }) {
+  if (status.color) {
+    return (
+      <span
+        className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap"
+        style={{ backgroundColor: status.color + '25', color: status.color }}
+      >
+        {status.name}
+      </span>
+    )
+  }
+  return (
+    <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300">
+      {status.name}
+    </span>
+  )
 }
 
 type ModalState = null | 'create' | Transaction
@@ -568,11 +586,9 @@ export function TransactionsPage() {
                     {mainCurrency && <span className="ml-1 text-xs text-gray-400 dark:text-gray-500">{mainCurrency.code}</span>}
                   </td>
                   <td className="px-4 py-3">
-                    {tx.paymentStatus ? (
-                      <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300 whitespace-nowrap">
-                        {tx.paymentStatus.name}
-                      </span>
-                    ) : '—'}
+                    {tx.paymentStatus
+                      ? <StatusBadge status={tx.paymentStatus} />
+                      : '—'}
                   </td>
                   <td className="px-4 py-3 text-gray-500 dark:text-gray-400 max-w-[160px] truncate" title={tx.notes ?? ''}>
                     {tx.notes ?? <span className="text-gray-300 dark:text-gray-600">—</span>}
