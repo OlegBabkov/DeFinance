@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { usePersistedState } from '../hooks/usePersistedState'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
@@ -44,8 +45,9 @@ export function TransactionsDashboardPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loading, setLoading] = useState(false)
   const [catsLoading, setCatsLoading] = useState(true)
-  const [months, setMonths] = useState<MonthOption>(6)
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [months, setMonths] = usePersistedState<MonthOption>('dashboard:months', 6)
+  const [selectedIdList, setSelectedIdList] = usePersistedState<string[]>('dashboard:selectedIds', [])
+  const selectedIds = useMemo(() => new Set(selectedIdList), [selectedIdList])
   const [pickerOpen, setPickerOpen] = useState(false)
   const pickerRef = useRef<HTMLDivElement>(null)
 
@@ -108,12 +110,9 @@ export function TransactionsDashboardPage() {
   const selectedCategories = categories.filter(c => selectedIds.has(c.id))
 
   const toggleCategory = (id: string) =>
-    setSelectedIds(prev => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
+    setSelectedIdList(prev =>
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    )
 
   const gridColor    = dark ? '#374151' : '#e5e7eb'
   const tickColor    = dark ? '#9ca3af' : '#6b7280'
@@ -178,7 +177,7 @@ export function TransactionsDashboardPage() {
               {selectedIds.size > 0 && (
                 <div className="px-3 py-2 border-t border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800">
                   <button
-                    onClick={() => setSelectedIds(new Set())}
+                    onClick={() => setSelectedIdList([])}
                     className="text-xs text-gray-400 hover:text-red-500 transition-colors"
                   >
                     Clear all
