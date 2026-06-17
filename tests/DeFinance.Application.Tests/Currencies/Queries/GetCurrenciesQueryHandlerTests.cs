@@ -1,3 +1,4 @@
+using DeFinance.Application.Abstractions;
 using DeFinance.Application.Abstractions.Repositories;
 using DeFinance.Application.Common;
 using DeFinance.Application.Currencies.Queries;
@@ -10,6 +11,7 @@ namespace DeFinance.Application.Tests.Currencies.Queries;
 public class GetCurrenciesQueryHandlerTests
 {
     private readonly ICurrencyRepository _repository = Substitute.For<ICurrencyRepository>();
+    private readonly ICacheService _cache = Substitute.For<ICacheService>();
 
     private void SetupGetAll(IReadOnlyList<Currency> items, int totalCount) =>
         _repository.GetAllAsync(
@@ -29,7 +31,7 @@ public class GetCurrenciesQueryHandlerTests
         };
         SetupGetAll(currencies, 2);
 
-        var result = await new GetAllCurrenciesQueryHandler(_repository)
+        var result = await new GetAllCurrenciesQueryHandler(_repository, _cache)
             .Handle(new GetAllCurrenciesQuery(), CancellationToken.None);
 
         result.Items.Should().HaveCount(2);
@@ -42,7 +44,7 @@ public class GetCurrenciesQueryHandlerTests
     {
         SetupGetAll([], 0);
 
-        var result = await new GetAllCurrenciesQueryHandler(_repository)
+        var result = await new GetAllCurrenciesQueryHandler(_repository, _cache)
             .Handle(new GetAllCurrenciesQuery(), CancellationToken.None);
 
         result.Items.Should().BeEmpty();
@@ -55,7 +57,7 @@ public class GetCurrenciesQueryHandlerTests
     {
         SetupGetAll([], 0);
 
-        await new GetAllCurrenciesQueryHandler(_repository)
+        await new GetAllCurrenciesQueryHandler(_repository, _cache)
             .Handle(new GetAllCurrenciesQuery(
                 Search: "usd", IsActive: true, Page: 2, PageSize: 10,
                 SortBy: "code", SortDirection: SortDirection.Desc),
@@ -70,7 +72,7 @@ public class GetCurrenciesQueryHandlerTests
     {
         SetupGetAll([], 50);
 
-        var result = await new GetAllCurrenciesQueryHandler(_repository)
+        var result = await new GetAllCurrenciesQueryHandler(_repository, _cache)
             .Handle(new GetAllCurrenciesQuery(Page: 3, PageSize: 10), CancellationToken.None);
 
         result.Page.Should().Be(3);
@@ -89,7 +91,7 @@ public class GetCurrenciesQueryHandlerTests
     {
         SetupGetAll([], totalCount);
 
-        var result = await new GetAllCurrenciesQueryHandler(_repository)
+        var result = await new GetAllCurrenciesQueryHandler(_repository, _cache)
             .Handle(new GetAllCurrenciesQuery(Page: page, PageSize: pageSize), CancellationToken.None);
 
         result.TotalPages.Should().Be(expectedTotalPages);

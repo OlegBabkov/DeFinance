@@ -1,3 +1,4 @@
+using DeFinance.Application.Abstractions;
 using DeFinance.Application.Abstractions.Repositories;
 using DeFinance.Application.Categories.Queries;
 using DeFinance.Application.Common;
@@ -10,6 +11,7 @@ namespace DeFinance.Application.Tests.Categories.Queries;
 public class GetAllCategoriesQueryHandlerTests
 {
     private readonly ICategoryRepository _repository = Substitute.For<ICategoryRepository>();
+    private readonly ICacheService _cache = Substitute.For<ICacheService>();
 
     private void SetupGetAll(IReadOnlyList<Category> items, int totalCount) =>
         _repository.GetAllAsync(
@@ -30,7 +32,7 @@ public class GetAllCategoriesQueryHandlerTests
         };
         SetupGetAll(categories, 2);
 
-        var result = await new GetAllCategoriesQueryHandler(_repository)
+        var result = await new GetAllCategoriesQueryHandler(_repository, _cache)
             .Handle(new GetAllCategoriesQuery(), CancellationToken.None);
 
         result.Items.Should().HaveCount(2);
@@ -43,7 +45,7 @@ public class GetAllCategoriesQueryHandlerTests
     {
         SetupGetAll([], 0);
 
-        var result = await new GetAllCategoriesQueryHandler(_repository)
+        var result = await new GetAllCategoriesQueryHandler(_repository, _cache)
             .Handle(new GetAllCategoriesQuery(), CancellationToken.None);
 
         result.Items.Should().BeEmpty();
@@ -56,7 +58,7 @@ public class GetAllCategoriesQueryHandlerTests
     {
         SetupGetAll([], 0);
 
-        await new GetAllCategoriesQueryHandler(_repository)
+        await new GetAllCategoriesQueryHandler(_repository, _cache)
             .Handle(new GetAllCategoriesQuery(
                 Search: "food", IsActive: true,
                 Type: CategoryType.Expense, PaymentObligation: CategoryPaymentObligation.Mandatory,
@@ -78,7 +80,7 @@ public class GetAllCategoriesQueryHandlerTests
     {
         SetupGetAll([], totalCount);
 
-        var result = await new GetAllCategoriesQueryHandler(_repository)
+        var result = await new GetAllCategoriesQueryHandler(_repository, _cache)
             .Handle(new GetAllCategoriesQuery(Page: page, PageSize: pageSize), CancellationToken.None);
 
         result.TotalPages.Should().Be(expectedTotalPages);
