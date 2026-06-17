@@ -1,3 +1,4 @@
+using DeFinance.Application.Abstractions;
 using DeFinance.Application.Abstractions.Repositories;
 using DeFinance.Application.Common;
 using DeFinance.Application.Counterparties.Queries;
@@ -10,6 +11,7 @@ namespace DeFinance.Application.Tests.Counterparties.Queries;
 public class GetCounterpartyQueryHandlerTests
 {
     private readonly ICounterpartyRepository _repository = Substitute.For<ICounterpartyRepository>();
+    private readonly ICacheService _cache = Substitute.For<ICacheService>();
 
     private void SetupGetAll(IReadOnlyList<Counterparty> items, int totalCount) =>
         _repository.GetAllAsync(
@@ -29,7 +31,7 @@ public class GetCounterpartyQueryHandlerTests
         };
         SetupGetAll(counterparties, 2);
 
-        var result = await new GetAllCounterpartiesQueryHandler(_repository)
+        var result = await new GetAllCounterpartiesQueryHandler(_repository, _cache)
             .Handle(new GetAllCounterpartiesQuery(), CancellationToken.None);
 
         result.Items.Should().HaveCount(2);
@@ -42,7 +44,7 @@ public class GetCounterpartyQueryHandlerTests
     {
         SetupGetAll([], 0);
 
-        var result = await new GetAllCounterpartiesQueryHandler(_repository)
+        var result = await new GetAllCounterpartiesQueryHandler(_repository, _cache)
             .Handle(new GetAllCounterpartiesQuery(), CancellationToken.None);
 
         result.Items.Should().BeEmpty();
@@ -55,7 +57,7 @@ public class GetCounterpartyQueryHandlerTests
     {
         SetupGetAll([], 0);
 
-        await new GetAllCounterpartiesQueryHandler(_repository)
+        await new GetAllCounterpartiesQueryHandler(_repository, _cache)
             .Handle(new GetAllCounterpartiesQuery(
                 Search: "lid", IsActive: true, Type: CounterpartyType.Company,
                 Page: 2, PageSize: 25, SortBy: "name", SortDirection: SortDirection.Desc),
@@ -76,7 +78,7 @@ public class GetCounterpartyQueryHandlerTests
     {
         SetupGetAll([], totalCount);
 
-        var result = await new GetAllCounterpartiesQueryHandler(_repository)
+        var result = await new GetAllCounterpartiesQueryHandler(_repository, _cache)
             .Handle(new GetAllCounterpartiesQuery(Page: page, PageSize: pageSize), CancellationToken.None);
 
         result.TotalPages.Should().Be(expectedTotalPages);

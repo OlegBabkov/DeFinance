@@ -1,3 +1,4 @@
+using DeFinance.Application.Abstractions;
 using DeFinance.Application.Abstractions.Repositories;
 using DeFinance.Application.Accounts.Queries;
 using DeFinance.Application.Common;
@@ -10,6 +11,7 @@ namespace DeFinance.Application.Tests.Accounts.Queries;
 public class GetAllAccountsQueryHandlerTests
 {
     private readonly IAccountRepository _repository = Substitute.For<IAccountRepository>();
+    private readonly ICacheService _cache = Substitute.For<ICacheService>();
 
     private void SetupGetAll(IReadOnlyList<Account> items, int totalCount) =>
         _repository.GetAllAsync(
@@ -30,7 +32,7 @@ public class GetAllAccountsQueryHandlerTests
         };
         SetupGetAll(accounts, 2);
 
-        var result = await new GetAllAccountsQueryHandler(_repository)
+        var result = await new GetAllAccountsQueryHandler(_repository, _cache)
             .Handle(new GetAllAccountsQuery(), CancellationToken.None);
 
         result.Items.Should().HaveCount(2);
@@ -43,7 +45,7 @@ public class GetAllAccountsQueryHandlerTests
     {
         SetupGetAll([], 0);
 
-        var result = await new GetAllAccountsQueryHandler(_repository)
+        var result = await new GetAllAccountsQueryHandler(_repository, _cache)
             .Handle(new GetAllAccountsQuery(), CancellationToken.None);
 
         result.Items.Should().BeEmpty();
@@ -57,7 +59,7 @@ public class GetAllAccountsQueryHandlerTests
         SetupGetAll([], 0);
         var currencyId = Guid.NewGuid();
 
-        await new GetAllAccountsQueryHandler(_repository)
+        await new GetAllAccountsQueryHandler(_repository, _cache)
             .Handle(new GetAllAccountsQuery(
                 Search: "savings", IsActive: true, Type: AccountType.Savings, CurrencyId: currencyId,
                 Page: 2, PageSize: 25, SortBy: "balance", SortDirection: SortDirection.Desc),
@@ -73,7 +75,7 @@ public class GetAllAccountsQueryHandlerTests
     {
         SetupGetAll([], 100);
 
-        var result = await new GetAllAccountsQueryHandler(_repository)
+        var result = await new GetAllAccountsQueryHandler(_repository, _cache)
             .Handle(new GetAllAccountsQuery(Page: 4, PageSize: 25), CancellationToken.None);
 
         result.Page.Should().Be(4);
@@ -94,7 +96,7 @@ public class GetAllAccountsQueryHandlerTests
     {
         SetupGetAll([], totalCount);
 
-        var result = await new GetAllAccountsQueryHandler(_repository)
+        var result = await new GetAllAccountsQueryHandler(_repository, _cache)
             .Handle(new GetAllAccountsQuery(Page: page, PageSize: pageSize), CancellationToken.None);
 
         result.TotalPages.Should().Be(expectedTotalPages);

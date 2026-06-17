@@ -26,7 +26,7 @@ public class CurrencyQueryValidatorTests
 
     [Theory]
     [InlineData(0)]
-    [InlineData(101)]
+    [InlineData(501)]
     public async Task Validator_WithInvalidPageSize_ShouldBeInvalid(int pageSize)
     {
         var result = await _validator.ValidateAsync(new GetAllCurrenciesQuery(PageSize: pageSize));

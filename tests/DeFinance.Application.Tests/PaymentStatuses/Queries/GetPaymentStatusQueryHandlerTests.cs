@@ -1,3 +1,4 @@
+using DeFinance.Application.Abstractions;
 using DeFinance.Application.Abstractions.Repositories;
 using DeFinance.Application.Common;
 using DeFinance.Application.PaymentStatuses.Queries;
@@ -10,6 +11,7 @@ namespace DeFinance.Application.Tests.PaymentStatuses.Queries;
 public class GetPaymentStatusQueryHandlerTests
 {
     private readonly IPaymentStatusRepository _repository = Substitute.For<IPaymentStatusRepository>();
+    private readonly ICacheService _cache = Substitute.For<ICacheService>();
 
     private void SetupGetAll(IReadOnlyList<PaymentStatus> items, int totalCount) =>
         _repository.GetAllAsync(
@@ -29,7 +31,7 @@ public class GetPaymentStatusQueryHandlerTests
         };
         SetupGetAll(statuses, 2);
 
-        var result = await new GetAllPaymentStatusesQueryHandler(_repository)
+        var result = await new GetAllPaymentStatusesQueryHandler(_repository, _cache)
             .Handle(new GetAllPaymentStatusesQuery(), CancellationToken.None);
 
         result.Items.Should().HaveCount(2);
@@ -42,7 +44,7 @@ public class GetPaymentStatusQueryHandlerTests
     {
         SetupGetAll([], 0);
 
-        var result = await new GetAllPaymentStatusesQueryHandler(_repository)
+        var result = await new GetAllPaymentStatusesQueryHandler(_repository, _cache)
             .Handle(new GetAllPaymentStatusesQuery(), CancellationToken.None);
 
         result.Items.Should().BeEmpty();
@@ -55,7 +57,7 @@ public class GetPaymentStatusQueryHandlerTests
     {
         SetupGetAll([], 0);
 
-        await new GetAllPaymentStatusesQueryHandler(_repository)
+        await new GetAllPaymentStatusesQueryHandler(_repository, _cache)
             .Handle(new GetAllPaymentStatusesQuery(
                 Search: "paid", IsActive: false, Page: 2, PageSize: 50,
                 SortBy: "name", SortDirection: SortDirection.Desc),
@@ -74,7 +76,7 @@ public class GetPaymentStatusQueryHandlerTests
     {
         SetupGetAll([], totalCount);
 
-        var result = await new GetAllPaymentStatusesQueryHandler(_repository)
+        var result = await new GetAllPaymentStatusesQueryHandler(_repository, _cache)
             .Handle(new GetAllPaymentStatusesQuery(Page: page, PageSize: pageSize), CancellationToken.None);
 
         result.TotalPages.Should().Be(expectedTotalPages);
