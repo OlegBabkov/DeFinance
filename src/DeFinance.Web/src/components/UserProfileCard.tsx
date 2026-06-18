@@ -130,10 +130,10 @@ export function UserProfileCard({ onClose, onUsernameChange, onPhotoChange, anch
   return (
     <div
       ref={cardRef}
-      className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 z-50 overflow-hidden"
+      className="absolute right-0 top-full mt-2 w-80 max-h-[calc(100vh-80px)] flex flex-col bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 z-50 overflow-hidden"
     >
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-700">
+      {/* Header — always visible */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-700 shrink-0">
         <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">Account</span>
         <button
           onClick={onClose}
@@ -146,7 +146,7 @@ export function UserProfileCard({ onClose, onUsernameChange, onPhotoChange, anch
       {loading ? (
         <div className="px-4 py-8 flex justify-center text-gray-400 dark:text-gray-500"><Spinner /></div>
       ) : (
-        <div className="px-4 py-4 space-y-5">
+        <div className="px-4 py-4 space-y-5 overflow-y-auto">
 
           {/* Avatar + joined date */}
           <div className="flex items-center gap-3">
