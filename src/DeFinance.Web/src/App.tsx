@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { ThemeProvider } from './ThemeContext'
 import { NotificationProvider } from './NotificationContext'
@@ -18,7 +18,7 @@ import { MandatoryPage } from './pages/MandatoryPage'
 import { PlanFactPage } from './pages/PlanFactPage'
 import { TransactionsDashboardPage } from './pages/TransactionsDashboardPage'
 import { DashboardsLayout } from './pages/DashboardsLayout'
-import { clearToken, decodeUsername, isTokenExpired, loadToken, saveToken } from './api/auth'
+import { authApi, clearToken, decodeUsername, isTokenExpired, loadToken, saveToken } from './api/auth'
 
 function getInitialUsername(): string | null {
   const token = loadToken()
@@ -28,6 +28,15 @@ function getInitialUsername(): string | null {
 
 function App() {
   const [username, setUsername] = useState<string | null>(getInitialUsername)
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (username) {
+      authApi.me().then(u => setPhotoUrl(u.photoUrl ?? null)).catch(() => {})
+    } else {
+      setPhotoUrl(null)
+    }
+  }, [username])
 
   const handleLogin = (name: string, token?: string) => {
     if (token) saveToken(token)
@@ -51,7 +60,7 @@ function App() {
             <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
               <Sidebar />
               <div className="flex-1 flex flex-col overflow-hidden">
-                <TopBar username={username} onLogout={handleLogout} onUsernameChange={setUsername} />
+                <TopBar username={username} onLogout={handleLogout} onUsernameChange={setUsername} photoUrl={photoUrl} onPhotoChange={setPhotoUrl} />
                 <main className="flex-1 overflow-hidden">
                   <Routes>
                     <Route element={<DashboardsLayout />}>

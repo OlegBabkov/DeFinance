@@ -5,6 +5,7 @@ using DeFinance.Application.Users.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
 
 namespace DeFinance.Api.Controllers;
 
@@ -56,6 +57,30 @@ public class AuthController(ISender sender) : ControllerBase
         if (userId is null) return Unauthorized();
         var result = await sender.Send(new UpdateUserCommand(userId.Value, req.Username, req.Email, req.PhoneNumber), ct);
         return result is null ? NotFound() : Ok(result);
+    }
+
+    [HttpPut("me/photo")]
+    [Authorize]
+    [Consumes("multipart/form-data")]
+    public async Task<IActionResult> UploadPhoto(IFormFile photo, CancellationToken ct)
+    {
+        var userId = GetCurrentUserId();
+        if (userId is null) return Unauthorized();
+
+        using var ms = new System.IO.MemoryStream();
+        await photo.CopyToAsync(ms, ct);
+        var result = await sender.Send(new UploadUserPhotoCommand(userId.Value, ms.ToArray(), photo.ContentType), ct);
+        return result is null ? NotFound() : Ok(result);
+    }
+
+    [HttpDelete("me/photo")]
+    [Authorize]
+    public async Task<IActionResult> DeletePhoto(CancellationToken ct)
+    {
+        var userId = GetCurrentUserId();
+        if (userId is null) return Unauthorized();
+        var success = await sender.Send(new DeleteUserPhotoCommand(userId.Value), ct);
+        return success ? NoContent() : NotFound();
     }
 
     [HttpPost("change-password")]
