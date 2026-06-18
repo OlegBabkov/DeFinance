@@ -15,7 +15,7 @@ public class CreateAccountCommandHandler(IAccountRepository repository, ICurrent
 {
     public async Task<AccountResponse> Handle(CreateAccountCommand request, CancellationToken cancellationToken)
     {
-        var account = Account.Create(request.Name, request.Type, request.InitialBalance, request.CurrencyId, currentUserService.UserId!.Value);
+        var account = Account.Create(request.Name, request.Type, request.InitialBalance, request.CurrencyId, currentUserService.UserId);
         await repository.AddAsync(account, cancellationToken);
         await repository.SaveChangesAsync(cancellationToken);
         return account.ToResponse();

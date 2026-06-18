@@ -2,5 +2,5 @@ namespace DeFinance.Application.Abstractions;
 
 public interface ICurrentUserService
 {
-    Guid? UserId { get; }
+    Guid UserId { get; }
 }

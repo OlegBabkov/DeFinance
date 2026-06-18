@@ -70,7 +70,7 @@ public class DeFinanceWebApplicationFactory : WebApplicationFactory<Program>
 
 file sealed class TestCurrentUserService(Guid userId) : ICurrentUserService
 {
-    public Guid? UserId => userId;
+    public Guid UserId => userId;
 }
 
 file sealed class TestAuthHandler(

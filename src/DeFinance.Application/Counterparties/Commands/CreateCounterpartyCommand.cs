@@ -15,7 +15,7 @@ public class CreateCounterpartyCommandHandler(ICounterpartyRepository repository
 {
     public async Task<CounterpartyResponse> Handle(CreateCounterpartyCommand request, CancellationToken cancellationToken)
     {
-        var counterparty = Counterparty.Create(request.Name, request.Type, request.ContactInfo, currentUserService.UserId!.Value);
+        var counterparty = Counterparty.Create(request.Name, request.Type, request.ContactInfo, currentUserService.UserId);
         await repository.AddAsync(counterparty, cancellationToken);
         await repository.SaveChangesAsync(cancellationToken);
         return counterparty.ToResponse();

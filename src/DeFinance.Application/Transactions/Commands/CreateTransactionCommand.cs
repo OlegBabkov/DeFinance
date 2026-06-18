@@ -36,7 +36,7 @@ public class CreateTransactionCommandHandler(
         var transaction = Transaction.Create(
             request.DateTime, request.Sum, request.ExchangeRate,
             request.InCurrencyId, request.AccountId, request.CategoryId,
-            request.CounterpartyId, request.PaymentStatusId, currentUserService.UserId!.Value, request.Notes);
+            request.CounterpartyId, request.PaymentStatusId, currentUserService.UserId, request.Notes);
 
         account.AdjustBalance(BalanceDelta(category.Type, request.Sum));
 

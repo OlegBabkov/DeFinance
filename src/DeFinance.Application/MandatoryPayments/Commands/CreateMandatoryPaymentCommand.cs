@@ -28,7 +28,7 @@ public class CreateMandatoryPaymentCommandHandler(IMandatoryPaymentRepository re
         var payment = MandatoryPayment.Create(
             request.Name, request.Amount,
             request.CurrencyId, request.AccountId, request.CategoryId, request.PaymentStatusId,
-            request.Frequency, request.DayOfPeriod, request.Notes, currentUserService.UserId!.Value);
+            request.Frequency, request.DayOfPeriod, request.Notes, currentUserService.UserId);
 
         await repository.AddAsync(payment, cancellationToken);
         await repository.SaveChangesAsync(cancellationToken);

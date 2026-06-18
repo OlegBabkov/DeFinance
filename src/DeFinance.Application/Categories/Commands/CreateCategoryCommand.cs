@@ -15,7 +15,7 @@ public class CreateCategoryCommandHandler(ICategoryRepository repository, ICurre
 {
     public async Task<CategoryResponse> Handle(CreateCategoryCommand request, CancellationToken cancellationToken)
     {
-        var category = Category.Create(request.Name, request.Type, request.Color, request.Icon, request.ParentId, request.PaymentObligation, currentUserService.UserId!.Value);
+        var category = Category.Create(request.Name, request.Type, request.Color, request.Icon, request.ParentId, request.PaymentObligation, currentUserService.UserId);
         await repository.AddAsync(category, cancellationToken);
         await repository.SaveChangesAsync(cancellationToken);
         return category.ToResponse();

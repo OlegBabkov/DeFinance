@@ -21,7 +21,7 @@ public class UpsertOpeningBalanceCommandHandler(IOpeningBalanceOverrideRepositor
         else
         {
             await repository.AddAsync(
-                OpeningBalanceOverride.Create(request.Year, request.Month, request.Amount, currentUserService.UserId!.Value),
+                OpeningBalanceOverride.Create(request.Year, request.Month, request.Amount, currentUserService.UserId),
                 cancellationToken);
         }
         await repository.SaveChangesAsync(cancellationToken);

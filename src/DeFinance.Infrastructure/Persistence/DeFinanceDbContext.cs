@@ -22,12 +22,12 @@ public class DeFinanceDbContext(DbContextOptions<DeFinanceDbContext> options, IC
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(DeFinanceDbContext).Assembly);
 
-        modelBuilder.Entity<Account>().HasQueryFilter(a => !currentUserService.UserId.HasValue || a.UserId == currentUserService.UserId.GetValueOrDefault());
-        modelBuilder.Entity<Category>().HasQueryFilter(c => !currentUserService.UserId.HasValue || c.UserId == currentUserService.UserId.GetValueOrDefault());
-        modelBuilder.Entity<Transaction>().HasQueryFilter(t => !currentUserService.UserId.HasValue || t.UserId == currentUserService.UserId.GetValueOrDefault());
-        modelBuilder.Entity<Counterparty>().HasQueryFilter(c => !currentUserService.UserId.HasValue || c.UserId == currentUserService.UserId.GetValueOrDefault());
-        modelBuilder.Entity<MandatoryPayment>().HasQueryFilter(m => !currentUserService.UserId.HasValue || m.UserId == currentUserService.UserId.GetValueOrDefault());
-        modelBuilder.Entity<BudgetEntry>().HasQueryFilter(b => !currentUserService.UserId.HasValue || b.UserId == currentUserService.UserId.GetValueOrDefault());
-        modelBuilder.Entity<OpeningBalanceOverride>().HasQueryFilter(o => !currentUserService.UserId.HasValue || o.UserId == currentUserService.UserId.GetValueOrDefault());
+        modelBuilder.Entity<Account>().HasQueryFilter(a => a.UserId == currentUserService.UserId);
+        modelBuilder.Entity<Category>().HasQueryFilter(c => c.UserId == currentUserService.UserId);
+        modelBuilder.Entity<Transaction>().HasQueryFilter(t => t.UserId == currentUserService.UserId);
+        modelBuilder.Entity<Counterparty>().HasQueryFilter(c => c.UserId == currentUserService.UserId);
+        modelBuilder.Entity<MandatoryPayment>().HasQueryFilter(m => m.UserId == currentUserService.UserId);
+        modelBuilder.Entity<BudgetEntry>().HasQueryFilter(b => b.UserId == currentUserService.UserId);
+        modelBuilder.Entity<OpeningBalanceOverride>().HasQueryFilter(o => o.UserId == currentUserService.UserId);
     }
 }
