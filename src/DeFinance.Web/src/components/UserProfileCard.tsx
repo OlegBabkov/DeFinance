@@ -29,10 +29,10 @@ export function UserProfileCard({ onClose, onUsernameChange, anchorRef }: Props)
   useEffect(() => {
     authApi.me().then(u => {
       setUser(u)
-      setUsername(u.username)
-      setEmail(u.email)
+      setUsername(u.username ?? '')
+      setEmail(u.email ?? '')
       setPhone(u.phoneNumber ?? '')
-    }).finally(() => setLoading(false))
+    }).catch(() => {}).finally(() => setLoading(false))
   }, [])
 
   useEffect(() => {
