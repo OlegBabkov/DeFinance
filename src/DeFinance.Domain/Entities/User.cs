@@ -9,6 +9,8 @@ public class User
     public string? PhoneNumber { get; private set; }
     public DateTime CreatedAt { get; private set; }
     public bool IsActive { get; private set; }
+    public byte[]? Photo { get; private set; }
+    public string? PhotoContentType { get; private set; }
 
     private User() { }
 
@@ -32,6 +34,18 @@ public class User
     }
 
     public void ChangePassword(string password) => Password = password;
+
+    public void SetPhoto(byte[] photo, string contentType)
+    {
+        Photo = photo;
+        PhotoContentType = contentType;
+    }
+
+    public void RemovePhoto()
+    {
+        Photo = null;
+        PhotoContentType = null;
+    }
 
     public void Activate() => IsActive = true;
     public void Deactivate() => IsActive = false;

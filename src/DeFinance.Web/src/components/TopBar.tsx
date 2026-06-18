@@ -5,9 +5,11 @@ interface Props {
   username: string
   onLogout: () => void
   onUsernameChange: (username: string) => void
+  photoUrl: string | null
+  onPhotoChange: (url: string | null) => void
 }
 
-export function TopBar({ username, onLogout, onUsernameChange }: Props) {
+export function TopBar({ username, onLogout, onUsernameChange, photoUrl, onPhotoChange }: Props) {
   const initials = username.slice(0, 2).toUpperCase()
   const [cardOpen, setCardOpen] = useState(false)
   const avatarRef = useRef<HTMLButtonElement>(null)
@@ -21,8 +23,10 @@ export function TopBar({ username, onLogout, onUsernameChange }: Props) {
             onClick={() => setCardOpen(o => !o)}
             className="flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
           >
-            <div className="w-7 h-7 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-semibold select-none">
-              {initials}
+            <div className="w-7 h-7 rounded-full overflow-hidden bg-indigo-600 flex items-center justify-center text-white text-xs font-semibold select-none shrink-0">
+              {photoUrl
+                ? <img src={photoUrl} alt={username} className="w-full h-full object-cover" />
+                : initials}
             </div>
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{username}</span>
           </button>
@@ -31,6 +35,7 @@ export function TopBar({ username, onLogout, onUsernameChange }: Props) {
             <UserProfileCard
               onClose={() => setCardOpen(false)}
               onUsernameChange={onUsernameChange}
+              onPhotoChange={onPhotoChange}
               anchorRef={avatarRef}
             />
           )}

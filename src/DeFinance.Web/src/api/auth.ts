@@ -11,6 +11,7 @@ export interface UserInfo {
   phoneNumber?: string
   createdAt: string
   isActive: boolean
+  photoUrl?: string
 }
 
 export interface UpdateMeRequest { username: string; email: string; phoneNumber?: string }
@@ -27,6 +28,13 @@ export const authApi = {
     client.put<UserInfo>('/auth/me', req).then(r => r.data),
   changePassword: (req: ChangePasswordRequest) =>
     client.post('/auth/change-password', req),
+  uploadPhoto: (file: File) => {
+    const form = new FormData()
+    form.append('photo', file)
+    return client.put<UserInfo>('/auth/me/photo', form).then(r => r.data)
+  },
+  deletePhoto: () =>
+    client.delete('/auth/me/photo'),
 }
 
 export const TOKEN_KEY = 'definance_jwt'

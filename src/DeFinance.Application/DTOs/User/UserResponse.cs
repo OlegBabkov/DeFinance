@@ -6,4 +6,5 @@ public record UserResponse(
     string Email,
     string? PhoneNumber,
     DateTime CreatedAt,
-    bool IsActive);
+    bool IsActive,
+    string? PhotoUrl);

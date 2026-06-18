@@ -3,13 +3,16 @@ import { authApi, type UserInfo } from '../api/auth'
 import { useNotify } from '../NotificationContext'
 import { Spinner } from './Spinner'
 
+const ACCEPTED_PHOTO_TYPES = 'image/jpeg,image/png,image/webp,image/gif'
+
 interface Props {
   onClose: () => void
   onUsernameChange: (username: string) => void
+  onPhotoChange: (url: string | null) => void
   anchorRef: React.RefObject<HTMLElement | null>
 }
 
-export function UserProfileCard({ onClose, onUsernameChange, anchorRef }: Props) {
+export function UserProfileCard({ onClose, onUsernameChange, onPhotoChange, anchorRef }: Props) {
   const notify = useNotify()
   const cardRef = useRef<HTMLDivElement>(null)
 
@@ -25,6 +28,8 @@ export function UserProfileCard({ onClose, onUsernameChange, anchorRef }: Props)
   const [newPw, setNewPw] = useState('')
   const [confirmPw, setConfirmPw] = useState('')
   const [pwSaving, setPwSaving] = useState(false)
+  const [photoSaving, setPhotoSaving] = useState(false)
+  const photoInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     authApi.me().then(u => {
@@ -73,6 +78,37 @@ export function UserProfileCard({ onClose, onUsernameChange, anchorRef }: Props)
     }
   }
 
+  async function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setPhotoSaving(true)
+    try {
+      const updated = await authApi.uploadPhoto(file)
+      setUser(updated)
+      onPhotoChange(updated.photoUrl ?? null)
+      notify('Photo updated', 'success')
+    } catch {
+      notify('Failed to upload photo', 'error')
+    } finally {
+      setPhotoSaving(false)
+      if (photoInputRef.current) photoInputRef.current.value = ''
+    }
+  }
+
+  async function handleRemovePhoto() {
+    setPhotoSaving(true)
+    try {
+      await authApi.deletePhoto()
+      setUser(u => u ? { ...u, photoUrl: undefined } : u)
+      onPhotoChange(null)
+      notify('Photo removed', 'success')
+    } catch {
+      notify('Failed to remove photo', 'error')
+    } finally {
+      setPhotoSaving(false)
+    }
+  }
+
   async function handleChangePassword() {
     if (!currentPw || !newPw) return
     if (newPw !== confirmPw) { notify('New passwords do not match', 'error'); return }
@@ -114,8 +150,27 @@ export function UserProfileCard({ onClose, onUsernameChange, anchorRef }: Props)
 
           {/* Avatar + joined date */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white text-sm font-semibold select-none shrink-0">
-              {username.slice(0, 2).toUpperCase()}
+            <div className="relative group shrink-0">
+              <div className="w-14 h-14 rounded-full overflow-hidden bg-indigo-600 flex items-center justify-center text-white text-lg font-semibold select-none">
+                {user?.photoUrl
+                  ? <img src={user.photoUrl} alt={username} className="w-full h-full object-cover" />
+                  : username.slice(0, 2).toUpperCase()}
+              </div>
+              <button
+                onClick={() => photoInputRef.current?.click()}
+                disabled={photoSaving}
+                title="Change photo"
+                className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs transition-opacity disabled:opacity-30"
+              >
+                {photoSaving ? <Spinner /> : '📷'}
+              </button>
+              <input
+                ref={photoInputRef}
+                type="file"
+                accept={ACCEPTED_PHOTO_TYPES}
+                className="hidden"
+                onChange={handlePhotoChange}
+              />
             </div>
             <div>
               <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{user?.username}</p>
@@ -123,6 +178,15 @@ export function UserProfileCard({ onClose, onUsernameChange, anchorRef }: Props)
                 <p className="text-xs text-gray-400 dark:text-gray-500">
                   Member since {new Date(user.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
                 </p>
+              )}
+              {user?.photoUrl && (
+                <button
+                  onClick={handleRemovePhoto}
+                  disabled={photoSaving}
+                  className="text-xs text-red-400 hover:text-red-500 disabled:opacity-50 mt-0.5"
+                >
+                  Remove photo
+                </button>
               )}
             </div>
           </div>

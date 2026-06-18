@@ -28,6 +28,8 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.CreatedAt)
             .IsRequired();
 
+        builder.Property(u => u.PhotoContentType).HasMaxLength(50);
+
         builder.HasIndex(u => u.Username).IsUnique();
     }
 }
