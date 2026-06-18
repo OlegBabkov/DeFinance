@@ -6,8 +6,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DeFinance.Infrastructure.Persistence.Repositories;
 
-public class TransactionRepository(DeFinanceDbContext dbContext, ICacheService cache, IEventPublisher events) : ITransactionRepository
+public class TransactionRepository(DeFinanceDbContext dbContext, ICacheService cache, IEventPublisher events, ICurrentUserService currentUserService) : ITransactionRepository
 {
+    private readonly Guid _userId = currentUserService.UserId;
+
     public async Task<IReadOnlyList<(Guid CategoryId, int Month, decimal Total)>> GetCategoryMonthlyTotalsAsync(
         int year, IReadOnlyList<int> months, bool excludeSavings = false, CancellationToken cancellationToken = default)
     {
@@ -16,6 +18,7 @@ public class TransactionRepository(DeFinanceDbContext dbContext, ICacheService c
         var yearEnd = DateTime.SpecifyKind(new DateTime(year + 1, 1, 1), DateTimeKind.Utc);
 
         var data = await dbContext.Transactions
+            .Where(t => t.UserId == _userId)
             .Where(t => t.DateTime >= yearStart && t.DateTime < yearEnd && monthList.Contains(t.DateTime.Month))
             .Where(t => !excludeSavings || t.Account!.Type != AccountType.Savings)
             .GroupBy(t => new { t.CategoryId, t.DateTime.Month })
@@ -27,6 +30,7 @@ public class TransactionRepository(DeFinanceDbContext dbContext, ICacheService c
 
     public async Task<decimal> GetSignedBalanceBeforeAsync(DateTime before, bool excludeSavings = false, CancellationToken cancellationToken = default) =>
         await dbContext.Transactions
+            .Where(t => t.UserId == _userId)
             .Where(t => t.DateTime < before)
             .Where(t => !excludeSavings || t.Account!.Type != AccountType.Savings)
             .SumAsync(t =>
@@ -50,6 +54,7 @@ public class TransactionRepository(DeFinanceDbContext dbContext, ICacheService c
 
     public async Task<Transaction?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
         await dbContext.Transactions
+            .Where(t => t.UserId == _userId)
             .Include(t => t.Account).ThenInclude(a => a!.Currency)
             .Include(t => t.InCurrency)
             .Include(t => t.Category).ThenInclude(c => c!.Parent)
@@ -60,6 +65,7 @@ public class TransactionRepository(DeFinanceDbContext dbContext, ICacheService c
     public async Task<decimal?> GetBalanceBeforeAsync(Guid transactionId, CancellationToken cancellationToken = default)
     {
         var tx = await dbContext.Transactions
+            .Where(t => t.UserId == _userId)
             .Include(t => t.Account)
             .Include(t => t.Category).ThenInclude(c => c!.Parent)
             .FirstOrDefaultAsync(t => t.Id == transactionId, cancellationToken);
@@ -68,6 +74,7 @@ public class TransactionRepository(DeFinanceDbContext dbContext, ICacheService c
 
         // Contributions from same-account transactions strictly after this one
         var laterAdjustment = await dbContext.Transactions
+            .Where(t => t.UserId == _userId)
             .Where(t => t.AccountId == tx.AccountId && t.DateTime > tx.DateTime)
             .SumAsync(t =>
                 t.Category!.Type == CategoryType.Income  ?  t.Sum :
@@ -100,6 +107,7 @@ public class TransactionRepository(DeFinanceDbContext dbContext, ICacheService c
         CancellationToken cancellationToken = default)
     {
         var query = dbContext.Transactions
+            .Where(t => t.UserId == _userId)
             .Include(t => t.Account).ThenInclude(a => a!.Currency)
             .Include(t => t.InCurrency)
             .Include(t => t.Category).ThenInclude(c => c!.Parent)

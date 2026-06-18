@@ -6,10 +6,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DeFinance.Infrastructure.Persistence.Repositories;
 
-public class AccountRepository(DeFinanceDbContext dbContext, ICacheService cache) : IAccountRepository
+public class AccountRepository(DeFinanceDbContext dbContext, ICacheService cache, ICurrentUserService currentUserService) : IAccountRepository
 {
+    private readonly Guid _userId = currentUserService.UserId;
+
     public async Task<Account?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
         await dbContext.Accounts
+            .Where(a => a.UserId == _userId)
             .Include(a => a.Currency)
             .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
 
@@ -24,7 +27,7 @@ public class AccountRepository(DeFinanceDbContext dbContext, ICacheService cache
         int pageSize,
         CancellationToken cancellationToken = default)
     {
-        var query = dbContext.Accounts.Include(a => a.Currency).AsQueryable();
+        var query = dbContext.Accounts.Where(a => a.UserId == _userId).Include(a => a.Currency).AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(search))
         {

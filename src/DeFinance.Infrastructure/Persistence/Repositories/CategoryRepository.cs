@@ -6,10 +6,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DeFinance.Infrastructure.Persistence.Repositories;
 
-public class CategoryRepository(DeFinanceDbContext dbContext, ICacheService cache) : ICategoryRepository
+public class CategoryRepository(DeFinanceDbContext dbContext, ICacheService cache, ICurrentUserService currentUserService) : ICategoryRepository
 {
+    private readonly Guid _userId = currentUserService.UserId;
+
     public async Task<Category?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
-        await dbContext.Categories.FindAsync([id], cancellationToken);
+        await dbContext.Categories
+            .Where(c => c.UserId == _userId)
+            .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
 
     public async Task<(IReadOnlyList<Category> Items, int TotalCount)> GetAllAsync(
         string? search,
@@ -22,7 +26,7 @@ public class CategoryRepository(DeFinanceDbContext dbContext, ICacheService cach
         int pageSize,
         CancellationToken cancellationToken = default)
     {
-        var query = dbContext.Categories.AsQueryable();
+        var query = dbContext.Categories.Where(c => c.UserId == _userId).AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(search))
         {
@@ -59,7 +63,7 @@ public class CategoryRepository(DeFinanceDbContext dbContext, ICacheService cach
     {
         var typeList = types.ToList();
         return await dbContext.Categories
-            .Where(c => c.IsActive && typeList.Contains(c.Type))
+            .Where(c => c.UserId == _userId && c.IsActive && typeList.Contains(c.Type))
             .OrderBy(c => c.Name)
             .ToListAsync(cancellationToken);
     }

@@ -1,10 +1,9 @@
-using DeFinance.Application.Abstractions;
 using DeFinance.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace DeFinance.Infrastructure.Persistence;
 
-public class DeFinanceDbContext(DbContextOptions<DeFinanceDbContext> options, ICurrentUserService currentUserService) : DbContext(options)
+public class DeFinanceDbContext(DbContextOptions<DeFinanceDbContext> options) : DbContext(options)
 {
     public DbSet<Currency> Currencies => Set<Currency>();
     public DbSet<Account> Accounts => Set<Account>();
@@ -18,16 +17,6 @@ public class DeFinanceDbContext(DbContextOptions<DeFinanceDbContext> options, IC
     public DbSet<BudgetEntryLine> BudgetEntryLines => Set<BudgetEntryLine>();
     public DbSet<OpeningBalanceOverride> OpeningBalanceOverrides => Set<OpeningBalanceOverride>();
 
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
-    {
+    protected override void OnModelCreating(ModelBuilder modelBuilder) =>
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(DeFinanceDbContext).Assembly);
-
-        modelBuilder.Entity<Account>().HasQueryFilter(a => a.UserId == currentUserService.UserId);
-        modelBuilder.Entity<Category>().HasQueryFilter(c => c.UserId == currentUserService.UserId);
-        modelBuilder.Entity<Transaction>().HasQueryFilter(t => t.UserId == currentUserService.UserId);
-        modelBuilder.Entity<Counterparty>().HasQueryFilter(c => c.UserId == currentUserService.UserId);
-        modelBuilder.Entity<MandatoryPayment>().HasQueryFilter(m => m.UserId == currentUserService.UserId);
-        modelBuilder.Entity<BudgetEntry>().HasQueryFilter(b => b.UserId == currentUserService.UserId);
-        modelBuilder.Entity<OpeningBalanceOverride>().HasQueryFilter(o => o.UserId == currentUserService.UserId);
-    }
 }
