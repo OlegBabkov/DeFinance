@@ -61,8 +61,11 @@ public static class TransactionSeeder
 
     public static async Task SeedAsync(DeFinanceDbContext context, CancellationToken cancellationToken = default)
     {
-        if (await context.Transactions.AnyAsync(cancellationToken))
+        if (await context.Transactions.IgnoreQueryFilters().AnyAsync(cancellationToken))
             return;
+
+        var admin = await context.Users.FirstOrDefaultAsync(cancellationToken);
+        if (admin is null) return;
 
         var eurId = await context.Currencies
             .Where(c => c.Code == "EUR")
@@ -72,6 +75,7 @@ public static class TransactionSeeder
         if (eurId == default) return;
 
         var eurAccountIds = await context.Accounts
+            .IgnoreQueryFilters()
             .Where(a => a.Currency != null && a.Currency.Code == "EUR" && a.IsActive)
             .Select(a => a.Id)
             .ToListAsync(cancellationToken);
@@ -79,12 +83,14 @@ public static class TransactionSeeder
         if (eurAccountIds.Count == 0) return;
 
         var categories = await context.Categories
+            .IgnoreQueryFilters()
             .Select(c => new { c.Id, c.Name })
             .ToListAsync(cancellationToken);
 
         var categoryByName = categories.ToDictionary(c => c.Name, c => c.Id);
 
         var counterpartyIds = await context.Counterparties
+            .IgnoreQueryFilters()
             .Select(c => c.Id)
             .ToListAsync(cancellationToken);
 
@@ -117,7 +123,7 @@ public static class TransactionSeeder
             var dt = now.AddDays(-daysAgo).AddHours(rng.Next(8, 20)).AddMinutes(rng.Next(0, 60));
 
             transactions.Add(Transaction.Create(
-                dt, sum, 1m, eurId, accountId, categoryId, counterpartyId, statusId, notes));
+                dt, sum, 1m, eurId, accountId, categoryId, counterpartyId, statusId, admin.Id, notes));
         }
 
         await context.Transactions.AddRangeAsync(transactions, cancellationToken);

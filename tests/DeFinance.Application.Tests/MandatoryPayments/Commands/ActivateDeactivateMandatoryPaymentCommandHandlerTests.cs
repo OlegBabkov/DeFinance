@@ -14,7 +14,7 @@ public class ActivateDeactivateMandatoryPaymentCommandHandlerTests
     public async Task Activate_WhenPaymentExists_ShouldSetIsActiveTrue()
     {
         var id = Guid.NewGuid();
-        var payment = MandatoryPayment.Create("Rent", 500m, Guid.NewGuid(), Guid.NewGuid(), null, null, PaymentFrequency.Monthly, 1, null);
+        var payment = MandatoryPayment.Create("Rent", 500m, Guid.NewGuid(), Guid.NewGuid(), null, null, PaymentFrequency.Monthly, 1, null, Guid.NewGuid());
         payment.Deactivate();
         _repository.GetByIdAsync(id, Arg.Any<CancellationToken>()).Returns(payment);
         _repository.SaveChangesAsync(Arg.Any<CancellationToken>()).Returns(1);
@@ -42,7 +42,7 @@ public class ActivateDeactivateMandatoryPaymentCommandHandlerTests
     public async Task Deactivate_WhenPaymentExists_ShouldSetIsActiveFalse()
     {
         var id = Guid.NewGuid();
-        var payment = MandatoryPayment.Create("Insurance", 200m, Guid.NewGuid(), Guid.NewGuid(), null, null, PaymentFrequency.Yearly, 1, null);
+        var payment = MandatoryPayment.Create("Insurance", 200m, Guid.NewGuid(), Guid.NewGuid(), null, null, PaymentFrequency.Yearly, 1, null, Guid.NewGuid());
         _repository.GetByIdAsync(id, Arg.Any<CancellationToken>()).Returns(payment);
         _repository.SaveChangesAsync(Arg.Any<CancellationToken>()).Returns(1);
 

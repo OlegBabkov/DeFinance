@@ -1,3 +1,4 @@
+using DeFinance.Application.Abstractions;
 using DeFinance.Application.Abstractions.Repositories;
 using DeFinance.Application.DTOs.MandatoryPayment;
 using DeFinance.Domain.Entities;
@@ -18,7 +19,7 @@ public record CreateMandatoryPaymentCommand(
     string? Notes
 ) : IRequest<MandatoryPaymentResponse>;
 
-public class CreateMandatoryPaymentCommandHandler(IMandatoryPaymentRepository repository)
+public class CreateMandatoryPaymentCommandHandler(IMandatoryPaymentRepository repository, ICurrentUserService currentUserService)
     : IRequestHandler<CreateMandatoryPaymentCommand, MandatoryPaymentResponse>
 {
     public async Task<MandatoryPaymentResponse> Handle(
@@ -27,7 +28,7 @@ public class CreateMandatoryPaymentCommandHandler(IMandatoryPaymentRepository re
         var payment = MandatoryPayment.Create(
             request.Name, request.Amount,
             request.CurrencyId, request.AccountId, request.CategoryId, request.PaymentStatusId,
-            request.Frequency, request.DayOfPeriod, request.Notes);
+            request.Frequency, request.DayOfPeriod, request.Notes, currentUserService.UserId!.Value);
 
         await repository.AddAsync(payment, cancellationToken);
         await repository.SaveChangesAsync(cancellationToken);

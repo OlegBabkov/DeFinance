@@ -20,7 +20,7 @@ public class UpdateCategoryCommandHandlerTests
     public async Task Handle_WhenCategoryExists_ShouldUpdateAndReturnResponse()
     {
         var id = Guid.NewGuid();
-        var category = Category.Create("Old Name", CategoryType.Expense, "#000000", "icon", null, null);
+        var category = Category.Create("Old Name", CategoryType.Expense, "#000000", "icon", null, null, Guid.NewGuid());
         _repository.GetByIdAsync(id, Arg.Any<CancellationToken>()).Returns(category);
         _repository.SaveChangesAsync(Arg.Any<CancellationToken>()).Returns(1);
 

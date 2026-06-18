@@ -20,7 +20,7 @@ public class UpdateCounterpartyCommandHandlerTests
     public async Task Handle_WhenExists_ShouldUpdateAndReturnResponse()
     {
         var id = Guid.NewGuid();
-        var counterparty = Counterparty.Create("Amazon", CounterpartyType.Company, null);
+        var counterparty = Counterparty.Create("Amazon", CounterpartyType.Company, null, Guid.NewGuid());
         _repository.GetByIdAsync(id, Arg.Any<CancellationToken>()).Returns(counterparty);
         _repository.SaveChangesAsync(Arg.Any<CancellationToken>()).Returns(1);
 

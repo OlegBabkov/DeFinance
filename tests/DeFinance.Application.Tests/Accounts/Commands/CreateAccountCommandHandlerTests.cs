@@ -1,3 +1,4 @@
+using DeFinance.Application.Abstractions;
 using DeFinance.Application.Abstractions.Repositories;
 using DeFinance.Application.Accounts.Commands;
 using DeFinance.Domain.Entities;
@@ -9,11 +10,13 @@ namespace DeFinance.Application.Tests.Accounts.Commands;
 public class CreateAccountCommandHandlerTests
 {
     private readonly IAccountRepository _repository = Substitute.For<IAccountRepository>();
+    private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
     private readonly CreateAccountCommandHandler _handler;
 
     public CreateAccountCommandHandlerTests()
     {
-        _handler = new CreateAccountCommandHandler(_repository);
+        _currentUserService.UserId.Returns(Guid.NewGuid());
+        _handler = new CreateAccountCommandHandler(_repository, _currentUserService);
     }
 
     [Fact]

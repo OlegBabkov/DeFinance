@@ -1,3 +1,4 @@
+using DeFinance.Application.Abstractions;
 using DeFinance.Application.Abstractions.Repositories;
 using DeFinance.Application.MandatoryPayments.Commands;
 using DeFinance.Domain.Entities;
@@ -9,11 +10,13 @@ namespace DeFinance.Application.Tests.MandatoryPayments.Commands;
 public class CreateMandatoryPaymentCommandHandlerTests
 {
     private readonly IMandatoryPaymentRepository _repository = Substitute.For<IMandatoryPaymentRepository>();
+    private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
     private readonly CreateMandatoryPaymentCommandHandler _handler;
 
     public CreateMandatoryPaymentCommandHandlerTests()
     {
-        _handler = new CreateMandatoryPaymentCommandHandler(_repository);
+        _currentUserService.UserId.Returns(Guid.NewGuid());
+        _handler = new CreateMandatoryPaymentCommandHandler(_repository, _currentUserService);
     }
 
     [Fact]

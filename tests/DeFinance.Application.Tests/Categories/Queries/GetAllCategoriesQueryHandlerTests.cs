@@ -12,6 +12,7 @@ public class GetAllCategoriesQueryHandlerTests
 {
     private readonly ICategoryRepository _repository = Substitute.For<ICategoryRepository>();
     private readonly ICacheService _cache = Substitute.For<ICacheService>();
+    private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
 
     private void SetupGetAll(IReadOnlyList<Category> items, int totalCount) =>
         _repository.GetAllAsync(
@@ -27,12 +28,12 @@ public class GetAllCategoriesQueryHandlerTests
     {
         var categories = new List<Category>
         {
-            Category.Create("Food", CategoryType.Expense, "#FF0000", "🍕", null, null),
-            Category.Create("Salary", CategoryType.Income, "#00FF00", "💰", null, null)
+            Category.Create("Food", CategoryType.Expense, "#FF0000", "🍕", null, null, Guid.NewGuid()),
+            Category.Create("Salary", CategoryType.Income, "#00FF00", "💰", null, null, Guid.NewGuid())
         };
         SetupGetAll(categories, 2);
 
-        var result = await new GetAllCategoriesQueryHandler(_repository, _cache)
+        var result = await new GetAllCategoriesQueryHandler(_repository, _cache, _currentUserService)
             .Handle(new GetAllCategoriesQuery(), CancellationToken.None);
 
         result.Items.Should().HaveCount(2);
@@ -45,7 +46,7 @@ public class GetAllCategoriesQueryHandlerTests
     {
         SetupGetAll([], 0);
 
-        var result = await new GetAllCategoriesQueryHandler(_repository, _cache)
+        var result = await new GetAllCategoriesQueryHandler(_repository, _cache, _currentUserService)
             .Handle(new GetAllCategoriesQuery(), CancellationToken.None);
 
         result.Items.Should().BeEmpty();
@@ -58,7 +59,7 @@ public class GetAllCategoriesQueryHandlerTests
     {
         SetupGetAll([], 0);
 
-        await new GetAllCategoriesQueryHandler(_repository, _cache)
+        await new GetAllCategoriesQueryHandler(_repository, _cache, _currentUserService)
             .Handle(new GetAllCategoriesQuery(
                 Search: "food", IsActive: true,
                 Type: CategoryType.Expense, PaymentObligation: CategoryPaymentObligation.Mandatory,
@@ -80,7 +81,7 @@ public class GetAllCategoriesQueryHandlerTests
     {
         SetupGetAll([], totalCount);
 
-        var result = await new GetAllCategoriesQueryHandler(_repository, _cache)
+        var result = await new GetAllCategoriesQueryHandler(_repository, _cache, _currentUserService)
             .Handle(new GetAllCategoriesQuery(Page: page, PageSize: pageSize), CancellationToken.None);
 
         result.TotalPages.Should().Be(expectedTotalPages);

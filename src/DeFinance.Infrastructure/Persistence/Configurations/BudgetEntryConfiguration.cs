@@ -26,6 +26,11 @@ public class BudgetEntryConfiguration : IEntityTypeConfiguration<BudgetEntry>
 
         builder.Navigation(e => e.Lines).HasField("_lines");
 
-        builder.HasIndex(e => new { e.CategoryId, e.Year, e.Month }).IsUnique();
+        builder.HasOne<User>()
+            .WithMany()
+            .HasForeignKey(e => e.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasIndex(e => new { e.UserId, e.CategoryId, e.Year, e.Month }).IsUnique();
     }
 }

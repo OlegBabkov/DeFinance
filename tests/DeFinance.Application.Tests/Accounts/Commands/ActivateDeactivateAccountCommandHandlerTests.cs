@@ -14,7 +14,7 @@ public class ActivateDeactivateAccountCommandHandlerTests
     public async Task Activate_WhenAccountExists_ShouldSetIsActiveTrue()
     {
         var id = Guid.NewGuid();
-        var account = Account.Create("Account", AccountType.Savings, 0m, Guid.NewGuid());
+        var account = Account.Create("Account", AccountType.Savings, 0m, Guid.NewGuid(), Guid.NewGuid());
         account.Deactivate();
         _repository.GetByIdAsync(id, Arg.Any<CancellationToken>()).Returns(account);
         _repository.SaveChangesAsync(Arg.Any<CancellationToken>()).Returns(1);
@@ -41,7 +41,7 @@ public class ActivateDeactivateAccountCommandHandlerTests
     public async Task Deactivate_WhenAccountExists_ShouldSetIsActiveFalse()
     {
         var id = Guid.NewGuid();
-        var account = Account.Create("Account", AccountType.Credit, 0m, Guid.NewGuid());
+        var account = Account.Create("Account", AccountType.Credit, 0m, Guid.NewGuid(), Guid.NewGuid());
         _repository.GetByIdAsync(id, Arg.Any<CancellationToken>()).Returns(account);
         _repository.SaveChangesAsync(Arg.Any<CancellationToken>()).Returns(1);
 

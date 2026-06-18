@@ -7,14 +7,15 @@ public class OpeningBalanceOverride
     public int Month { get; private set; }
     public decimal? Amount { get; private set; }
     public decimal? PlanAmount { get; private set; }
+    public Guid UserId { get; private set; }
 
     private OpeningBalanceOverride() { }
 
-    public static OpeningBalanceOverride Create(int year, int month, decimal amount) =>
-        new() { Id = Guid.NewGuid(), Year = year, Month = month, Amount = amount };
+    public static OpeningBalanceOverride Create(int year, int month, decimal amount, Guid userId) =>
+        new() { Id = Guid.NewGuid(), Year = year, Month = month, Amount = amount, UserId = userId };
 
-    public static OpeningBalanceOverride CreateForPlan(int year, int month, decimal planAmount) =>
-        new() { Id = Guid.NewGuid(), Year = year, Month = month, PlanAmount = planAmount };
+    public static OpeningBalanceOverride CreateForPlan(int year, int month, decimal planAmount, Guid userId) =>
+        new() { Id = Guid.NewGuid(), Year = year, Month = month, PlanAmount = planAmount, UserId = userId };
 
     public void UpdateAmount(decimal amount) => Amount = amount;
     public void UpdatePlanAmount(decimal planAmount) => PlanAmount = planAmount;

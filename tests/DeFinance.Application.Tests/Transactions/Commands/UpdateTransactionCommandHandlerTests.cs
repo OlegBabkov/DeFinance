@@ -20,7 +20,7 @@ public class UpdateTransactionCommandHandlerTests
 
     private static Transaction MakeTransactionWithNavProps(Account account, Category category, decimal sum)
     {
-        var tx = Transaction.Create(DateTime.UtcNow, sum, 1m, Guid.NewGuid(), account.Id, category.Id, null, Guid.NewGuid());
+        var tx = Transaction.Create(DateTime.UtcNow, sum, 1m, Guid.NewGuid(), account.Id, category.Id, null, Guid.NewGuid(), Guid.NewGuid());
         typeof(Transaction).GetProperty("Account")!.SetValue(tx, account);
         typeof(Transaction).GetProperty("Category")!.SetValue(tx, category);
         return tx;
@@ -41,10 +41,10 @@ public class UpdateTransactionCommandHandlerTests
     [Fact]
     public async Task Handle_SameAccountAndCategory_ShouldReverseThenApplyBalance()
     {
-        var account = Account.Create("Checking", AccountType.Checking, 1000m, Guid.NewGuid());
-        var category = Category.Create("Salary", CategoryType.Income, null, null, null, null);
+        var account = Account.Create("Checking", AccountType.Checking, 1000m, Guid.NewGuid(), Guid.NewGuid());
+        var category = Category.Create("Salary", CategoryType.Income, null, null, null, null, Guid.NewGuid());
         var tx = MakeTransactionWithNavProps(account, category, 300m);
-        var returnedTx = Transaction.Create(DateTime.UtcNow, 500m, 1m, Guid.NewGuid(), account.Id, category.Id, null, Guid.NewGuid());
+        var returnedTx = Transaction.Create(DateTime.UtcNow, 500m, 1m, Guid.NewGuid(), account.Id, category.Id, null, Guid.NewGuid(), Guid.NewGuid());
 
         _transactionRepository.GetByIdAsync(tx.Id, Arg.Any<CancellationToken>()).Returns(tx);
         _transactionRepository.GetByIdAsync(tx.Id, Arg.Any<CancellationToken>()).Returns(tx, returnedTx);
@@ -62,8 +62,8 @@ public class UpdateTransactionCommandHandlerTests
     [Fact]
     public async Task Handle_WhenNewAccountNotFound_ShouldThrow()
     {
-        var oldAccount = Account.Create("Old", AccountType.Checking, 500m, Guid.NewGuid());
-        var category = Category.Create("Salary", CategoryType.Income, null, null, null, null);
+        var oldAccount = Account.Create("Old", AccountType.Checking, 500m, Guid.NewGuid(), Guid.NewGuid());
+        var category = Category.Create("Salary", CategoryType.Income, null, null, null, null, Guid.NewGuid());
         var tx = MakeTransactionWithNavProps(oldAccount, category, 200m);
         var newAccountId = Guid.NewGuid();
 

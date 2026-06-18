@@ -37,6 +37,9 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<IPasswordService, BCryptPasswordService>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
 
+        services.AddHttpContextAccessor();
+        services.AddScoped<ICurrentUserService, CurrentUserService>();
+
         return services;
     }
 }

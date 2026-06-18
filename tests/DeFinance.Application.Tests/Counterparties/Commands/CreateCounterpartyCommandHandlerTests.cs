@@ -1,3 +1,4 @@
+using DeFinance.Application.Abstractions;
 using DeFinance.Application.Abstractions.Repositories;
 using DeFinance.Application.Counterparties.Commands;
 using DeFinance.Domain.Entities;
@@ -9,11 +10,13 @@ namespace DeFinance.Application.Tests.Counterparties.Commands;
 public class CreateCounterpartyCommandHandlerTests
 {
     private readonly ICounterpartyRepository _repository = Substitute.For<ICounterpartyRepository>();
+    private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
     private readonly CreateCounterpartyCommandHandler _handler;
 
     public CreateCounterpartyCommandHandlerTests()
     {
-        _handler = new CreateCounterpartyCommandHandler(_repository);
+        _currentUserService.UserId.Returns(Guid.NewGuid());
+        _handler = new CreateCounterpartyCommandHandler(_repository, _currentUserService);
     }
 
     [Fact]

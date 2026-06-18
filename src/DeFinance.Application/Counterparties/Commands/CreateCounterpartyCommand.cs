@@ -1,3 +1,4 @@
+using DeFinance.Application.Abstractions;
 using DeFinance.Application.Abstractions.Repositories;
 using DeFinance.Application.DTOs.Counterparty;
 using DeFinance.Domain.Entities;
@@ -9,12 +10,12 @@ namespace DeFinance.Application.Counterparties.Commands;
 public record CreateCounterpartyCommand(string Name, CounterpartyType Type, string? ContactInfo)
     : IRequest<CounterpartyResponse>;
 
-public class CreateCounterpartyCommandHandler(ICounterpartyRepository repository)
+public class CreateCounterpartyCommandHandler(ICounterpartyRepository repository, ICurrentUserService currentUserService)
     : IRequestHandler<CreateCounterpartyCommand, CounterpartyResponse>
 {
     public async Task<CounterpartyResponse> Handle(CreateCounterpartyCommand request, CancellationToken cancellationToken)
     {
-        var counterparty = Counterparty.Create(request.Name, request.Type, request.ContactInfo);
+        var counterparty = Counterparty.Create(request.Name, request.Type, request.ContactInfo, currentUserService.UserId!.Value);
         await repository.AddAsync(counterparty, cancellationToken);
         await repository.SaveChangesAsync(cancellationToken);
         return counterparty.ToResponse();

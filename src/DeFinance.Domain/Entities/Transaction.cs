@@ -28,6 +28,7 @@ public class Transaction
     public PaymentStatus? PaymentStatus { get; private set; }
 
     public string? Notes { get; private set; }
+    public Guid UserId { get; private set; }
 
     private Transaction() { }
 
@@ -40,6 +41,7 @@ public class Transaction
         Guid categoryId,
         Guid? counterpartyId,
         Guid paymentStatusId,
+        Guid userId,
         string? notes = null) =>
         new()
         {
@@ -53,6 +55,7 @@ public class Transaction
             CategoryId = categoryId,
             CounterpartyId = counterpartyId,
             PaymentStatusId = paymentStatusId,
+            UserId = userId,
             Notes = notes
         };
 

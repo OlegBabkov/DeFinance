@@ -1,16 +1,25 @@
+using System.Security.Claims;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using DeFinance.Application.Abstractions;
 using DeFinance.Infrastructure.Persistence;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace DeFinance.Api.Tests.Infrastructure;
 
 public class DeFinanceWebApplicationFactory : WebApplicationFactory<Program>
 {
+    public static readonly Guid TestUserId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
+
     public static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
     {
         Converters = { new JsonStringEnumConverter() }
@@ -38,6 +47,12 @@ public class DeFinanceWebApplicationFactory : WebApplicationFactory<Program>
             var dbName = Guid.NewGuid().ToString();
             services.AddDbContext<DeFinanceDbContext>(options =>
                 options.UseInMemoryDatabase(dbName));
+
+            services.Replace(ServiceDescriptor.Scoped<ICurrentUserService>(_ =>
+                new TestCurrentUserService(TestUserId)));
+
+            services.AddAuthentication(TestAuthHandler.SchemeName)
+                .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(TestAuthHandler.SchemeName, _ => { });
         });
     }
 
@@ -50,5 +65,32 @@ public class DeFinanceWebApplicationFactory : WebApplicationFactory<Program>
         db.Database.EnsureCreated();
 
         return host;
+    }
+}
+
+file sealed class TestCurrentUserService(Guid userId) : ICurrentUserService
+{
+    public Guid? UserId => userId;
+}
+
+file sealed class TestAuthHandler(
+    IOptionsMonitor<AuthenticationSchemeOptions> options,
+    ILoggerFactory logger,
+    UrlEncoder encoder)
+    : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
+{
+    public const string SchemeName = "Test";
+
+    protected override Task<AuthenticateResult> HandleAuthenticateAsync()
+    {
+        var claims = new[]
+        {
+            new Claim(ClaimTypes.NameIdentifier, DeFinanceWebApplicationFactory.TestUserId.ToString()),
+            new Claim(ClaimTypes.Name, "test-user"),
+        };
+        var identity = new ClaimsIdentity(claims, SchemeName);
+        var principal = new ClaimsPrincipal(identity);
+        var ticket = new AuthenticationTicket(principal, SchemeName);
+        return Task.FromResult(AuthenticateResult.Success(ticket));
     }
 }

@@ -20,7 +20,7 @@ public class SetCategoryImportanceCommandHandlerTests
     public async Task Handle_WhenCategoryExists_ShouldSetImportantTrue()
     {
         var id = Guid.NewGuid();
-        var category = Category.Create("Salary", CategoryType.Income, null, null, null, null);
+        var category = Category.Create("Salary", CategoryType.Income, null, null, null, null, Guid.NewGuid());
         _repository.GetByIdAsync(id, Arg.Any<CancellationToken>()).Returns(category);
         _repository.SaveChangesAsync(Arg.Any<CancellationToken>()).Returns(1);
 
@@ -35,7 +35,7 @@ public class SetCategoryImportanceCommandHandlerTests
     public async Task Handle_WhenSetToFalse_ShouldClearImportantFlag()
     {
         var id = Guid.NewGuid();
-        var category = Category.Create("Salary", CategoryType.Income, null, null, null, null);
+        var category = Category.Create("Salary", CategoryType.Income, null, null, null, null, Guid.NewGuid());
         category.SetImportant(true);
         _repository.GetByIdAsync(id, Arg.Any<CancellationToken>()).Returns(category);
         _repository.SaveChangesAsync(Arg.Any<CancellationToken>()).Returns(1);

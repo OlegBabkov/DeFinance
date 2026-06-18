@@ -20,7 +20,7 @@ public class GetAccountByIdQueryHandlerTests
     public async Task Handle_WhenAccountExists_ShouldReturnResponse()
     {
         var id = Guid.NewGuid();
-        var account = Account.Create("Checking Account", AccountType.Checking, 250m, Guid.NewGuid());
+        var account = Account.Create("Checking Account", AccountType.Checking, 250m, Guid.NewGuid(), Guid.NewGuid());
         _repository.GetByIdAsync(id, Arg.Any<CancellationToken>()).Returns(account);
 
         var result = await _handler.Handle(new GetAccountByIdQuery(id), CancellationToken.None);

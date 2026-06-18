@@ -1,3 +1,4 @@
+using DeFinance.Application.Abstractions;
 using DeFinance.Application.Abstractions.Repositories;
 using DeFinance.Domain.Entities;
 using FluentValidation;
@@ -15,7 +16,7 @@ public record UpsertBudgetEntryCommand(
     IReadOnlyList<BudgetEntryLineRequest> Lines
 ) : IRequest<Unit>;
 
-public class UpsertBudgetEntryCommandHandler(IBudgetEntryRepository repository)
+public class UpsertBudgetEntryCommandHandler(IBudgetEntryRepository repository, ICurrentUserService currentUserService)
     : IRequestHandler<UpsertBudgetEntryCommand, Unit>
 {
     public async Task<Unit> Handle(UpsertBudgetEntryCommand request, CancellationToken cancellationToken)
@@ -28,7 +29,7 @@ public class UpsertBudgetEntryCommandHandler(IBudgetEntryRepository repository)
         }
         else
         {
-            var entry = BudgetEntry.Create(request.CategoryId, request.Year, request.Month, request.PlannedAmount);
+            var entry = BudgetEntry.Create(request.CategoryId, request.Year, request.Month, request.PlannedAmount, currentUserService.UserId!.Value);
             entry.UpdateLines(request.Lines.Select(l => (l.Name, l.Amount)));
             await repository.AddAsync(entry, cancellationToken);
         }

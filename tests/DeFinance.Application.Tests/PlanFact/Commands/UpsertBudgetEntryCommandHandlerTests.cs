@@ -1,3 +1,4 @@
+using DeFinance.Application.Abstractions;
 using DeFinance.Application.Abstractions.Repositories;
 using DeFinance.Application.PlanFact.Commands;
 using DeFinance.Domain.Entities;
@@ -10,11 +11,13 @@ namespace DeFinance.Application.Tests.PlanFact.Commands;
 public class UpsertBudgetEntryCommandHandlerTests
 {
     private readonly IBudgetEntryRepository _repository = Substitute.For<IBudgetEntryRepository>();
+    private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
     private readonly UpsertBudgetEntryCommandHandler _handler;
 
     public UpsertBudgetEntryCommandHandlerTests()
     {
-        _handler = new UpsertBudgetEntryCommandHandler(_repository);
+        _currentUserService.UserId.Returns(Guid.NewGuid());
+        _handler = new UpsertBudgetEntryCommandHandler(_repository, _currentUserService);
     }
 
     [Fact]
@@ -40,7 +43,7 @@ public class UpsertBudgetEntryCommandHandlerTests
     public async Task Handle_WhenEntryExists_ShouldUpdateExistingEntry()
     {
         var categoryId = Guid.NewGuid();
-        var existing = BudgetEntry.Create(categoryId, 2025, 6, 300m);
+        var existing = BudgetEntry.Create(categoryId, 2025, 6, 300m, Guid.NewGuid());
         _repository.GetAsync(categoryId, 2025, 6, Arg.Any<CancellationToken>()).Returns(existing);
         _repository.SaveChangesAsync(Arg.Any<CancellationToken>()).Returns(1);
 

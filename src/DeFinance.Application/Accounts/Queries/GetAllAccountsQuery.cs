@@ -19,12 +19,12 @@ public record GetAllAccountsQuery(
     SortDirection SortDirection = SortDirection.Asc
 ) : IRequest<PagedResult<AccountResponse>>;
 
-public class GetAllAccountsQueryHandler(IAccountRepository repository, ICacheService cache)
+public class GetAllAccountsQueryHandler(IAccountRepository repository, ICacheService cache, ICurrentUserService currentUserService)
     : IRequestHandler<GetAllAccountsQuery, PagedResult<AccountResponse>>
 {
     public async Task<PagedResult<AccountResponse>> Handle(GetAllAccountsQuery request, CancellationToken cancellationToken)
     {
-        var key = $"acc:s={request.Search}&a={request.IsActive}&t={request.Type}&c={request.CurrencyId}&p={request.Page}&ps={request.PageSize}&sb={request.SortBy}&sd={request.SortDirection}";
+        var key = $"acc:uid={currentUserService.UserId}&s={request.Search}&a={request.IsActive}&t={request.Type}&c={request.CurrencyId}&p={request.Page}&ps={request.PageSize}&sb={request.SortBy}&sd={request.SortDirection}";
         var cached = await cache.GetAsync<PagedResult<AccountResponse>>(key, cancellationToken);
         if (cached is not null) return cached;
 

@@ -12,6 +12,7 @@ public class GetCounterpartyQueryHandlerTests
 {
     private readonly ICounterpartyRepository _repository = Substitute.For<ICounterpartyRepository>();
     private readonly ICacheService _cache = Substitute.For<ICacheService>();
+    private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
 
     private void SetupGetAll(IReadOnlyList<Counterparty> items, int totalCount) =>
         _repository.GetAllAsync(
@@ -26,12 +27,12 @@ public class GetCounterpartyQueryHandlerTests
     {
         var counterparties = new List<Counterparty>
         {
-            Counterparty.Create("Lidl", CounterpartyType.Company, null),
-            Counterparty.Create("Maria", CounterpartyType.Person, "maria@email.com")
+            Counterparty.Create("Lidl", CounterpartyType.Company, null, Guid.NewGuid()),
+            Counterparty.Create("Maria", CounterpartyType.Person, "maria@email.com", Guid.NewGuid())
         };
         SetupGetAll(counterparties, 2);
 
-        var result = await new GetAllCounterpartiesQueryHandler(_repository, _cache)
+        var result = await new GetAllCounterpartiesQueryHandler(_repository, _cache, _currentUserService)
             .Handle(new GetAllCounterpartiesQuery(), CancellationToken.None);
 
         result.Items.Should().HaveCount(2);
@@ -44,7 +45,7 @@ public class GetCounterpartyQueryHandlerTests
     {
         SetupGetAll([], 0);
 
-        var result = await new GetAllCounterpartiesQueryHandler(_repository, _cache)
+        var result = await new GetAllCounterpartiesQueryHandler(_repository, _cache, _currentUserService)
             .Handle(new GetAllCounterpartiesQuery(), CancellationToken.None);
 
         result.Items.Should().BeEmpty();
@@ -57,7 +58,7 @@ public class GetCounterpartyQueryHandlerTests
     {
         SetupGetAll([], 0);
 
-        await new GetAllCounterpartiesQueryHandler(_repository, _cache)
+        await new GetAllCounterpartiesQueryHandler(_repository, _cache, _currentUserService)
             .Handle(new GetAllCounterpartiesQuery(
                 Search: "lid", IsActive: true, Type: CounterpartyType.Company,
                 Page: 2, PageSize: 25, SortBy: "name", SortDirection: SortDirection.Desc),
@@ -78,7 +79,7 @@ public class GetCounterpartyQueryHandlerTests
     {
         SetupGetAll([], totalCount);
 
-        var result = await new GetAllCounterpartiesQueryHandler(_repository, _cache)
+        var result = await new GetAllCounterpartiesQueryHandler(_repository, _cache, _currentUserService)
             .Handle(new GetAllCounterpartiesQuery(Page: page, PageSize: pageSize), CancellationToken.None);
 
         result.TotalPages.Should().Be(expectedTotalPages);
@@ -90,7 +91,7 @@ public class GetCounterpartyQueryHandlerTests
     public async Task GetById_WhenExists_ShouldReturnResponse()
     {
         var id = Guid.NewGuid();
-        var counterparty = Counterparty.Create("Sparkasse", CounterpartyType.Company, null);
+        var counterparty = Counterparty.Create("Sparkasse", CounterpartyType.Company, null, Guid.NewGuid());
         _repository.GetByIdAsync(id, Arg.Any<CancellationToken>()).Returns(counterparty);
 
         var result = await new GetCounterpartyByIdQueryHandler(_repository)

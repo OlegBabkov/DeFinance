@@ -1,3 +1,4 @@
+using DeFinance.Application.Abstractions;
 using DeFinance.Application.Abstractions.Repositories;
 using DeFinance.Application.PlanFact.Commands;
 using DeFinance.Domain.Entities;
@@ -10,11 +11,13 @@ namespace DeFinance.Application.Tests.PlanFact.Commands;
 public class UpsertPlanOpeningBalanceCommandHandlerTests
 {
     private readonly IOpeningBalanceOverrideRepository _repository = Substitute.For<IOpeningBalanceOverrideRepository>();
+    private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
     private readonly UpsertPlanOpeningBalanceCommandHandler _handler;
 
     public UpsertPlanOpeningBalanceCommandHandlerTests()
     {
-        _handler = new UpsertPlanOpeningBalanceCommandHandler(_repository);
+        _currentUserService.UserId.Returns(Guid.NewGuid());
+        _handler = new UpsertPlanOpeningBalanceCommandHandler(_repository, _currentUserService);
     }
 
     [Fact]
@@ -35,7 +38,7 @@ public class UpsertPlanOpeningBalanceCommandHandlerTests
     [Fact]
     public async Task Handle_WhenOverrideExists_ShouldUpdatePlanAmount()
     {
-        var existing = OpeningBalanceOverride.Create(2025, 7, 5000m);
+        var existing = OpeningBalanceOverride.Create(2025, 7, 5000m, Guid.NewGuid());
         _repository.GetAsync(2025, 7, Arg.Any<CancellationToken>()).Returns(existing);
         _repository.SaveChangesAsync(Arg.Any<CancellationToken>()).Returns(1);
 

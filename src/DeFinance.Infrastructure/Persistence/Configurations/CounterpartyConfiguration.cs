@@ -19,5 +19,10 @@ public class CounterpartyConfiguration : IEntityTypeConfiguration<Counterparty>
 
         builder.Property(c => c.ContactInfo)
             .HasMaxLength(500);
+
+        builder.HasOne<User>()
+            .WithMany()
+            .HasForeignKey(c => c.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

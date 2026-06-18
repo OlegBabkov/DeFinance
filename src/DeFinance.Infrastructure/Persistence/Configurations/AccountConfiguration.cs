@@ -25,5 +25,10 @@ public class AccountConfiguration : IEntityTypeConfiguration<Account>
             .WithMany()
             .HasForeignKey(a => a.CurrencyId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne<User>()
+            .WithMany()
+            .HasForeignKey(a => a.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

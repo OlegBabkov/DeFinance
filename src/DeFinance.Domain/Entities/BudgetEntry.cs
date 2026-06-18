@@ -9,12 +9,14 @@ public class BudgetEntry
     public int Month { get; private set; }
     public decimal PlannedAmount { get; private set; }
 
+    public Guid UserId { get; private set; }
+
     private ICollection<BudgetEntryLine> _lines = [];
     public IReadOnlyList<BudgetEntryLine> Lines => _lines.ToList();
 
     private BudgetEntry() { }
 
-    public static BudgetEntry Create(Guid categoryId, int year, int month, decimal plannedAmount) =>
+    public static BudgetEntry Create(Guid categoryId, int year, int month, decimal plannedAmount, Guid userId) =>
         new()
         {
             Id = Guid.NewGuid(),
@@ -22,6 +24,7 @@ public class BudgetEntry
             Year = year,
             Month = month,
             PlannedAmount = plannedAmount,
+            UserId = userId,
         };
 
     public void UpdateAmount(decimal plannedAmount) => PlannedAmount = plannedAmount;

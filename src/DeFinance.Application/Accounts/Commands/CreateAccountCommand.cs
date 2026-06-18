@@ -1,3 +1,4 @@
+using DeFinance.Application.Abstractions;
 using DeFinance.Application.Abstractions.Repositories;
 using DeFinance.Application.DTOs.Account;
 using DeFinance.Domain.Entities;
@@ -9,12 +10,12 @@ namespace DeFinance.Application.Accounts.Commands;
 public record CreateAccountCommand(string Name, AccountType Type, decimal InitialBalance, Guid CurrencyId)
     : IRequest<AccountResponse>;
 
-public class CreateAccountCommandHandler(IAccountRepository repository)
+public class CreateAccountCommandHandler(IAccountRepository repository, ICurrentUserService currentUserService)
     : IRequestHandler<CreateAccountCommand, AccountResponse>
 {
     public async Task<AccountResponse> Handle(CreateAccountCommand request, CancellationToken cancellationToken)
     {
-        var account = Account.Create(request.Name, request.Type, request.InitialBalance, request.CurrencyId);
+        var account = Account.Create(request.Name, request.Type, request.InitialBalance, request.CurrencyId, currentUserService.UserId!.Value);
         await repository.AddAsync(account, cancellationToken);
         await repository.SaveChangesAsync(cancellationToken);
         return account.ToResponse();

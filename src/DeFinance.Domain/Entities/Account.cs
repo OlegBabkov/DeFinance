@@ -9,10 +9,11 @@ public class Account
     public Guid CurrencyId { get; private set; }
     public Currency? Currency { get; private set; }
     public bool IsActive { get; private set; }
+    public Guid UserId { get; private set; }
 
     private Account() { }
 
-    public static Account Create(string name, AccountType type, decimal initialBalance, Guid currencyId) =>
+    public static Account Create(string name, AccountType type, decimal initialBalance, Guid currencyId, Guid userId) =>
         new()
         {
             Id = Guid.NewGuid(),
@@ -20,6 +21,7 @@ public class Account
             Type = type,
             Balance = initialBalance,
             CurrencyId = currencyId,
+            UserId = userId,
             IsActive = true
         };
 
