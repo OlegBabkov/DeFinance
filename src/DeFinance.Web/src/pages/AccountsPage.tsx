@@ -85,7 +85,8 @@ export function AccountsPage() {
   const refetch = () => setRefreshKey(k => k + 1)
 
   const handleSort = (field: string) => {
-    if (sortBy === field) setSortDirection(d => d === 'Asc' ? 'Desc' : 'Asc')
+    if (sortBy === field && sortDirection === 'Desc') { setSortBy(null); setSortDirection('Asc') }
+    else if (sortBy === field) setSortDirection('Desc')
     else { setSortBy(field); setSortDirection('Asc') }
     setPage(1)
   }
