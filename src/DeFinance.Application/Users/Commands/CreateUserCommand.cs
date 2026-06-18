@@ -25,9 +25,7 @@ public class CreateUserCommandHandler(IUserRepository repository, IPasswordServi
                 nameof(request.Username), "Username is already taken.")]);
 
         var hashed = passwordService.Hash(request.Password);
-        var hashedEmail = passwordService.Hash(request.Email);
-        var hashedPhone = request.PhoneNumber is not null ? passwordService.Hash(request.PhoneNumber) : null;
-        var user = User.Create(request.Username, hashed, hashedEmail, hashedPhone);
+        var user = User.Create(request.Username, hashed, request.Email, request.PhoneNumber);
         await repository.AddAsync(user, cancellationToken);
         await repository.SaveChangesAsync(cancellationToken);
         return user.ToResponse();
