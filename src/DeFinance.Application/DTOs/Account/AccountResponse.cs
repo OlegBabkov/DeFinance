@@ -10,4 +10,5 @@ public record AccountResponse(
     decimal Balance,
     Guid CurrencyId,
     CurrencyResponse? Currency,
-    bool IsActive);
+    bool IsActive,
+    int SortOrder);

@@ -19,6 +19,7 @@ export interface Account {
   currencyId: string
   currency: AccountCurrency | null
   isActive: boolean
+  sortOrder: number
 }
 
 export interface CreateAccountRequest {
@@ -45,4 +46,5 @@ export const accountsApi = {
   update: (id: string, req: UpdateAccountRequest) => client.put<Account>(`/accounts/${id}`, req).then(r => r.data),
   activate: (id: string) => client.patch<Account>(`/accounts/${id}/activate`).then(r => r.data),
   deactivate: (id: string) => client.patch<Account>(`/accounts/${id}/deactivate`).then(r => r.data),
+  reorder: (orderedIds: string[]) => client.put('/accounts/reorder', { orderedIds }),
 }

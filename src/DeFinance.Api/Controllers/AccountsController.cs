@@ -52,6 +52,13 @@ public class AccountsController(ISender sender) : ControllerBase
         return result is null ? NotFound() : Ok(result);
     }
 
+    [HttpPut("reorder")]
+    public async Task<IActionResult> Reorder([FromBody] ReorderAccountsCommand command, CancellationToken ct)
+    {
+        await sender.Send(command, ct);
+        return NoContent();
+    }
+
     [HttpPatch("{id:guid}/deactivate")]
     public async Task<IActionResult> Deactivate(Guid id, CancellationToken ct)
     {

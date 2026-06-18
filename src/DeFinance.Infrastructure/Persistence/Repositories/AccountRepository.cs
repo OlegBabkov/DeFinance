@@ -50,7 +50,8 @@ public class AccountRepository(DeFinanceDbContext dbContext, ICacheService cache
         {
             "type"    => sortDirection == SortDirection.Desc ? query.OrderByDescending(a => a.Type)    : query.OrderBy(a => a.Type),
             "balance" => sortDirection == SortDirection.Desc ? query.OrderByDescending(a => a.Balance) : query.OrderBy(a => a.Balance),
-            _         => sortDirection == SortDirection.Desc ? query.OrderByDescending(a => a.Name)    : query.OrderBy(a => a.Name),
+            "name"    => sortDirection == SortDirection.Desc ? query.OrderByDescending(a => a.Name)    : query.OrderBy(a => a.Name),
+            _         => query.OrderBy(a => a.SortOrder).ThenBy(a => a.Name),
         };
 
         var items = await query
@@ -63,6 +64,19 @@ public class AccountRepository(DeFinanceDbContext dbContext, ICacheService cache
 
     public async Task AddAsync(Account account, CancellationToken cancellationToken = default) =>
         await dbContext.Accounts.AddAsync(account, cancellationToken);
+
+    public async Task ReorderAsync(IReadOnlyList<Guid> orderedIds, CancellationToken cancellationToken = default)
+    {
+        var accounts = await dbContext.Accounts
+            .Where(a => a.UserId == _userId && orderedIds.Contains(a.Id))
+            .ToListAsync(cancellationToken);
+
+        for (var i = 0; i < orderedIds.Count; i++)
+        {
+            var account = accounts.FirstOrDefault(a => a.Id == orderedIds[i]);
+            account?.SetSortOrder(i);
+        }
+    }
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
