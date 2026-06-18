@@ -43,6 +43,9 @@ namespace DeFinance.Infrastructure.Persistence.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer");
+
                     b.Property<int>("Type")
                         .HasColumnType("integer");
 

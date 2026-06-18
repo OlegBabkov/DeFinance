@@ -17,5 +17,6 @@ public interface IAccountRepository
         int pageSize,
         CancellationToken cancellationToken = default);
     Task AddAsync(Account account, CancellationToken cancellationToken = default);
+    Task ReorderAsync(IReadOnlyList<Guid> orderedIds, CancellationToken cancellationToken = default);
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

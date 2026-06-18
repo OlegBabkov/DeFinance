@@ -6,7 +6,7 @@ public static class AccountMappingExtensions
 {
     public static AccountResponse ToResponse(this Domain.Entities.Account account) =>
         new(account.Id, account.Name, account.Type, account.Balance, account.CurrencyId,
-            account.Currency?.ToResponse(), account.IsActive);
+            account.Currency?.ToResponse(), account.IsActive, account.SortOrder);
 
     public static IReadOnlyList<AccountResponse> ToResponse(this IEnumerable<Domain.Entities.Account> accounts) =>
         accounts.Select(a => a.ToResponse()).ToList();

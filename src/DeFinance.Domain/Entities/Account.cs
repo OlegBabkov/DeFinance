@@ -10,6 +10,7 @@ public class Account
     public Currency? Currency { get; private set; }
     public bool IsActive { get; private set; }
     public Guid UserId { get; private set; }
+    public int SortOrder { get; private set; }
 
     private Account() { }
 
@@ -24,6 +25,8 @@ public class Account
             UserId = userId,
             IsActive = true
         };
+
+    public void SetSortOrder(int order) => SortOrder = order;
 
     public void Update(string name) => Name = name;
     public void AdjustBalance(decimal delta) => Balance += delta;

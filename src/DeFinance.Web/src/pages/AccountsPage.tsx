@@ -85,7 +85,8 @@ export function AccountsPage() {
   const refetch = () => setRefreshKey(k => k + 1)
 
   const handleSort = (field: string) => {
-    if (sortBy === field) setSortDirection(d => d === 'Asc' ? 'Desc' : 'Asc')
+    if (sortBy === field && sortDirection === 'Desc') { setSortBy(null); setSortDirection('Asc') }
+    else if (sortBy === field) setSortDirection('Desc')
     else { setSortBy(field); setSortDirection('Asc') }
     setPage(1)
   }
@@ -133,9 +134,26 @@ export function AccountsPage() {
     refetch()
   }
 
-  const items = result?.items ?? []
+  const [items, setItems] = useState<Account[]>([])
+  useEffect(() => { setItems(result?.items ?? []) }, [result])
 
-  if (!result && loading) return <div className="p-8 flex justify-center text-gray-400 dark:text-gray-500"><Spinner /></div>
+  const isCustomSort = sortBy !== null
+
+  const moveAccount = async (index: number, direction: 'up' | 'down') => {
+    const newItems = [...items]
+    const swapIndex = direction === 'up' ? index - 1 : index + 1
+    if (swapIndex < 0 || swapIndex >= newItems.length) return
+    ;[newItems[index], newItems[swapIndex]] = [newItems[swapIndex], newItems[index]]
+    setItems(newItems)
+    try {
+      await accountsApi.reorder(newItems.map(a => a.id))
+    } catch {
+      notify('Failed to save order', 'error')
+      setItems(items) // rollback
+    }
+  }
+
+  if (!result && !items.length && loading) return <div className="p-8 flex justify-center text-gray-400 dark:text-gray-500"><Spinner /></div>
   if (error && !result) return <div className="p-8 text-red-500">{error}</div>
 
   return (
@@ -214,6 +232,7 @@ export function AccountsPage() {
           <table className="w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
             <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0 z-10">
               <tr>
+                {!isCustomSort && <th className="px-2 py-3 w-16" />}
                 <SortableHeader label="Name" field="name" sortBy={sortBy} sortDirection={sortDirection} onSort={handleSort} />
                 <SortableHeader label="Type" field="type" sortBy={sortBy} sortDirection={sortDirection} onSort={handleSort} />
                 <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Currency</th>
@@ -223,8 +242,30 @@ export function AccountsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-              {items.map(account => (
+              {items.map((account, idx) => (
                 <tr key={account.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                  {!isCustomSort && (
+                    <td className="px-2 py-3 w-16">
+                      <div className="flex flex-col items-center gap-0.5">
+                        <button
+                          onClick={() => moveAccount(idx, 'up')}
+                          disabled={idx === 0}
+                          className="p-0.5 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 disabled:opacity-20 disabled:cursor-default transition-colors"
+                          title="Move up"
+                        >
+                          ▲
+                        </button>
+                        <button
+                          onClick={() => moveAccount(idx, 'down')}
+                          disabled={idx === items.length - 1}
+                          className="p-0.5 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 disabled:opacity-20 disabled:cursor-default transition-colors"
+                          title="Move down"
+                        >
+                          ▼
+                        </button>
+                      </div>
+                    </td>
+                  )}
                   <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{account.name}</td>
                   <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{account.type}</td>
                   <td className="px-4 py-3 text-gray-600 dark:text-gray-400 font-mono">
