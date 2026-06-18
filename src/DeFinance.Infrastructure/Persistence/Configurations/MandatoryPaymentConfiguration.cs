@@ -48,5 +48,10 @@ public class MandatoryPaymentConfiguration : IEntityTypeConfiguration<MandatoryP
             .HasForeignKey(p => p.CategoryId)
             .IsRequired(false)
             .OnDelete(DeleteBehavior.SetNull);
+
+        builder.HasOne<User>()
+            .WithMany()
+            .HasForeignKey(p => p.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

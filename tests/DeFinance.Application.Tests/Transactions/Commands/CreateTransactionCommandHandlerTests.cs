@@ -1,3 +1,4 @@
+using DeFinance.Application.Abstractions;
 using DeFinance.Application.Abstractions.Repositories;
 using DeFinance.Application.Transactions.Commands;
 using DeFinance.Domain.Entities;
@@ -11,21 +12,23 @@ public class CreateTransactionCommandHandlerTests
     private readonly ITransactionRepository _transactionRepository = Substitute.For<ITransactionRepository>();
     private readonly IAccountRepository _accountRepository = Substitute.For<IAccountRepository>();
     private readonly ICategoryRepository _categoryRepository = Substitute.For<ICategoryRepository>();
+    private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
     private readonly CreateTransactionCommandHandler _handler;
 
     public CreateTransactionCommandHandlerTests()
     {
-        _handler = new CreateTransactionCommandHandler(_transactionRepository, _accountRepository, _categoryRepository);
+        _currentUserService.UserId.Returns(Guid.NewGuid());
+        _handler = new CreateTransactionCommandHandler(_transactionRepository, _accountRepository, _categoryRepository, _currentUserService);
     }
 
     private static Account MakeAccount(decimal balance = 0m) =>
-        Account.Create("Checking", AccountType.Checking, balance, Guid.NewGuid());
+        Account.Create("Checking", AccountType.Checking, balance, Guid.NewGuid(), Guid.NewGuid());
 
     private static Category MakeCategory(CategoryType type) =>
-        Category.Create("Cat", type, null, null, null, null);
+        Category.Create("Cat", type, null, null, null, null, Guid.NewGuid());
 
     private static Transaction MakeTransaction(decimal sum = 100m) =>
-        Transaction.Create(DateTime.UtcNow, sum, 1m, Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), null, Guid.NewGuid());
+        Transaction.Create(DateTime.UtcNow, sum, 1m, Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), null, Guid.NewGuid(), Guid.NewGuid());
 
     [Fact]
     public async Task Handle_IncomeCategory_ShouldIncreaseAccountBalance()

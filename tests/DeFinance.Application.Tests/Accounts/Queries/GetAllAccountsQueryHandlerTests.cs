@@ -12,6 +12,7 @@ public class GetAllAccountsQueryHandlerTests
 {
     private readonly IAccountRepository _repository = Substitute.For<IAccountRepository>();
     private readonly ICacheService _cache = Substitute.For<ICacheService>();
+    private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
 
     private void SetupGetAll(IReadOnlyList<Account> items, int totalCount) =>
         _repository.GetAllAsync(
@@ -27,12 +28,12 @@ public class GetAllAccountsQueryHandlerTests
         var currencyId = Guid.NewGuid();
         var accounts = new List<Account>
         {
-            Account.Create("Checking", AccountType.Checking, 100m, currencyId),
-            Account.Create("Savings", AccountType.Savings, 500m, currencyId)
+            Account.Create("Checking", AccountType.Checking, 100m, currencyId, Guid.NewGuid()),
+            Account.Create("Savings", AccountType.Savings, 500m, currencyId, Guid.NewGuid())
         };
         SetupGetAll(accounts, 2);
 
-        var result = await new GetAllAccountsQueryHandler(_repository, _cache)
+        var result = await new GetAllAccountsQueryHandler(_repository, _cache, _currentUserService)
             .Handle(new GetAllAccountsQuery(), CancellationToken.None);
 
         result.Items.Should().HaveCount(2);
@@ -45,7 +46,7 @@ public class GetAllAccountsQueryHandlerTests
     {
         SetupGetAll([], 0);
 
-        var result = await new GetAllAccountsQueryHandler(_repository, _cache)
+        var result = await new GetAllAccountsQueryHandler(_repository, _cache, _currentUserService)
             .Handle(new GetAllAccountsQuery(), CancellationToken.None);
 
         result.Items.Should().BeEmpty();
@@ -59,7 +60,7 @@ public class GetAllAccountsQueryHandlerTests
         SetupGetAll([], 0);
         var currencyId = Guid.NewGuid();
 
-        await new GetAllAccountsQueryHandler(_repository, _cache)
+        await new GetAllAccountsQueryHandler(_repository, _cache, _currentUserService)
             .Handle(new GetAllAccountsQuery(
                 Search: "savings", IsActive: true, Type: AccountType.Savings, CurrencyId: currencyId,
                 Page: 2, PageSize: 25, SortBy: "balance", SortDirection: SortDirection.Desc),
@@ -75,7 +76,7 @@ public class GetAllAccountsQueryHandlerTests
     {
         SetupGetAll([], 100);
 
-        var result = await new GetAllAccountsQueryHandler(_repository, _cache)
+        var result = await new GetAllAccountsQueryHandler(_repository, _cache, _currentUserService)
             .Handle(new GetAllAccountsQuery(Page: 4, PageSize: 25), CancellationToken.None);
 
         result.Page.Should().Be(4);
@@ -96,7 +97,7 @@ public class GetAllAccountsQueryHandlerTests
     {
         SetupGetAll([], totalCount);
 
-        var result = await new GetAllAccountsQueryHandler(_repository, _cache)
+        var result = await new GetAllAccountsQueryHandler(_repository, _cache, _currentUserService)
             .Handle(new GetAllAccountsQuery(Page: page, PageSize: pageSize), CancellationToken.None);
 
         result.TotalPages.Should().Be(expectedTotalPages);

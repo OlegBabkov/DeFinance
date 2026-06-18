@@ -17,6 +17,7 @@ public class MandatoryPayment
     public int DayOfPeriod { get; private set; }
     public string? Notes { get; private set; }
     public bool IsActive { get; private set; }
+    public Guid UserId { get; private set; }
 
     private MandatoryPayment() { }
 
@@ -29,7 +30,8 @@ public class MandatoryPayment
         Guid? paymentStatusId,
         PaymentFrequency frequency,
         int dayOfPeriod,
-        string? notes) =>
+        string? notes,
+        Guid userId) =>
         new()
         {
             Id = Guid.NewGuid(),
@@ -42,6 +44,7 @@ public class MandatoryPayment
             Frequency = frequency,
             DayOfPeriod = dayOfPeriod,
             Notes = notes,
+            UserId = userId,
             IsActive = true,
         };
 

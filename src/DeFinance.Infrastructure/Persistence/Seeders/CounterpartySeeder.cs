@@ -70,11 +70,14 @@ public static class CounterpartySeeder
 
     public static async Task SeedAsync(DeFinanceDbContext context, CancellationToken cancellationToken = default)
     {
-        if (await context.Counterparties.AnyAsync(cancellationToken))
+        if (await context.Counterparties.IgnoreQueryFilters().AnyAsync(cancellationToken))
             return;
 
+        var admin = await context.Users.FirstOrDefaultAsync(cancellationToken);
+        if (admin is null) return;
+
         var toAdd = _counterparties
-            .Select(c => Counterparty.Create(c.Name, c.Type, null))
+            .Select(c => Counterparty.Create(c.Name, c.Type, null, admin.Id))
             .ToList();
 
         await context.Counterparties.AddRangeAsync(toAdd, cancellationToken);

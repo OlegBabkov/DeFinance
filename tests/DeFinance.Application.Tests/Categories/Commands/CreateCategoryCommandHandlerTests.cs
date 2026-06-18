@@ -1,3 +1,4 @@
+using DeFinance.Application.Abstractions;
 using DeFinance.Application.Abstractions.Repositories;
 using DeFinance.Application.Categories.Commands;
 using DeFinance.Domain.Entities;
@@ -9,11 +10,13 @@ namespace DeFinance.Application.Tests.Categories.Commands;
 public class CreateCategoryCommandHandlerTests
 {
     private readonly ICategoryRepository _repository = Substitute.For<ICategoryRepository>();
+    private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
     private readonly CreateCategoryCommandHandler _handler;
 
     public CreateCategoryCommandHandlerTests()
     {
-        _handler = new CreateCategoryCommandHandler(_repository);
+        _currentUserService.UserId.Returns(Guid.NewGuid());
+        _handler = new CreateCategoryCommandHandler(_repository, _currentUserService);
     }
 
     [Fact]

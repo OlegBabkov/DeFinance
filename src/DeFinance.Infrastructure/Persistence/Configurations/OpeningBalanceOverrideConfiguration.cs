@@ -13,6 +13,12 @@ public class OpeningBalanceOverrideConfiguration : IEntityTypeConfiguration<Open
         builder.Property(e => e.Month).IsRequired();
         builder.Property(e => e.Amount).HasPrecision(18, 4);
         builder.Property(e => e.PlanAmount).HasPrecision(18, 4);
-        builder.HasIndex(e => new { e.Year, e.Month }).IsUnique();
+
+        builder.HasOne<User>()
+            .WithMany()
+            .HasForeignKey(e => e.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasIndex(e => new { e.UserId, e.Year, e.Month }).IsUnique();
     }
 }

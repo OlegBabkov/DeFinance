@@ -26,8 +26,8 @@ public class GetMandatoryPaymentQueryHandlerTests
     {
         var payments = new List<MandatoryPayment>
         {
-            MandatoryPayment.Create("Rent", 1000m, Guid.NewGuid(), Guid.NewGuid(), null, null, PaymentFrequency.Monthly, 1, null),
-            MandatoryPayment.Create("Insurance", 200m, Guid.NewGuid(), Guid.NewGuid(), null, null, PaymentFrequency.Yearly, 1, null),
+            MandatoryPayment.Create("Rent", 1000m, Guid.NewGuid(), Guid.NewGuid(), null, null, PaymentFrequency.Monthly, 1, null, Guid.NewGuid()),
+            MandatoryPayment.Create("Insurance", 200m, Guid.NewGuid(), Guid.NewGuid(), null, null, PaymentFrequency.Yearly, 1, null, Guid.NewGuid()),
         };
         SetupGetAll(payments, 2);
 
@@ -76,7 +76,7 @@ public class GetMandatoryPaymentQueryHandlerTests
     public async Task GetById_WhenPaymentExists_ShouldReturnResponse()
     {
         var id = Guid.NewGuid();
-        var payment = MandatoryPayment.Create("Rent", 1000m, Guid.NewGuid(), Guid.NewGuid(), null, null, PaymentFrequency.Monthly, 1, null);
+        var payment = MandatoryPayment.Create("Rent", 1000m, Guid.NewGuid(), Guid.NewGuid(), null, null, PaymentFrequency.Monthly, 1, null, Guid.NewGuid());
         _repository.GetByIdAsync(id, Arg.Any<CancellationToken>()).Returns(payment);
 
         var result = await new GetMandatoryPaymentByIdQueryHandler(_repository)

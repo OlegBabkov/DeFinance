@@ -12,7 +12,7 @@ public class GetTransactionQueryHandlerTests
     private readonly ITransactionRepository _repository = Substitute.For<ITransactionRepository>();
 
     private static Transaction MakeTransaction(decimal sum = 100m) =>
-        Transaction.Create(DateTime.UtcNow, sum, 1m, Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), null, Guid.NewGuid());
+        Transaction.Create(DateTime.UtcNow, sum, 1m, Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), null, Guid.NewGuid(), Guid.NewGuid());
 
     // ── GetById ──────────────────────────────────────────────────────────────
 

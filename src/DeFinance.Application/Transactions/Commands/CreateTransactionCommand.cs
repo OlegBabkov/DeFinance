@@ -1,3 +1,4 @@
+using DeFinance.Application.Abstractions;
 using DeFinance.Application.Abstractions.Repositories;
 using DeFinance.Application.DTOs.Transaction;
 using DeFinance.Domain.Entities;
@@ -21,7 +22,8 @@ public record CreateTransactionCommand(
 public class CreateTransactionCommandHandler(
     ITransactionRepository transactionRepository,
     IAccountRepository accountRepository,
-    ICategoryRepository categoryRepository)
+    ICategoryRepository categoryRepository,
+    ICurrentUserService currentUserService)
     : IRequestHandler<CreateTransactionCommand, TransactionResponse>
 {
     public async Task<TransactionResponse> Handle(CreateTransactionCommand request, CancellationToken cancellationToken)
@@ -34,7 +36,7 @@ public class CreateTransactionCommandHandler(
         var transaction = Transaction.Create(
             request.DateTime, request.Sum, request.ExchangeRate,
             request.InCurrencyId, request.AccountId, request.CategoryId,
-            request.CounterpartyId, request.PaymentStatusId, request.Notes);
+            request.CounterpartyId, request.PaymentStatusId, currentUserService.UserId, request.Notes);
 
         account.AdjustBalance(BalanceDelta(category.Type, request.Sum));
 

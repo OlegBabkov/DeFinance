@@ -18,12 +18,12 @@ public record GetAllCounterpartiesQuery(
     SortDirection SortDirection = SortDirection.Asc
 ) : IRequest<PagedResult<CounterpartyResponse>>;
 
-public class GetAllCounterpartiesQueryHandler(ICounterpartyRepository repository, ICacheService cache)
+public class GetAllCounterpartiesQueryHandler(ICounterpartyRepository repository, ICacheService cache, ICurrentUserService currentUserService)
     : IRequestHandler<GetAllCounterpartiesQuery, PagedResult<CounterpartyResponse>>
 {
     public async Task<PagedResult<CounterpartyResponse>> Handle(GetAllCounterpartiesQuery request, CancellationToken cancellationToken)
     {
-        var key = $"cp:s={request.Search}&a={request.IsActive}&t={request.Type}&p={request.Page}&ps={request.PageSize}&sb={request.SortBy}&sd={request.SortDirection}";
+        var key = $"cp:uid={currentUserService.UserId}&s={request.Search}&a={request.IsActive}&t={request.Type}&p={request.Page}&ps={request.PageSize}&sb={request.SortBy}&sd={request.SortDirection}";
         var cached = await cache.GetAsync<PagedResult<CounterpartyResponse>>(key, cancellationToken);
         if (cached is not null) return cached;
 

@@ -96,19 +96,22 @@ public static class CategorySeeder
 
     public static async Task SeedAsync(DeFinanceDbContext context, CancellationToken cancellationToken = default)
     {
-        if (!await context.Categories.AnyAsync(cancellationToken))
+        var admin = await context.Users.FirstOrDefaultAsync(cancellationToken);
+        if (admin is null) return;
+
+        if (!await context.Categories.IgnoreQueryFilters().AnyAsync(cancellationToken))
         {
             var toAdd = _categories
-                .Select(c => Category.Create(c.Name, c.Type, c.Color, c.Icon, null, null))
+                .Select(c => Category.Create(c.Name, c.Type, c.Color, c.Icon, null, null, admin.Id))
                 .ToList();
             await context.Categories.AddRangeAsync(toAdd, cancellationToken);
         }
 
         // Always ensure transfer categories exist (for existing installations too)
-        if (!await context.Categories.AnyAsync(c => c.Type == CategoryType.TransferIn, cancellationToken))
-            await context.Categories.AddAsync(Category.Create("Transfer In", CategoryType.TransferIn, "#64748B", "🔄", null, null), cancellationToken);
-        if (!await context.Categories.AnyAsync(c => c.Type == CategoryType.TransferOut, cancellationToken))
-            await context.Categories.AddAsync(Category.Create("Transfer Out", CategoryType.TransferOut, "#64748B", "🔄", null, null), cancellationToken);
+        if (!await context.Categories.IgnoreQueryFilters().AnyAsync(c => c.Type == CategoryType.TransferIn, cancellationToken))
+            await context.Categories.AddAsync(Category.Create("Transfer In", CategoryType.TransferIn, "#64748B", "🔄", null, null, admin.Id), cancellationToken);
+        if (!await context.Categories.IgnoreQueryFilters().AnyAsync(c => c.Type == CategoryType.TransferOut, cancellationToken))
+            await context.Categories.AddAsync(Category.Create("Transfer Out", CategoryType.TransferOut, "#64748B", "🔄", null, null, admin.Id), cancellationToken);
 
         await context.SaveChangesAsync(cancellationToken);
     }

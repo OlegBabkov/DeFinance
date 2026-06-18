@@ -1,3 +1,4 @@
+using DeFinance.Application.Abstractions;
 using DeFinance.Application.Abstractions.Repositories;
 using DeFinance.Domain.Entities;
 using FluentValidation;
@@ -7,7 +8,7 @@ namespace DeFinance.Application.PlanFact.Commands;
 
 public record UpsertPlanOpeningBalanceCommand(int Year, int Month, decimal Amount) : IRequest<Unit>;
 
-public class UpsertPlanOpeningBalanceCommandHandler(IOpeningBalanceOverrideRepository repository)
+public class UpsertPlanOpeningBalanceCommandHandler(IOpeningBalanceOverrideRepository repository, ICurrentUserService currentUserService)
     : IRequestHandler<UpsertPlanOpeningBalanceCommand, Unit>
 {
     public async Task<Unit> Handle(UpsertPlanOpeningBalanceCommand request, CancellationToken cancellationToken)
@@ -20,7 +21,7 @@ public class UpsertPlanOpeningBalanceCommandHandler(IOpeningBalanceOverrideRepos
         else
         {
             await repository.AddAsync(
-                OpeningBalanceOverride.CreateForPlan(request.Year, request.Month, request.Amount),
+                OpeningBalanceOverride.CreateForPlan(request.Year, request.Month, request.Amount, currentUserService.UserId),
                 cancellationToken);
         }
         await repository.SaveChangesAsync(cancellationToken);

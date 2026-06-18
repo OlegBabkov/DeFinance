@@ -12,10 +12,11 @@ public class Category
     public CategoryPaymentObligation? PaymentObligation { get; private set; }
     public bool IsActive { get; private set; }
     public bool IsImportant { get; private set; }
+    public Guid UserId { get; private set; }
 
     private Category() { }
 
-    public static Category Create(string name, CategoryType type, string? color, string? icon, Guid? parentId, CategoryPaymentObligation? paymentObligation) =>
+    public static Category Create(string name, CategoryType type, string? color, string? icon, Guid? parentId, CategoryPaymentObligation? paymentObligation, Guid userId) =>
         new()
         {
             Id = Guid.NewGuid(),
@@ -25,6 +26,7 @@ public class Category
             Icon = icon,
             ParentId = parentId,
             PaymentObligation = paymentObligation,
+            UserId = userId,
             IsActive = true
         };
 

@@ -74,7 +74,7 @@ public class GetPlanFactSummaryQueryHandlerTests
         _budgetEntryRepository.GetByPeriodAsync(2025, Arg.Any<IReadOnlyList<int>>(), Arg.Any<CancellationToken>()).Returns([]);
         _transactionRepository.GetCategoryMonthlyTotalsAsync(2025, Arg.Any<IReadOnlyList<int>>(), Arg.Any<bool>(), Arg.Any<CancellationToken>())
             .Returns([]);
-        var overrides = (IReadOnlyList<OpeningBalanceOverride>)[OpeningBalanceOverride.Create(2025, 5, 7500m)];
+        var overrides = (IReadOnlyList<OpeningBalanceOverride>)[OpeningBalanceOverride.Create(2025, 5, 7500m, Guid.NewGuid())];
         _openingBalanceRepository.GetByYearAsync(2025, Arg.Any<IReadOnlyList<int>>(), Arg.Any<CancellationToken>()).Returns(overrides);
 
         var result = await _handler.Handle(new GetPlanFactSummaryQuery(2025, [5]), CancellationToken.None);
@@ -104,8 +104,8 @@ public class GetPlanFactSummaryQueryHandlerTests
     [Fact]
     public async Task Handle_ShouldMapIncomeAndExpenseCategoriesIntoRows()
     {
-        var income = Category.Create("Salary", CategoryType.Income, null, null, null, null);
-        var expense = Category.Create("Rent", CategoryType.Expense, null, null, null, null);
+        var income = Category.Create("Salary", CategoryType.Income, null, null, null, null, Guid.NewGuid());
+        var expense = Category.Create("Rent", CategoryType.Expense, null, null, null, null, Guid.NewGuid());
 
         _categoryRepository.GetActiveByTypesAsync(Arg.Any<IReadOnlyList<CategoryType>>(), Arg.Any<CancellationToken>())
             .Returns([income, expense]);

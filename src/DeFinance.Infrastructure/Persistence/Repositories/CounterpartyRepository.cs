@@ -6,10 +6,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DeFinance.Infrastructure.Persistence.Repositories;
 
-public class CounterpartyRepository(DeFinanceDbContext dbContext, ICacheService cache) : ICounterpartyRepository
+public class CounterpartyRepository(DeFinanceDbContext dbContext, ICacheService cache, ICurrentUserService currentUserService) : ICounterpartyRepository
 {
+    private readonly Guid _userId = currentUserService.UserId;
+
     public async Task<Counterparty?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
-        await dbContext.Counterparties.FindAsync([id], cancellationToken);
+        await dbContext.Counterparties
+            .Where(c => c.UserId == _userId)
+            .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
 
     public async Task<(IReadOnlyList<Counterparty> Items, int TotalCount)> GetAllAsync(
         string? search,
@@ -21,7 +25,7 @@ public class CounterpartyRepository(DeFinanceDbContext dbContext, ICacheService 
         int pageSize,
         CancellationToken cancellationToken = default)
     {
-        var query = dbContext.Counterparties.AsQueryable();
+        var query = dbContext.Counterparties.Where(c => c.UserId == _userId).AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(search))
         {

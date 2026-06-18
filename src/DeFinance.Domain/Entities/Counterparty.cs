@@ -7,16 +7,18 @@ public class Counterparty
     public CounterpartyType Type { get; private set; }
     public string? ContactInfo { get; private set; }
     public bool IsActive { get; private set; }
+    public Guid UserId { get; private set; }
 
     private Counterparty() { }
 
-    public static Counterparty Create(string name, CounterpartyType type, string? contactInfo) =>
+    public static Counterparty Create(string name, CounterpartyType type, string? contactInfo, Guid userId) =>
         new()
         {
             Id = Guid.NewGuid(),
             Name = name,
             Type = type,
             ContactInfo = contactInfo,
+            UserId = userId,
             IsActive = true
         };
 

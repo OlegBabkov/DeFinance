@@ -17,8 +17,6 @@ public class DeFinanceDbContext(DbContextOptions<DeFinanceDbContext> options) : 
     public DbSet<BudgetEntryLine> BudgetEntryLines => Set<BudgetEntryLine>();
     public DbSet<OpeningBalanceOverride> OpeningBalanceOverrides => Set<OpeningBalanceOverride>();
 
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
-    {
+    protected override void OnModelCreating(ModelBuilder modelBuilder) =>
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(DeFinanceDbContext).Assembly);
-    }
 }

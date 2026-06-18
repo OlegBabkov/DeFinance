@@ -20,7 +20,7 @@ public class UpdateMandatoryPaymentCommandHandlerTests
     public async Task Handle_WhenPaymentExists_ShouldUpdateAndReturnResponse()
     {
         var id = Guid.NewGuid();
-        var payment = MandatoryPayment.Create("Old Name", 500m, Guid.NewGuid(), Guid.NewGuid(), null, null, PaymentFrequency.Monthly, 1, null);
+        var payment = MandatoryPayment.Create("Old Name", 500m, Guid.NewGuid(), Guid.NewGuid(), null, null, PaymentFrequency.Monthly, 1, null, Guid.NewGuid());
         _repository.GetByIdAsync(id, Arg.Any<CancellationToken>()).Returns(payment);
         _repository.SaveChangesAsync(Arg.Any<CancellationToken>()).Returns(1);
 

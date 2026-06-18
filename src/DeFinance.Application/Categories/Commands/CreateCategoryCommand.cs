@@ -1,3 +1,4 @@
+using DeFinance.Application.Abstractions;
 using DeFinance.Application.Abstractions.Repositories;
 using DeFinance.Application.DTOs.Category;
 using DeFinance.Domain.Entities;
@@ -9,12 +10,12 @@ namespace DeFinance.Application.Categories.Commands;
 public record CreateCategoryCommand(string Name, CategoryType Type, string? Color, string? Icon, Guid? ParentId, CategoryPaymentObligation? PaymentObligation)
     : IRequest<CategoryResponse>;
 
-public class CreateCategoryCommandHandler(ICategoryRepository repository)
+public class CreateCategoryCommandHandler(ICategoryRepository repository, ICurrentUserService currentUserService)
     : IRequestHandler<CreateCategoryCommand, CategoryResponse>
 {
     public async Task<CategoryResponse> Handle(CreateCategoryCommand request, CancellationToken cancellationToken)
     {
-        var category = Category.Create(request.Name, request.Type, request.Color, request.Icon, request.ParentId, request.PaymentObligation);
+        var category = Category.Create(request.Name, request.Type, request.Color, request.Icon, request.ParentId, request.PaymentObligation, currentUserService.UserId);
         await repository.AddAsync(category, cancellationToken);
         await repository.SaveChangesAsync(cancellationToken);
         return category.ToResponse();

@@ -20,7 +20,7 @@ public class UpdateAccountCommandHandlerTests
     public async Task Handle_WhenAccountExists_ShouldUpdateNameAndReturnResponse()
     {
         var id = Guid.NewGuid();
-        var account = Account.Create("Old Name", AccountType.Checking, 500m, Guid.NewGuid());
+        var account = Account.Create("Old Name", AccountType.Checking, 500m, Guid.NewGuid(), Guid.NewGuid());
         _repository.GetByIdAsync(id, Arg.Any<CancellationToken>()).Returns(account);
         _repository.SaveChangesAsync(Arg.Any<CancellationToken>()).Returns(1);
 

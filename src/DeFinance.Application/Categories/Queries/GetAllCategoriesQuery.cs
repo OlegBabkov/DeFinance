@@ -19,12 +19,12 @@ public record GetAllCategoriesQuery(
     SortDirection SortDirection = SortDirection.Asc
 ) : IRequest<PagedResult<CategoryResponse>>;
 
-public class GetAllCategoriesQueryHandler(ICategoryRepository repository, ICacheService cache)
+public class GetAllCategoriesQueryHandler(ICategoryRepository repository, ICacheService cache, ICurrentUserService currentUserService)
     : IRequestHandler<GetAllCategoriesQuery, PagedResult<CategoryResponse>>
 {
     public async Task<PagedResult<CategoryResponse>> Handle(GetAllCategoriesQuery request, CancellationToken cancellationToken)
     {
-        var key = $"cat:s={request.Search}&a={request.IsActive}&t={request.Type}&ob={request.PaymentObligation}&p={request.Page}&ps={request.PageSize}&sb={request.SortBy}&sd={request.SortDirection}";
+        var key = $"cat:uid={currentUserService.UserId}&s={request.Search}&a={request.IsActive}&t={request.Type}&ob={request.PaymentObligation}&p={request.Page}&ps={request.PageSize}&sb={request.SortBy}&sd={request.SortDirection}";
         var cached = await cache.GetAsync<PagedResult<CategoryResponse>>(key, cancellationToken);
         if (cached is not null) return cached;
 

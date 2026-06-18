@@ -43,3 +43,6 @@ appsettings.*.local.json
 
 # Database backups (stored locally, never committed)
 /backups/*.sql.gz
+
+# Test coverage reports (generated artifacts)
+coverage-report/

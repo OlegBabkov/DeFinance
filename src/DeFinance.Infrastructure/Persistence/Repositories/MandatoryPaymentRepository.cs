@@ -1,3 +1,4 @@
+using DeFinance.Application.Abstractions;
 using DeFinance.Application.Abstractions.Repositories;
 using DeFinance.Application.Common;
 using DeFinance.Domain.Entities;
@@ -5,10 +6,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DeFinance.Infrastructure.Persistence.Repositories;
 
-public class MandatoryPaymentRepository(DeFinanceDbContext dbContext) : IMandatoryPaymentRepository
+public class MandatoryPaymentRepository(DeFinanceDbContext dbContext, ICurrentUserService currentUserService) : IMandatoryPaymentRepository
 {
+    private readonly Guid _userId = currentUserService.UserId;
+
     public async Task<MandatoryPayment?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
         await dbContext.MandatoryPayments
+            .Where(p => p.UserId == _userId)
             .Include(p => p.Currency)
             .Include(p => p.Account).ThenInclude(a => a!.Currency)
             .Include(p => p.Category).ThenInclude(c => c!.Parent)
@@ -30,6 +34,7 @@ public class MandatoryPaymentRepository(DeFinanceDbContext dbContext) : IMandato
         CancellationToken cancellationToken = default)
     {
         var query = dbContext.MandatoryPayments
+            .Where(p => p.UserId == _userId)
             .Include(p => p.Currency)
             .Include(p => p.Account).ThenInclude(a => a!.Currency)
             .Include(p => p.Category).ThenInclude(c => c!.Parent)
@@ -82,7 +87,7 @@ public class MandatoryPaymentRepository(DeFinanceDbContext dbContext) : IMandato
 
     public async Task<int> ResetPaymentStatusesByAccountAsync(Guid accountId, CancellationToken cancellationToken = default) =>
         await dbContext.MandatoryPayments
-            .Where(p => p.AccountId == accountId && p.PaymentStatusId != null)
+            .Where(p => p.UserId == _userId && p.AccountId == accountId && p.PaymentStatusId != null)
             .ExecuteUpdateAsync(s => s.SetProperty(p => p.PaymentStatusId, (Guid?)null), cancellationToken);
 
     public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) =>

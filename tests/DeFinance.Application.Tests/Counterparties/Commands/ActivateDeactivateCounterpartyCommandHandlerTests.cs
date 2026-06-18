@@ -14,7 +14,7 @@ public class ActivateDeactivateCounterpartyCommandHandlerTests
     public async Task Activate_WhenExists_ShouldSetIsActiveTrue()
     {
         var id = Guid.NewGuid();
-        var counterparty = Counterparty.Create("Rewe", CounterpartyType.Company, null);
+        var counterparty = Counterparty.Create("Rewe", CounterpartyType.Company, null, Guid.NewGuid());
         counterparty.Deactivate();
         _repository.GetByIdAsync(id, Arg.Any<CancellationToken>()).Returns(counterparty);
         _repository.SaveChangesAsync(Arg.Any<CancellationToken>()).Returns(1);
@@ -41,7 +41,7 @@ public class ActivateDeactivateCounterpartyCommandHandlerTests
     public async Task Deactivate_WhenExists_ShouldSetIsActiveFalse()
     {
         var id = Guid.NewGuid();
-        var counterparty = Counterparty.Create("Aldi Nord", CounterpartyType.Company, null);
+        var counterparty = Counterparty.Create("Aldi Nord", CounterpartyType.Company, null, Guid.NewGuid());
         _repository.GetByIdAsync(id, Arg.Any<CancellationToken>()).Returns(counterparty);
         _repository.SaveChangesAsync(Arg.Any<CancellationToken>()).Returns(1);
 

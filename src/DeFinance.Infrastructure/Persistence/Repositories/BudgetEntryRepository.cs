@@ -1,15 +1,19 @@
+using DeFinance.Application.Abstractions;
 using DeFinance.Application.Abstractions.Repositories;
 using DeFinance.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace DeFinance.Infrastructure.Persistence.Repositories;
 
-public class BudgetEntryRepository(DeFinanceDbContext dbContext) : IBudgetEntryRepository
+public class BudgetEntryRepository(DeFinanceDbContext dbContext, ICurrentUserService currentUserService) : IBudgetEntryRepository
 {
+    private readonly Guid _userId = currentUserService.UserId;
+
     public async Task<IReadOnlyList<BudgetEntry>> GetByPeriodAsync(int year, IReadOnlyList<int> months, CancellationToken cancellationToken = default)
     {
         var monthList = months.ToList();
         return await dbContext.BudgetEntries
+            .Where(e => e.UserId == _userId)
             .Include(e => e.Lines)
             .Where(e => e.Year == year && monthList.Contains(e.Month))
             .ToListAsync(cancellationToken);
@@ -17,6 +21,7 @@ public class BudgetEntryRepository(DeFinanceDbContext dbContext) : IBudgetEntryR
 
     public async Task<BudgetEntry?> GetAsync(Guid categoryId, int year, int month, CancellationToken cancellationToken = default) =>
         await dbContext.BudgetEntries
+            .Where(e => e.UserId == _userId)
             .Include(e => e.Lines)
             .FirstOrDefaultAsync(e => e.CategoryId == categoryId && e.Year == year && e.Month == month, cancellationToken);
 
