@@ -13,7 +13,7 @@ public record UpdateUserCommand(
     string? PhoneNumber
 ) : IRequest<UserResponse?>;
 
-public class UpdateUserCommandHandler(IUserRepository repository, IPasswordService passwordService)
+public class UpdateUserCommandHandler(IUserRepository repository)
     : IRequestHandler<UpdateUserCommand, UserResponse?>
 {
     public async Task<UserResponse?> Handle(UpdateUserCommand request, CancellationToken cancellationToken)
@@ -21,9 +21,7 @@ public class UpdateUserCommandHandler(IUserRepository repository, IPasswordServi
         var user = await repository.GetByIdAsync(request.Id, cancellationToken);
         if (user is null) return null;
 
-        var hashedEmail = passwordService.Hash(request.Email);
-        var hashedPhone = request.PhoneNumber is not null ? passwordService.Hash(request.PhoneNumber) : null;
-        user.Update(request.Username, hashedEmail, hashedPhone);
+        user.Update(request.Username, request.Email, request.PhoneNumber);
         await repository.SaveChangesAsync(cancellationToken);
         return user.ToResponse();
     }
