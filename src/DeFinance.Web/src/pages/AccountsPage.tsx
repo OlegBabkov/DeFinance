@@ -139,6 +139,14 @@ export function AccountsPage() {
 
   const isCustomSort = sortBy !== null
 
+  // currency conversion controls
+  const [convFrom, setConvFrom] = usePersistedState('acc_conv_from', '')
+  const [convTo, setConvTo] = usePersistedState('acc_conv_to', '')
+  const [convRate, setConvRate] = usePersistedState('acc_conv_rate', '')
+  const convRateNum = parseFloat(convRate)
+  const showConv = convFrom !== '' && convTo !== '' && convFrom !== convTo && convRateNum > 0
+  const convToCurrency = currencies.find(c => c.code === convTo)
+
   const moveAccount = async (index: number, direction: 'up' | 'down') => {
     const newItems = [...items]
     const swapIndex = direction === 'up' ? index - 1 : index + 1
@@ -185,6 +193,28 @@ export function AccountsPage() {
             <option value="">All types</option>
             {ACCOUNT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
           </select>
+
+          <div className="flex items-center gap-1.5 ml-2">
+            <select value={convFrom} onChange={e => setConvFrom(e.target.value)} className={filterCls}>
+              <option value="">— currency</option>
+              {currencies.map(c => <option key={c.id} value={c.code}>{c.symbol} {c.code}</option>)}
+            </select>
+            <span className="text-gray-400 select-none font-mono">⟷</span>
+            <select value={convTo} onChange={e => setConvTo(e.target.value)} className={filterCls}>
+              <option value="">— currency</option>
+              {currencies.map(c => <option key={c.id} value={c.code}>{c.symbol} {c.code}</option>)}
+            </select>
+            <input
+              type="number"
+              min="0"
+              step="any"
+              placeholder="Rate"
+              value={convRate}
+              onChange={e => setConvRate(e.target.value)}
+              className={`${filterCls} w-24`}
+            />
+          </div>
+
           {loading && <Spinner size="sm" />}
         </div>
       </div>
@@ -237,6 +267,11 @@ export function AccountsPage() {
                 <SortableHeader label="Type" field="type" sortBy={sortBy} sortDirection={sortDirection} onSort={handleSort} />
                 <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Currency</th>
                 <SortableHeader label="Balance" field="balance" sortBy={sortBy} sortDirection={sortDirection} onSort={handleSort} />
+                {showConv && (
+                  <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                    In {convToCurrency?.symbol ?? ''} {convTo}
+                  </th>
+                )}
                 <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Status</th>
                 <th className="px-4 py-3" />
               </tr>
@@ -274,6 +309,13 @@ export function AccountsPage() {
                   <td className="px-4 py-3 text-gray-900 dark:text-gray-100 font-mono">
                     {account.currency?.symbol ?? ''} {account.balance.toFixed(2)}
                   </td>
+                  {showConv && (
+                    <td className="px-4 py-3 font-mono text-indigo-600 dark:text-indigo-400">
+                      {account.currency?.code === convFrom
+                        ? `${convToCurrency?.symbol ?? ''} ${(account.balance / convRateNum).toFixed(2)}`
+                        : <span className="text-gray-300 dark:text-gray-600">—</span>}
+                    </td>
+                  )}
                   <td className="px-4 py-3">
                     <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${account.isActive ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'}`}>
                       {account.isActive ? 'Active' : 'Inactive'}
@@ -290,7 +332,7 @@ export function AccountsPage() {
               ))}
               {items.length === 0 && !loading && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-gray-400 dark:text-gray-500">No accounts found.</td>
+                  <td colSpan={6 + (isCustomSort ? 0 : 1) + (showConv ? 1 : 0)} className="px-4 py-8 text-center text-gray-400 dark:text-gray-500">No accounts found.</td>
                 </tr>
               )}
             </tbody>
