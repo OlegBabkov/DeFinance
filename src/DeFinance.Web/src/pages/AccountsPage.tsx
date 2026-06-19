@@ -140,9 +140,9 @@ export function AccountsPage() {
   const isCustomSort = sortBy !== null
 
   // currency conversion controls
-  const [convFrom, setConvFrom] = useState('')
-  const [convTo, setConvTo] = useState('')
-  const [convRate, setConvRate] = useState('')
+  const [convFrom, setConvFrom] = usePersistedState('acc_conv_from', '')
+  const [convTo, setConvTo] = usePersistedState('acc_conv_to', '')
+  const [convRate, setConvRate] = usePersistedState('acc_conv_rate', '')
   const convRateNum = parseFloat(convRate)
   const showConv = convFrom !== '' && convTo !== '' && convFrom !== convTo && convRateNum > 0
   const convToCurrency = currencies.find(c => c.code === convTo)
