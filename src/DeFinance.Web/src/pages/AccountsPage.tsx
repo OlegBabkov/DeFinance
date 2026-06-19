@@ -146,6 +146,9 @@ export function AccountsPage() {
   const convRateNum = parseFloat(convRate)
   const showConv = convFrom !== '' && convTo !== '' && convFrom !== convTo && convRateNum > 0
   const convToCurrency = currencies.find(c => c.code === convTo)
+  const convSum = showConv
+    ? items.filter(a => a.currency?.code === convFrom).reduce((s, a) => s + a.balance / convRateNum, 0)
+    : 0
 
   const moveAccount = async (index: number, direction: 'up' | 'down') => {
     const newItems = [...items]
@@ -213,6 +216,11 @@ export function AccountsPage() {
               onChange={e => setConvRate(e.target.value)}
               className={`${filterCls} w-24`}
             />
+            {showConv && (
+              <span className="ml-1 px-3 py-1.5 rounded-lg border border-indigo-200 dark:border-indigo-700 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 text-sm font-mono whitespace-nowrap">
+                {convToCurrency?.symbol ?? ''} {convSum.toFixed(2)} {convTo}
+              </span>
+            )}
           </div>
 
           {loading && <Spinner size="sm" />}
