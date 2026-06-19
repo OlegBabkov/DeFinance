@@ -312,7 +312,7 @@ export function AccountsPage() {
                   {showConv && (
                     <td className="px-4 py-3 font-mono text-indigo-600 dark:text-indigo-400">
                       {account.currency?.code === convFrom
-                        ? `${convToCurrency?.symbol ?? ''} ${(account.balance * convRateNum).toFixed(2)}`
+                        ? `${convToCurrency?.symbol ?? ''} ${(account.balance / convRateNum).toFixed(2)}`
                         : <span className="text-gray-300 dark:text-gray-600">—</span>}
                     </td>
                   )}
