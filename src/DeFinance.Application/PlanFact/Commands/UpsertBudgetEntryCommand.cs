@@ -22,18 +22,18 @@ public class UpsertBudgetEntryCommandHandler(IBudgetEntryRepository repository, 
     public async Task<Unit> Handle(UpsertBudgetEntryCommand request, CancellationToken cancellationToken)
     {
         var existing = await repository.GetAsync(request.CategoryId, request.Year, request.Month, cancellationToken);
+        var lines = request.Lines.Select(l => (l.Name, l.Amount));
         if (existing is not null)
         {
-            existing.UpdateAmount(request.PlannedAmount);
-            existing.UpdateLines(request.Lines.Select(l => (l.Name, l.Amount)));
+            await repository.UpdateDirectAsync(existing.Id, request.PlannedAmount, lines, cancellationToken);
         }
         else
         {
             var entry = BudgetEntry.Create(request.CategoryId, request.Year, request.Month, request.PlannedAmount, currentUserService.UserId);
-            entry.UpdateLines(request.Lines.Select(l => (l.Name, l.Amount)));
+            entry.UpdateLines(lines);
             await repository.AddAsync(entry, cancellationToken);
+            await repository.SaveChangesAsync(cancellationToken);
         }
-        await repository.SaveChangesAsync(cancellationToken);
         return Unit.Value;
     }
 }
