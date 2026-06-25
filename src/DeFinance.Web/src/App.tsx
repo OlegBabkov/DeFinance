@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { FloatingCalculator } from './components/CalculatorModal'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { ThemeProvider } from './ThemeContext'
 import { NotificationProvider } from './NotificationContext'
@@ -29,6 +30,7 @@ function getInitialUsername(): string | null {
 function App() {
   const [username, setUsername] = useState<string | null>(getInitialUsername)
   const [photoUrl, setPhotoUrl] = useState<string | null>(null)
+  const [calcOpen, setCalcOpen] = useState(false)
 
   useEffect(() => {
     if (username) {
@@ -60,7 +62,7 @@ function App() {
             <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
               <Sidebar />
               <div className="flex-1 flex flex-col overflow-hidden">
-                <TopBar username={username} onLogout={handleLogout} onUsernameChange={setUsername} photoUrl={photoUrl} onPhotoChange={setPhotoUrl} />
+                <TopBar username={username} onLogout={handleLogout} onUsernameChange={setUsername} photoUrl={photoUrl} onPhotoChange={setPhotoUrl} onOpenCalculator={() => setCalcOpen(true)} />
                 <main className="flex-1 overflow-hidden">
                   <Routes>
                     <Route element={<DashboardsLayout />}>
@@ -80,6 +82,7 @@ function App() {
               </div>
             </div>
           </BrowserRouter>
+          {calcOpen && <FloatingCalculator onClose={() => setCalcOpen(false)} />}
           </MainCurrencyProvider>
         )}
       </NotificationProvider>
