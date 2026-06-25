@@ -427,11 +427,29 @@ function ReportsPanel() {
     return () => { connection.stop() }
   }, [])
 
-  // Polling fallback: re-fetch every 3 s while any report is still in-flight
+  // Polling fallback: re-fetch every 3 s while any report is still in-flight.
+  // Also fires the popup notification when a report transitions to Completed/Failed,
+  // so the user gets feedback even if the SignalR event was missed.
   useEffect(() => {
     const hasActive = reports.some(r => r.status === 'Pending' || r.status === 'Processing')
     if (!hasActive) return
-    const id = setInterval(() => reportsApi.getAll().then(setReports).catch(() => {}), 3000)
+    const id = setInterval(() => {
+      reportsApi.getAll().then(latest => {
+        latest.forEach(r => {
+          const prev = reports.find(p => p.id === r.id)
+          if (!prev) return
+          const wasActive = prev.status === 'Pending' || prev.status === 'Processing'
+          if (!wasActive) return
+          if (r.status === 'Completed') {
+            setReadyReportId(r.id)
+            notifyRef.current('Report is ready for download', 'success')
+          } else if (r.status === 'Failed') {
+            notifyRef.current('Report generation failed', 'error')
+          }
+        })
+        setReports(latest)
+      }).catch(() => {})
+    }, 3000)
     return () => clearInterval(id)
   }, [reports])
 
