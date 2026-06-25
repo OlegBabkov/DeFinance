@@ -398,9 +398,13 @@ function ReportsPanel() {
     refreshReports().finally(() => setLoadingReports(false))
   }, [])
 
-  // SignalR for ReportGenerated events
+  // Stable refs so SignalR handler never captures a stale closure
   const refreshRef = useRef(refreshReports)
   refreshRef.current = refreshReports
+  const notifyRef = useRef(notify)
+  notifyRef.current = notify
+
+  // SignalR — empty dep array so the connection is created exactly once
   useEffect(() => {
     const connection = new signalR.HubConnectionBuilder()
       .withUrl('/hubs/notifications', {
@@ -413,15 +417,23 @@ function ReportsPanel() {
       refreshRef.current()
       if (data.success) {
         setReadyReportId(data.reportId)
-        notify('Report is ready for download', 'success')
+        notifyRef.current('Report is ready for download', 'success')
       } else {
-        notify('Report generation failed', 'error')
+        notifyRef.current('Report generation failed', 'error')
       }
     })
 
     connection.start().catch(() => {})
     return () => { connection.stop() }
-  }, [notify])
+  }, [])
+
+  // Polling fallback: re-fetch every 3 s while any report is still in-flight
+  useEffect(() => {
+    const hasActive = reports.some(r => r.status === 'Pending' || r.status === 'Processing')
+    if (!hasActive) return
+    const id = setInterval(() => reportsApi.getAll().then(setReports).catch(() => {}), 3000)
+    return () => clearInterval(id)
+  }, [reports])
 
   const handleGenerate = async () => {
     setGenerating(true)
