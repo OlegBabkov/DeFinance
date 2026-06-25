@@ -7,6 +7,7 @@ using DeFinance.Infrastructure;
 using DeFinance.Infrastructure.Persistence;
 using DeFinance.Infrastructure.Persistence.Seeders;
 using FluentValidation;
+using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
@@ -50,6 +51,22 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 builder.Services.AddSignalR();
 builder.Services.AddHostedService<TransactionEventSubscriber>();
+builder.Services.AddHostedService<ReportGeneratedSubscriber>();
+
+builder.Services.AddMassTransit(x =>
+{
+    x.UsingRabbitMq((_, cfg) =>
+    {
+        var rmqHost = builder.Configuration["RabbitMQ:Host"] ?? "localhost";
+        var rmqUser = builder.Configuration["RabbitMQ:Username"] ?? "guest";
+        var rmqPass = builder.Configuration["RabbitMQ:Password"] ?? "guest";
+        cfg.Host(rmqHost, h =>
+        {
+            h.Username(rmqUser);
+            h.Password(rmqPass);
+        });
+    });
+});
 builder.Services.AddOpenTelemetryObservability(builder.Configuration);
 builder.Services.AddObservabilityHealthChecks(builder.Configuration);
 builder.Services.AddControllers(o => o.Filters.Add(new Microsoft.AspNetCore.Mvc.Authorization.AuthorizeFilter()))

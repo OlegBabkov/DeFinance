@@ -132,6 +132,21 @@ services:
       timeout: 5s
       retries: 5
 
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: definance-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: definance
+      RABBITMQ_DEFAULT_PASS: definance_pass
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
   api:
     build:
       context: ..
@@ -141,6 +156,9 @@ services:
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__DefaultConnection: "Host=postgres;Database=definance;Username=definance;Password=definance_pass"
       Redis__ConnectionString: "redis:6379"
+      RabbitMQ__Host: "rabbitmq"
+      RabbitMQ__Username: "definance"
+      RabbitMQ__Password: "definance_pass"
       Observability__ElasticsearchUrl: "http://elasticsearch:9200"
       Observability__ElasticsearchUsername: "elastic"
       Observability__ElasticsearchPassword: "definance_elastic"
@@ -152,10 +170,31 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
       elasticsearch:
         condition: service_healthy
       otel-collector:
         condition: service_started
+
+  reports:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.Reports
+    container_name: definance-reports
+    environment:
+      ConnectionStrings__DefaultConnection: "Host=postgres;Database=definance;Username=definance;Password=definance_pass"
+      Redis__ConnectionString: "redis:6379"
+      RabbitMQ__Host: "rabbitmq"
+      RabbitMQ__Username: "definance"
+      RabbitMQ__Password: "definance_pass"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
 
   web:
     build:

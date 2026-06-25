@@ -1,7 +1,15 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
+import * as signalR from '@microsoft/signalr'
 import { useNotify } from '../NotificationContext'
 import { useMainCurrency } from '../MainCurrencyContext'
 import { paymentStatusesApi, type PaymentStatus } from '../api/paymentStatuses'
+import { accountsApi, type Account } from '../api/accounts'
+import { categoriesApi, type Category } from '../api/categories'
+import {
+  reportsApi, type Report, type ReportType, type ReportPeriod,
+  REPORT_TYPE_LABELS, REPORT_PERIOD_LABELS
+} from '../api/reports'
+import { TOKEN_KEY } from '../api/auth'
 import { type PagedResult, type PageSize, type SortDirection } from '../api/common'
 import { Modal } from '../components/Modal'
 import { IconButton, PencilIcon, CheckCircleIcon, BanIcon } from '../components/IconButton'
@@ -19,6 +27,9 @@ const labelCls = 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-
 const filterCls =
   'px-2 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500'
 
+// ─────────────────────────────────────────────────────────────
+// Payment Statuses Panel (unchanged)
+// ─────────────────────────────────────────────────────────────
 function PaymentStatusesPanel() {
   const notify = useNotify()
   const [result, setResult] = useState<PagedResult<PaymentStatus> | null>(null)
@@ -293,6 +304,9 @@ function PaymentStatusesPanel() {
   )
 }
 
+// ─────────────────────────────────────────────────────────────
+// Main Currency Panel (unchanged)
+// ─────────────────────────────────────────────────────────────
 function MainCurrencyPanel() {
   const { currencies, mainCurrency, setMainCurrencyId } = useMainCurrency()
 
@@ -326,12 +340,273 @@ function MainCurrencyPanel() {
   )
 }
 
+// ─────────────────────────────────────────────────────────────
+// Reports Panel
+// ─────────────────────────────────────────────────────────────
+
+const REPORT_TYPE_DESCRIPTIONS: Record<ReportType, string> = {
+  CashFlowStatement:        'Daily income vs. expenses with net cash flow over the period.',
+  ExpenseCategoryBreakdown: 'Spending grouped by category with proportion bars.',
+  AccountBalanceSummary:    'Opening and closing balances per account with change summary.',
+}
+
+const STATUS_STYLES: Record<string, string> = {
+  Pending:    'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300',
+  Processing: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
+  Completed:  'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
+  Failed:     'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
+}
+
+async function downloadReport(id: string, fileName: string) {
+  const token = localStorage.getItem(TOKEN_KEY) ?? ''
+  const res = await fetch(`/api/reports/${id}/download`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) return
+  const blob = await res.blob()
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = fileName
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}
+
+function ReportsPanel() {
+  const notify = useNotify()
+
+  const [reportType, setReportType] = useState<ReportType>('CashFlowStatement')
+  const [period, setPeriod] = useState<ReportPeriod>('LastMonth')
+  const [accountId, setAccountId] = useState<string>('')
+  const [categoryId, setCategoryId] = useState<string>('')
+  const [generating, setGenerating] = useState(false)
+
+  const [accounts, setAccounts] = useState<Account[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
+  const [reports, setReports] = useState<Report[]>([])
+  const [loadingReports, setLoadingReports] = useState(true)
+  const [readyReportId, setReadyReportId] = useState<string | null>(null)
+
+  const refreshReports = () =>
+    reportsApi.getAll().then(setReports).catch(() => {})
+
+  useEffect(() => {
+    accountsApi.getAll({ pageSize: 200 }).then(r => setAccounts(r.items.filter(a => a.isActive))).catch(() => {})
+    categoriesApi.getAll({ pageSize: 500 }).then(r => setCategories(r.items.filter(c => c.isActive))).catch(() => {})
+    refreshReports().finally(() => setLoadingReports(false))
+  }, [])
+
+  // SignalR for ReportGenerated events
+  const refreshRef = useRef(refreshReports)
+  refreshRef.current = refreshReports
+  useEffect(() => {
+    const connection = new signalR.HubConnectionBuilder()
+      .withUrl('/hubs/notifications', {
+        accessTokenFactory: () => localStorage.getItem(TOKEN_KEY) ?? '',
+      })
+      .withAutomaticReconnect()
+      .build()
+
+    connection.on('ReportGenerated', (data: { reportId: string; success: boolean }) => {
+      refreshRef.current()
+      if (data.success) {
+        setReadyReportId(data.reportId)
+        notify('Report is ready for download', 'success')
+      } else {
+        notify('Report generation failed', 'error')
+      }
+    })
+
+    connection.start().catch(() => {})
+    return () => { connection.stop() }
+  }, [notify])
+
+  const handleGenerate = async () => {
+    setGenerating(true)
+    try {
+      await reportsApi.generate({
+        type: reportType,
+        period,
+        accountId: accountId || null,
+        categoryId: categoryId || null,
+      })
+      await refreshReports()
+      notify('Report queued — you\'ll be notified when it\'s ready', 'info')
+    } catch {
+      notify('Failed to generate report', 'error')
+    } finally {
+      setGenerating(false)
+    }
+  }
+
+  const expenseCategories = categories.filter(c => c.type === 'Expense' || c.type === 'TransferOut')
+
+  return (
+    <div className="flex gap-5 h-full min-h-0">
+      {/* ── Form ── */}
+      <div className="w-72 flex-shrink-0 flex flex-col gap-4">
+        {/* Report type cards */}
+        <div>
+          <label className={labelCls}>Report Type</label>
+          <div className="flex flex-col gap-2">
+            {(Object.keys(REPORT_TYPE_LABELS) as ReportType[]).map(rt => (
+              <button
+                key={rt}
+                onClick={() => setReportType(rt)}
+                className={`text-left px-3 py-2.5 rounded-lg border transition-all ${
+                  reportType === rt
+                    ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 ring-1 ring-indigo-500'
+                    : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
+                }`}
+              >
+                <p className={`text-xs font-semibold ${reportType === rt ? 'text-indigo-700 dark:text-indigo-300' : 'text-gray-700 dark:text-gray-300'}`}>
+                  {REPORT_TYPE_LABELS[rt]}
+                </p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 leading-relaxed">
+                  {REPORT_TYPE_DESCRIPTIONS[rt]}
+                </p>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Period */}
+        <div>
+          <label className={labelCls}>Period</label>
+          <select value={period} onChange={e => setPeriod(e.target.value as ReportPeriod)} className={inputCls}>
+            {(Object.keys(REPORT_PERIOD_LABELS) as ReportPeriod[]).map(p => (
+              <option key={p} value={p}>{REPORT_PERIOD_LABELS[p]}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Dynamic filter fields */}
+        {reportType === 'CashFlowStatement' && (
+          <div>
+            <label className={labelCls}>Account (optional)</label>
+            <select value={accountId} onChange={e => setAccountId(e.target.value)} className={inputCls}>
+              <option value="">All accounts</option>
+              {accounts.map(a => (
+                <option key={a.id} value={a.id}>{a.name} ({a.currency?.code ?? '?'})</option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {reportType === 'ExpenseCategoryBreakdown' && (
+          <div>
+            <label className={labelCls}>Category (optional)</label>
+            <select value={categoryId} onChange={e => setCategoryId(e.target.value)} className={inputCls}>
+              <option value="">All expense categories</option>
+              {expenseCategories.map(c => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        <button
+          onClick={handleGenerate}
+          disabled={generating}
+          className="mt-auto w-full px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
+        >
+          {generating ? (
+            <><Spinner size="sm" /><span>Queuing…</span></>
+          ) : (
+            <>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+              </svg>
+              Generate Report
+            </>
+          )}
+        </button>
+      </div>
+
+      {/* ── History ── */}
+      <div className="flex-1 flex flex-col min-h-0">
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Report History</p>
+          {loadingReports && <Spinner size="sm" />}
+        </div>
+
+        <div className="flex-1 min-h-0 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-700">
+          <table className="w-full divide-y divide-gray-200 dark:divide-gray-700 text-xs">
+            <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0 z-10">
+              <tr>
+                <th className="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400">Type</th>
+                <th className="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400">Period</th>
+                <th className="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400">Status</th>
+                <th className="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400">Created</th>
+                <th className="px-3 py-2" />
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100 dark:divide-gray-700 bg-white dark:bg-gray-800">
+              {reports.map(r => (
+                <tr key={r.id} className={`hover:bg-gray-50 dark:hover:bg-gray-700 ${readyReportId === r.id ? 'bg-green-50 dark:bg-green-900/10' : ''}`}>
+                  <td className="px-3 py-2 font-medium text-gray-800 dark:text-gray-200">
+                    {REPORT_TYPE_LABELS[r.type]}
+                  </td>
+                  <td className="px-3 py-2 text-gray-500 dark:text-gray-400">
+                    {REPORT_PERIOD_LABELS[r.period]}
+                  </td>
+                  <td className="px-3 py-2">
+                    <div className="flex items-center gap-1.5">
+                      {(r.status === 'Pending' || r.status === 'Processing') && (
+                        <span className="inline-block w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
+                      )}
+                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[r.status] ?? ''}`}>
+                        {r.status}
+                      </span>
+                    </div>
+                    {r.status === 'Failed' && r.errorMessage && (
+                      <p className="text-xs text-red-400 mt-0.5 truncate max-w-xs" title={r.errorMessage}>{r.errorMessage}</p>
+                    )}
+                  </td>
+                  <td className="px-3 py-2 text-gray-400 dark:text-gray-500 whitespace-nowrap">
+                    {new Date(r.createdAt).toLocaleString()}
+                  </td>
+                  <td className="px-3 py-2 text-right">
+                    {r.status === 'Completed' && r.fileName && (
+                      <button
+                        onClick={() => downloadReport(r.id, r.fileName!)}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 rounded-lg transition-colors"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                        </svg>
+                        Download
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+              {reports.length === 0 && !loadingReports && (
+                <tr>
+                  <td colSpan={5} className="px-3 py-8 text-center text-gray-400 dark:text-gray-500">
+                    No reports generated yet. Choose a type and click <strong>Generate Report</strong>.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────
+// Page layout
+// ─────────────────────────────────────────────────────────────
 export function AdministrationPage() {
   return (
     <div className="p-6 h-full flex flex-col">
       <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">Administration</h1>
 
-      <div className="flex-1 grid grid-cols-2 grid-rows-2 gap-4 min-h-0">
+      <div className="flex-1 grid grid-cols-2 gap-4 min-h-0" style={{ gridTemplateRows: 'minmax(0,1fr) minmax(0,1fr)' }}>
         <Panel title="Payment Statuses">
           <PaymentStatusesPanel />
         </Panel>
@@ -340,29 +615,30 @@ export function AdministrationPage() {
           <MainCurrencyPanel />
         </Panel>
 
-        <Panel title="" empty />
-        <Panel title="" empty />
+        <div className="col-span-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex flex-col overflow-hidden min-h-0">
+          <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center gap-2">
+            <svg className="w-4 h-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+            </svg>
+            <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Reports</h2>
+          </div>
+          <div className="flex-1 p-4 overflow-auto min-h-0">
+            <ReportsPanel />
+          </div>
+        </div>
       </div>
     </div>
   )
 }
 
-function Panel({ title, children, empty }: { title: string; children?: ReactNode; empty?: boolean }) {
+function Panel({ title, children }: { title: string; children?: ReactNode }) {
   return (
     <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex flex-col overflow-hidden">
-      {!empty && (
-        <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">{title}</h2>
-        </div>
-      )}
+      <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+        <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">{title}</h2>
+      </div>
       <div className="flex-1 p-4 overflow-auto flex flex-col min-h-0">
-        {empty ? (
-          <div className="h-full flex items-center justify-center text-gray-300 dark:text-gray-600 text-sm select-none">
-            —
-          </div>
-        ) : (
-          children
-        )}
+        {children}
       </div>
     </div>
   )
