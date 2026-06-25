@@ -9,6 +9,7 @@ public record ReportDto(
     ReportStatus Status,
     Guid? AccountId,
     Guid[] CategoryIds,
+    Guid[] CounterpartyIds,
     string? FileName,
     string? ErrorMessage,
     DateTime CreatedAt,

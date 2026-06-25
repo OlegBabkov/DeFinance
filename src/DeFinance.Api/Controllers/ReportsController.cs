@@ -23,7 +23,8 @@ public class ReportsController(ISender sender, IPublishEndpoint bus, ICurrentUse
             report.Type.ToString(),
             report.Period.ToString(),
             report.AccountId,
-            report.CategoryIds), ct);
+            report.CategoryIds,
+            report.CounterpartyIds), ct);
 
         return Accepted(report);
     }

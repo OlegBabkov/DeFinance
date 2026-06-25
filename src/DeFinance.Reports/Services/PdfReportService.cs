@@ -391,9 +391,115 @@ public class PdfReportService(DeFinanceDbContext db) : IPdfReportService
     }
 
     // ──────────────────────────────────────────────────────────────
+    // 4. Counterparty Spending
+    // ──────────────────────────────────────────────────────────────
+    public async Task<byte[]> GenerateCounterpartySpendingAsync(Guid userId, DateTime from, DateTime to, Guid[] counterpartyIds)
+    {
+        var query = db.Transactions
+            .Include(t => t.Counterparty)
+            .Where(t => t.UserId == userId
+                     && t.DateTime >= from && t.DateTime <= to
+                     && t.CounterpartyId != null);
+
+        if (counterpartyIds.Length > 0)
+            query = query.Where(t => t.CounterpartyId.HasValue && counterpartyIds.Contains(t.CounterpartyId.Value));
+
+        var transactions = await query.ToListAsync();
+        var total = transactions.Sum(t => t.AmountInCurrency);
+
+        var rows = transactions
+            .GroupBy(t => new { t.CounterpartyId, Name = t.Counterparty?.Name ?? "Unknown", Type = t.Counterparty?.Type.ToString() ?? "Other" })
+            .Select(g => new CounterpartyRow(
+                g.Key.Name,
+                g.Key.Type,
+                g.Count(),
+                g.Sum(t => t.AmountInCurrency),
+                total > 0 ? (double)(g.Sum(t => t.AmountInCurrency) / total) * 100.0 : 0.0))
+            .OrderByDescending(r => r.Amount)
+            .ToList();
+
+        return Document.Create(doc =>
+        {
+            doc.Page(page =>
+            {
+                SetupPage(page);
+
+                page.Header().Element(c => BuildHeader(c,
+                    "Counterparty Spending",
+                    $"{from:MMM dd, yyyy} – {to:MMM dd, yyyy}"));
+
+                page.Content().PaddingVertical(10).Column(col =>
+                {
+                    col.Item().Element(c => BuildSummaryRow(c, new[]
+                    {
+                        ("Total Spent",      $"{total:N2}",           Colors.Red.Darken2),
+                        ("Counterparties",   $"{rows.Count}",          Colors.Blue.Darken2),
+                        ("Transactions",     $"{transactions.Count}",  Colors.Grey.Darken2),
+                    }));
+
+                    col.Item().PaddingTop(16).Element(c => BuildCounterpartyTable(c, rows));
+                });
+
+                page.Footer().Element(BuildFooter);
+            });
+        }).GeneratePdf();
+    }
+
+    // ── Counterparty Spending table ──────────────────────────────
+    private static void BuildCounterpartyTable(IContainer c, List<CounterpartyRow> rows)
+    {
+        c.Table(table =>
+        {
+            table.ColumnsDefinition(cols =>
+            {
+                cols.ConstantColumn(24);
+                cols.RelativeColumn(3);
+                cols.ConstantColumn(60);
+                cols.ConstantColumn(50);
+                cols.RelativeColumn(2);
+                cols.RelativeColumn(2);
+                cols.RelativeColumn(3);
+            });
+
+            BuildTableHeader(table, "#", "Counterparty", "Type", "Txns", "Amount", "%", "Proportion");
+
+            var i   = 1;
+            var alt = false;
+            foreach (var row in rows)
+            {
+                var bg  = alt ? Colors.Grey.Lighten5 : Colors.White;
+                alt = !alt;
+                var pct = (float)Math.Min(row.Percent / 100.0, 1.0);
+
+                table.Cell().Background(bg).Padding(5).AlignCenter().Text($"{i++}").FontSize(8);
+                table.Cell().Background(bg).Padding(5).Text(row.Name).FontSize(8);
+                table.Cell().Background(bg).Padding(5).AlignCenter().Text(row.Type).FontSize(8).FontColor(Colors.Grey.Darken1);
+                table.Cell().Background(bg).Padding(5).AlignCenter().Text($"{row.Count}").FontSize(8);
+                table.Cell().Background(bg).Padding(5).AlignRight().Text($"{row.Amount:N2}").FontSize(8).FontColor(Colors.Red.Darken2);
+                table.Cell().Background(bg).Padding(5).AlignRight().Text($"{row.Percent:F1}%").FontSize(8);
+                table.Cell().Background(bg).Padding(4).Element(barCell =>
+                {
+                    barCell.Row(r =>
+                    {
+                        r.RelativeItem(Math.Max(pct, 0.01f)).Height(10).Background(Colors.Indigo.Lighten2);
+                        r.RelativeItem(Math.Max(1f - pct, 0f)).Height(10);
+                    });
+                });
+            }
+
+            if (rows.Count == 0)
+            {
+                table.Cell().ColumnSpan(7).Padding(12).AlignCenter()
+                     .Text("No transactions with counterparties found for the selected period.").FontSize(9).FontColor(Colors.Grey.Medium);
+            }
+        });
+    }
+
+    // ──────────────────────────────────────────────────────────────
     // Data records
     // ──────────────────────────────────────────────────────────────
     private record CashFlowRow(DateTime Date, decimal Income, decimal Expense);
     private record CategoryRow(string Category, int Count, decimal Amount, double Percent);
+    private record CounterpartyRow(string Name, string Type, int Count, decimal Amount, double Percent);
     private record AccountBalanceRow(string Account, string Currency, decimal OpeningBalance, decimal Change, decimal ClosingBalance);
 }

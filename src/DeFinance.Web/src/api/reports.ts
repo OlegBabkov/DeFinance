@@ -1,6 +1,6 @@
 import client from './client'
 
-export type ReportType = 'CashFlowStatement' | 'ExpenseCategoryBreakdown' | 'AccountBalanceSummary'
+export type ReportType = 'CashFlowStatement' | 'ExpenseCategoryBreakdown' | 'AccountBalanceSummary' | 'CounterpartySpending'
 export type ReportPeriod = 'OneDay' | 'LastWeek' | 'LastMonth' | 'LastTwoMonths' | 'LastHalfYear' | 'LastYear'
 export type ReportStatus = 'Pending' | 'Processing' | 'Completed' | 'Failed'
 
@@ -22,12 +22,14 @@ export interface GenerateReportRequest {
   period: ReportPeriod
   accountId?: string | null
   categoryIds?: string[]
+  counterpartyIds?: string[]
 }
 
 export const REPORT_TYPE_LABELS: Record<ReportType, string> = {
-  CashFlowStatement:       'Cash Flow Statement',
+  CashFlowStatement:        'Cash Flow Statement',
   ExpenseCategoryBreakdown: 'Expense Category Breakdown',
-  AccountBalanceSummary:   'Account Balance Summary',
+  AccountBalanceSummary:    'Account Balance Summary',
+  CounterpartySpending:     'Counterparty Spending',
 }
 
 export const REPORT_PERIOD_LABELS: Record<ReportPeriod, string> = {

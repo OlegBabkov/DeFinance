@@ -37,6 +37,17 @@ public class ReportConfiguration : IEntityTypeConfiguration<Report>
                 v => v.Aggregate(0, (h, id) => HashCode.Combine(h, id.GetHashCode())),
                 v => v.ToList()));
 
+        builder.Property(r => r.CounterpartyIds)
+            .HasConversion(
+                v => System.Text.Json.JsonSerializer.Serialize(v, (System.Text.Json.JsonSerializerOptions?)null),
+                v => System.Text.Json.JsonSerializer.Deserialize<List<Guid>>(v, (System.Text.Json.JsonSerializerOptions?)null) ?? new())
+            .HasColumnType("text")
+            .HasColumnName("counterparty_ids")
+            .Metadata.SetValueComparer(new ValueComparer<List<Guid>>(
+                (a, b) => a != null && b != null && a.SequenceEqual(b),
+                v => v.Aggregate(0, (h, id) => HashCode.Combine(h, id.GetHashCode())),
+                v => v.ToList()));
+
         builder.Property(r => r.FileName)
             .HasMaxLength(200);
 

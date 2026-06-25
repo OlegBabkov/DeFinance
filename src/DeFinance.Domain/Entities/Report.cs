@@ -9,6 +9,7 @@ public class Report
     public Guid UserId { get; private set; }
     public Guid? AccountId { get; private set; }
     public List<Guid> CategoryIds { get; private set; } = new();
+    public List<Guid> CounterpartyIds { get; private set; } = new();
     public byte[]? PdfContent { get; private set; }
     public string? FileName { get; private set; }
     public string? ErrorMessage { get; private set; }
@@ -17,7 +18,11 @@ public class Report
 
     private Report() { }
 
-    public static Report Create(ReportType type, ReportPeriod period, Guid userId, Guid? accountId = null, IEnumerable<Guid>? categoryIds = null) =>
+    public static Report Create(
+        ReportType type, ReportPeriod period, Guid userId,
+        Guid? accountId = null,
+        IEnumerable<Guid>? categoryIds = null,
+        IEnumerable<Guid>? counterpartyIds = null) =>
         new()
         {
             Id = Guid.NewGuid(),
@@ -27,6 +32,7 @@ public class Report
             UserId = userId,
             AccountId = accountId,
             CategoryIds = categoryIds?.ToList() ?? new(),
+            CounterpartyIds = counterpartyIds?.ToList() ?? new(),
             CreatedAt = DateTime.UtcNow
         };
 
