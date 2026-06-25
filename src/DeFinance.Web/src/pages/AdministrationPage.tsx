@@ -380,7 +380,7 @@ function ReportsPanel() {
   const [reportType, setReportType] = useState<ReportType>('CashFlowStatement')
   const [period, setPeriod] = useState<ReportPeriod>('LastMonth')
   const [accountId, setAccountId] = useState<string>('')
-  const [categoryId, setCategoryId] = useState<string>('')
+  const [categoryIds, setCategoryIds] = useState<string[]>([])
   const [generating, setGenerating] = useState(false)
 
   const [accounts, setAccounts] = useState<Account[]>([])
@@ -460,7 +460,7 @@ function ReportsPanel() {
         type: reportType,
         period,
         accountId: accountId || null,
-        categoryId: categoryId || null,
+        categoryIds: categoryIds.length > 0 ? categoryIds : undefined,
       })
       await refreshReports()
       notify('Report queued — you\'ll be notified when it\'s ready', 'info')
@@ -526,14 +526,50 @@ function ReportsPanel() {
         )}
 
         {reportType === 'ExpenseCategoryBreakdown' && (
-          <div>
-            <label className={labelCls}>Category (optional)</label>
-            <select value={categoryId} onChange={e => setCategoryId(e.target.value)} className={inputCls}>
-              <option value="">All expense categories</option>
-              {expenseCategories.map(c => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-center justify-between">
+              <label className={labelCls}>Categories (optional)</label>
+              {categoryIds.length > 0 && (
+                <button
+                  onClick={() => setCategoryIds([])}
+                  className="text-xs text-indigo-500 hover:text-indigo-700 dark:text-indigo-400"
+                >
+                  Clear ({categoryIds.length})
+                </button>
+              )}
+            </div>
+            <div className="max-h-44 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-600 divide-y divide-gray-100 dark:divide-gray-700">
+              {expenseCategories.length === 0 && (
+                <p className="px-3 py-2 text-xs text-gray-400">No expense categories found.</p>
+              )}
+              {expenseCategories.map(c => {
+                const checked = categoryIds.includes(c.id)
+                return (
+                  <label
+                    key={c.id}
+                    className={`flex items-center gap-2.5 px-3 py-1.5 cursor-pointer transition-colors text-xs
+                      ${checked
+                        ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-800 dark:text-indigo-200'
+                        : 'hover:bg-gray-50 dark:hover:bg-gray-700/50 text-gray-700 dark:text-gray-300'}`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={e =>
+                        setCategoryIds(prev =>
+                          e.target.checked ? [...prev, c.id] : prev.filter(id => id !== c.id)
+                        )
+                      }
+                      className="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 shrink-0"
+                    />
+                    <span className="truncate">{c.name}</span>
+                  </label>
+                )
+              })}
+            </div>
+            {categoryIds.length === 0 && (
+              <p className="text-xs text-gray-400 dark:text-gray-500">Leave empty to include all categories.</p>
+            )}
           </div>
         )}
 

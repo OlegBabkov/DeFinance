@@ -8,7 +8,7 @@ public record ReportDto(
     ReportPeriod Period,
     ReportStatus Status,
     Guid? AccountId,
-    Guid? CategoryId,
+    Guid[] CategoryIds,
     string? FileName,
     string? ErrorMessage,
     DateTime CreatedAt,

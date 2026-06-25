@@ -21,7 +21,7 @@ export interface GenerateReportRequest {
   type: ReportType
   period: ReportPeriod
   accountId?: string | null
-  categoryId?: string | null
+  categoryIds?: string[]
 }
 
 export const REPORT_TYPE_LABELS: Record<ReportType, string> = {

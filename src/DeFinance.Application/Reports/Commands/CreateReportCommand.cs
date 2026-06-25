@@ -10,7 +10,7 @@ public record CreateReportCommand(
     ReportType Type,
     ReportPeriod Period,
     Guid? AccountId,
-    Guid? CategoryId
+    Guid[] CategoryIds
 ) : IRequest<ReportDto>;
 
 public class CreateReportCommandHandler(
@@ -25,7 +25,7 @@ public class CreateReportCommandHandler(
             request.Period,
             currentUserService.UserId,
             request.AccountId,
-            request.CategoryId);
+            request.CategoryIds);
 
         await reportRepository.AddAsync(report, cancellationToken);
         await reportRepository.SaveChangesAsync(cancellationToken);

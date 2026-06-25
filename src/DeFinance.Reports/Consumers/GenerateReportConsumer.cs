@@ -42,7 +42,7 @@ public class GenerateReportConsumer(
             var pdfBytes = reportType switch
             {
                 ReportType.CashFlowStatement     => await pdfService.GenerateCashFlowAsync(msg.UserId, from, to, msg.AccountId),
-                ReportType.ExpenseCategoryBreakdown => await pdfService.GenerateExpenseCategoryBreakdownAsync(msg.UserId, from, to, msg.CategoryId),
+                ReportType.ExpenseCategoryBreakdown => await pdfService.GenerateExpenseCategoryBreakdownAsync(msg.UserId, from, to, msg.CategoryIds),
                 ReportType.AccountBalanceSummary => await pdfService.GenerateAccountBalanceSummaryAsync(msg.UserId, from, to),
                 _ => throw new InvalidOperationException($"Unhandled report type: {reportType}")
             };

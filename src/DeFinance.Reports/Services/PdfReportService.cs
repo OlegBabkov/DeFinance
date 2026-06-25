@@ -69,7 +69,7 @@ public class PdfReportService(DeFinanceDbContext db) : IPdfReportService
     // ──────────────────────────────────────────────────────────────
     // 2. Expense Category Breakdown
     // ──────────────────────────────────────────────────────────────
-    public async Task<byte[]> GenerateExpenseCategoryBreakdownAsync(Guid userId, DateTime from, DateTime to, Guid? categoryId)
+    public async Task<byte[]> GenerateExpenseCategoryBreakdownAsync(Guid userId, DateTime from, DateTime to, Guid[] categoryIds)
     {
         var query = db.Transactions
             .Include(t => t.Category)
@@ -77,8 +77,9 @@ public class PdfReportService(DeFinanceDbContext db) : IPdfReportService
                      && t.DateTime >= from && t.DateTime <= to
                      && (t.Category!.Type == CategoryType.Expense || t.Category.Type == CategoryType.TransferOut));
 
-        if (categoryId.HasValue)
-            query = query.Where(t => t.CategoryId == categoryId.Value || t.Category!.ParentId == categoryId.Value);
+        if (categoryIds.Length > 0)
+            query = query.Where(t => categoryIds.Contains(t.CategoryId) ||
+                                     (t.Category!.ParentId.HasValue && categoryIds.Contains(t.Category.ParentId.Value)));
 
         var transactions = await query.ToListAsync();
         var total = transactions.Sum(t => t.AmountInCurrency);

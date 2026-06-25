@@ -6,5 +6,5 @@ public record GenerateReportMessage(
     string ReportType,
     string Period,
     Guid? AccountId,
-    Guid? CategoryId
+    Guid[] CategoryIds
 );
