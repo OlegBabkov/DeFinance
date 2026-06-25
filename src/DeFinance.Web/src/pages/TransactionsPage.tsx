@@ -11,7 +11,7 @@ import { type PageSize } from '../api/common'
 import { Pagination } from '../components/Pagination'
 import { SortableHeader } from '../components/SortableHeader'
 import { Modal } from '../components/Modal'
-import { IconButton, InfoIcon, PencilIcon, TrashIcon, CalcIcon } from '../components/IconButton'
+import { IconButton, InfoIcon, PencilIcon, TrashIcon, CalcIcon, CopyIcon } from '../components/IconButton'
 import { TransactionPanel } from '../components/TransactionPanel'
 import { CalculatorModal } from '../components/CalculatorModal'
 import { useFavorites, sortByFavorites } from '../hooks/useFavorites'
@@ -70,7 +70,7 @@ function StatusBadge({ status }: { status: TransactionPaymentStatus }) {
   )
 }
 
-type ModalState = null | 'create' | Transaction
+type ModalState = null | 'create' | 'duplicate' | Transaction
 
 interface FormState {
   dateTime: string
@@ -236,6 +236,12 @@ export function TransactionsPage() {
     setModal(tx)
   }
 
+  const openDuplicate = (tx: Transaction) => {
+    setForm({ ...txToForm(tx), dateTime: todayDate() })
+    setFormError(null)
+    setModal('duplicate')
+  }
+
   const closeModal = () => setModal(null)
 
   const setField = (key: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
@@ -280,7 +286,7 @@ export function TransactionsPage() {
         paymentStatusId: form.paymentStatusId,
         notes: form.notes || null,
       }
-      if (modal === 'create') {
+      if (modal === 'create' || modal === 'duplicate') {
         await transactionsApi.create(req)
         notify('Transaction created', 'success')
       } else if (modal !== null) {
@@ -410,7 +416,7 @@ export function TransactionsPage() {
 
       {/* Modal */}
       {modal !== null && (
-        <Modal title={modal === 'create' ? 'New Transaction' : 'Edit Transaction'} onClose={closeModal}>
+        <Modal title={modal === 'create' ? 'New Transaction' : modal === 'duplicate' ? 'Duplicate Transaction' : 'Edit Transaction'} onClose={closeModal}>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -517,7 +523,7 @@ export function TransactionsPage() {
                 Cancel
               </button>
               <button type="submit" disabled={saving} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors">
-                {saving ? 'Saving…' : modal === 'create' ? 'Create' : 'Save'}
+                {saving ? 'Saving…' : modal === 'create' || modal === 'duplicate' ? 'Create' : 'Save'}
               </button>
             </div>
           </form>
@@ -599,6 +605,8 @@ export function TransactionsPage() {
                         className="text-gray-400 hover:text-blue-500 dark:hover:text-blue-400" />
                       <IconButton icon={<PencilIcon />} label="Edit" onClick={() => openEdit(tx)}
                         className="text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400" />
+                      <IconButton icon={<CopyIcon />} label="Duplicate" onClick={() => openDuplicate(tx)}
+                        className="text-gray-400 hover:text-emerald-500 dark:hover:text-emerald-400" />
                       <IconButton icon={<TrashIcon />} label="Delete" onClick={() => handleDelete(tx)}
                         className="text-gray-400 hover:text-red-500 dark:hover:text-red-400" />
                     </div>
