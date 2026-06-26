@@ -64,6 +64,13 @@ public class TransactionsController(ISender sender) : ControllerBase
         return result is null ? NotFound() : Ok(result);
     }
 
+    [HttpPatch("{id:guid}/payment-status")]
+    public async Task<IActionResult> UpdatePaymentStatus(Guid id, [FromBody] UpdatePaymentStatusBody body, CancellationToken ct)
+    {
+        var updated = await sender.Send(new UpdateTransactionPaymentStatusCommand(id, body.PaymentStatusId), ct);
+        return updated ? NoContent() : NotFound();
+    }
+
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
@@ -71,3 +78,5 @@ public class TransactionsController(ISender sender) : ControllerBase
         return deleted ? NoContent() : NotFound();
     }
 }
+
+public record UpdatePaymentStatusBody(Guid PaymentStatusId);
