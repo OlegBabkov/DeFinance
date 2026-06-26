@@ -20,7 +20,9 @@ namespace DeFinance.Infrastructure.Persistence.Migrations
                 table: "Reports",
                 type: "text",
                 nullable: false,
-                defaultValue: "");
+                defaultValue: "[]");
+
+            migrationBuilder.Sql("UPDATE \"Reports\" SET category_ids = '[]' WHERE category_ids = '' OR category_ids IS NULL");
         }
 
         /// <inheritdoc />

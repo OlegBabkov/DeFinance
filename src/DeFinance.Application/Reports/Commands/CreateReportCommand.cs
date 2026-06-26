@@ -10,8 +10,8 @@ public record CreateReportCommand(
     ReportType Type,
     ReportPeriod Period,
     Guid? AccountId,
-    Guid[] CategoryIds,
-    Guid[] CounterpartyIds
+    Guid[]? CategoryIds,
+    Guid[]? CounterpartyIds
 ) : IRequest<ReportDto>;
 
 public class CreateReportCommandHandler(

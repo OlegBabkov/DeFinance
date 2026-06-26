@@ -29,7 +29,8 @@ public class ReportConfiguration : IEntityTypeConfiguration<Report>
         builder.Property(r => r.CategoryIds)
             .HasConversion(
                 v => System.Text.Json.JsonSerializer.Serialize(v, (System.Text.Json.JsonSerializerOptions?)null),
-                v => System.Text.Json.JsonSerializer.Deserialize<List<Guid>>(v, (System.Text.Json.JsonSerializerOptions?)null) ?? new())
+                v => string.IsNullOrWhiteSpace(v) ? new() :
+                     System.Text.Json.JsonSerializer.Deserialize<List<Guid>>(v, (System.Text.Json.JsonSerializerOptions?)null) ?? new())
             .HasColumnType("text")
             .HasColumnName("category_ids")
             .Metadata.SetValueComparer(new ValueComparer<List<Guid>>(
@@ -40,7 +41,8 @@ public class ReportConfiguration : IEntityTypeConfiguration<Report>
         builder.Property(r => r.CounterpartyIds)
             .HasConversion(
                 v => System.Text.Json.JsonSerializer.Serialize(v, (System.Text.Json.JsonSerializerOptions?)null),
-                v => System.Text.Json.JsonSerializer.Deserialize<List<Guid>>(v, (System.Text.Json.JsonSerializerOptions?)null) ?? new())
+                v => string.IsNullOrWhiteSpace(v) ? new() :
+                     System.Text.Json.JsonSerializer.Deserialize<List<Guid>>(v, (System.Text.Json.JsonSerializerOptions?)null) ?? new())
             .HasColumnType("text")
             .HasColumnName("counterparty_ids")
             .Metadata.SetValueComparer(new ValueComparer<List<Guid>>(

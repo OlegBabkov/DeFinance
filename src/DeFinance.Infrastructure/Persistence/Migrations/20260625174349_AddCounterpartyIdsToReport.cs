@@ -15,7 +15,9 @@ namespace DeFinance.Infrastructure.Persistence.Migrations
                 table: "Reports",
                 type: "text",
                 nullable: false,
-                defaultValue: "");
+                defaultValue: "[]");
+
+            migrationBuilder.Sql("UPDATE \"Reports\" SET counterparty_ids = '[]' WHERE counterparty_ids = '' OR counterparty_ids IS NULL");
         }
 
         /// <inheritdoc />
