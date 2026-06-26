@@ -5,6 +5,7 @@ import { useMainCurrency } from '../MainCurrencyContext'
 import { paymentStatusesApi, type PaymentStatus } from '../api/paymentStatuses'
 import { accountsApi, type Account } from '../api/accounts'
 import { categoriesApi, type Category } from '../api/categories'
+import { counterpartiesApi, type Counterparty } from '../api/counterparties'
 import {
   reportsApi, type Report, type ReportType, type ReportPeriod,
   REPORT_TYPE_LABELS, REPORT_PERIOD_LABELS
@@ -348,6 +349,7 @@ const REPORT_TYPE_DESCRIPTIONS: Record<ReportType, string> = {
   CashFlowStatement:        'Daily income vs. expenses with net cash flow over the period.',
   ExpenseCategoryBreakdown: 'Spending grouped by category with proportion bars.',
   AccountBalanceSummary:    'Opening and closing balances per account with change summary.',
+  CounterpartySpending:     'Total transactions per counterparty with amount and proportion bars.',
 }
 
 const STATUS_STYLES: Record<string, string> = {
@@ -380,11 +382,13 @@ function ReportsPanel() {
   const [reportType, setReportType] = useState<ReportType>('CashFlowStatement')
   const [period, setPeriod] = useState<ReportPeriod>('LastMonth')
   const [accountId, setAccountId] = useState<string>('')
-  const [categoryId, setCategoryId] = useState<string>('')
+  const [categoryIds, setCategoryIds] = useState<string[]>([])
+  const [counterpartyIds, setCounterpartyIds] = useState<string[]>([])
   const [generating, setGenerating] = useState(false)
 
   const [accounts, setAccounts] = useState<Account[]>([])
   const [categories, setCategories] = useState<Category[]>([])
+  const [counterparties, setCounterparties] = useState<Counterparty[]>([])
   const [reports, setReports] = useState<Report[]>([])
   const [loadingReports, setLoadingReports] = useState(true)
   const [readyReportId, setReadyReportId] = useState<string | null>(null)
@@ -395,12 +399,17 @@ function ReportsPanel() {
   useEffect(() => {
     accountsApi.getAll({ pageSize: 200 }).then(r => setAccounts(r.items.filter(a => a.isActive))).catch(() => {})
     categoriesApi.getAll({ pageSize: 500 }).then(r => setCategories(r.items.filter(c => c.isActive))).catch(() => {})
+    counterpartiesApi.getAll({ pageSize: 500 }).then(r => setCounterparties(r.items.filter(c => c.isActive))).catch(() => {})
     refreshReports().finally(() => setLoadingReports(false))
   }, [])
 
-  // SignalR for ReportGenerated events
+  // Stable refs so SignalR handler never captures a stale closure
   const refreshRef = useRef(refreshReports)
   refreshRef.current = refreshReports
+  const notifyRef = useRef(notify)
+  notifyRef.current = notify
+
+  // SignalR — empty dep array so the connection is created exactly once
   useEffect(() => {
     const connection = new signalR.HubConnectionBuilder()
       .withUrl('/hubs/notifications', {
@@ -413,15 +422,41 @@ function ReportsPanel() {
       refreshRef.current()
       if (data.success) {
         setReadyReportId(data.reportId)
-        notify('Report is ready for download', 'success')
+        notifyRef.current('Report is ready for download', 'success')
       } else {
-        notify('Report generation failed', 'error')
+        notifyRef.current('Report generation failed', 'error')
       }
     })
 
     connection.start().catch(() => {})
     return () => { connection.stop() }
-  }, [notify])
+  }, [])
+
+  // Polling fallback: re-fetch every 3 s while any report is still in-flight.
+  // Also fires the popup notification when a report transitions to Completed/Failed,
+  // so the user gets feedback even if the SignalR event was missed.
+  useEffect(() => {
+    const hasActive = reports.some(r => r.status === 'Pending' || r.status === 'Processing')
+    if (!hasActive) return
+    const id = setInterval(() => {
+      reportsApi.getAll().then(latest => {
+        latest.forEach(r => {
+          const prev = reports.find(p => p.id === r.id)
+          if (!prev) return
+          const wasActive = prev.status === 'Pending' || prev.status === 'Processing'
+          if (!wasActive) return
+          if (r.status === 'Completed') {
+            setReadyReportId(r.id)
+            notifyRef.current('Report is ready for download', 'success')
+          } else if (r.status === 'Failed') {
+            notifyRef.current('Report generation failed', 'error')
+          }
+        })
+        setReports(latest)
+      }).catch(() => {})
+    }, 3000)
+    return () => clearInterval(id)
+  }, [reports])
 
   const handleGenerate = async () => {
     setGenerating(true)
@@ -430,7 +465,8 @@ function ReportsPanel() {
         type: reportType,
         period,
         accountId: accountId || null,
-        categoryId: categoryId || null,
+        categoryIds: categoryIds.length > 0 ? categoryIds : undefined,
+        counterpartyIds: counterpartyIds.length > 0 ? counterpartyIds : undefined,
       })
       await refreshReports()
       notify('Report queued — you\'ll be notified when it\'s ready', 'info')
@@ -496,14 +532,99 @@ function ReportsPanel() {
         )}
 
         {reportType === 'ExpenseCategoryBreakdown' && (
-          <div>
-            <label className={labelCls}>Category (optional)</label>
-            <select value={categoryId} onChange={e => setCategoryId(e.target.value)} className={inputCls}>
-              <option value="">All expense categories</option>
-              {expenseCategories.map(c => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-center justify-between">
+              <label className={labelCls}>Categories (optional)</label>
+              {categoryIds.length > 0 && (
+                <button
+                  onClick={() => setCategoryIds([])}
+                  className="text-xs text-indigo-500 hover:text-indigo-700 dark:text-indigo-400"
+                >
+                  Clear ({categoryIds.length})
+                </button>
+              )}
+            </div>
+            <div className="max-h-44 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-600 divide-y divide-gray-100 dark:divide-gray-700">
+              {expenseCategories.length === 0 && (
+                <p className="px-3 py-2 text-xs text-gray-400">No expense categories found.</p>
+              )}
+              {expenseCategories.map(c => {
+                const checked = categoryIds.includes(c.id)
+                return (
+                  <label
+                    key={c.id}
+                    className={`flex items-center gap-2.5 px-3 py-1.5 cursor-pointer transition-colors text-xs
+                      ${checked
+                        ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-800 dark:text-indigo-200'
+                        : 'hover:bg-gray-50 dark:hover:bg-gray-700/50 text-gray-700 dark:text-gray-300'}`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={e =>
+                        setCategoryIds(prev =>
+                          e.target.checked ? [...prev, c.id] : prev.filter(id => id !== c.id)
+                        )
+                      }
+                      className="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 shrink-0"
+                    />
+                    <span className="truncate">{c.name}</span>
+                  </label>
+                )
+              })}
+            </div>
+            {categoryIds.length === 0 && (
+              <p className="text-xs text-gray-400 dark:text-gray-500">Leave empty to include all categories.</p>
+            )}
+          </div>
+        )}
+
+        {reportType === 'CounterpartySpending' && (
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-center justify-between">
+              <label className={labelCls}>Counterparties (optional)</label>
+              {counterpartyIds.length > 0 && (
+                <button
+                  onClick={() => setCounterpartyIds([])}
+                  className="text-xs text-indigo-500 hover:text-indigo-700 dark:text-indigo-400"
+                >
+                  Clear ({counterpartyIds.length})
+                </button>
+              )}
+            </div>
+            <div className="max-h-44 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-600 divide-y divide-gray-100 dark:divide-gray-700">
+              {counterparties.length === 0 && (
+                <p className="px-3 py-2 text-xs text-gray-400">No counterparties found.</p>
+              )}
+              {counterparties.map(cp => {
+                const checked = counterpartyIds.includes(cp.id)
+                return (
+                  <label
+                    key={cp.id}
+                    className={`flex items-center gap-2.5 px-3 py-1.5 cursor-pointer transition-colors text-xs
+                      ${checked
+                        ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-800 dark:text-indigo-200'
+                        : 'hover:bg-gray-50 dark:hover:bg-gray-700/50 text-gray-700 dark:text-gray-300'}`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={e =>
+                        setCounterpartyIds(prev =>
+                          e.target.checked ? [...prev, cp.id] : prev.filter(id => id !== cp.id)
+                        )
+                      }
+                      className="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 shrink-0"
+                    />
+                    <span className="flex-1 truncate">{cp.name}</span>
+                    <span className="text-gray-400 dark:text-gray-500 shrink-0">{cp.type}</span>
+                  </label>
+                )
+              })}
+            </div>
+            {counterpartyIds.length === 0 && (
+              <p className="text-xs text-gray-400 dark:text-gray-500">Leave empty to include all counterparties.</p>
+            )}
           </div>
         )}
 

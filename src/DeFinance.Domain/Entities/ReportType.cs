@@ -4,5 +4,6 @@ public enum ReportType
 {
     CashFlowStatement,
     ExpenseCategoryBreakdown,
-    AccountBalanceSummary
+    AccountBalanceSummary,
+    CounterpartySpending
 }
