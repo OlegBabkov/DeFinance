@@ -90,6 +90,8 @@ export const transactionsApi = {
     client.post<Transaction>('/transactions', req).then(r => r.data),
   update: (id: string, req: UpdateTransactionRequest) =>
     client.put<Transaction>(`/transactions/${id}`, req).then(r => r.data),
+  updatePaymentStatus: (id: string, paymentStatusId: string) =>
+    client.patch(`/transactions/${id}/payment-status`, { paymentStatusId }),
   remove: (id: string) =>
     client.delete(`/transactions/${id}`),
 }

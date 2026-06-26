@@ -59,6 +59,11 @@ public class Transaction
             Notes = notes
         };
 
+    public void UpdatePaymentStatus(Guid paymentStatusId)
+    {
+        PaymentStatusId = paymentStatusId;
+    }
+
     public void Update(
         DateTime dateTime,
         decimal sum,

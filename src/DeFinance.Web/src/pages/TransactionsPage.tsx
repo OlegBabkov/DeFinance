@@ -52,20 +52,46 @@ function activeOrCurrent<T extends { id: string; isActive: boolean }>(items: T[]
   return active
 }
 
-function StatusBadge({ status }: { status: TransactionPaymentStatus }) {
+function StatusBadge({
+  status,
+  onDoubleClick,
+  cycling,
+}: {
+  status: TransactionPaymentStatus
+  onDoubleClick?: () => void
+  cycling?: boolean
+}) {
+  const base = 'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap select-none transition-opacity'
+  const interactive = onDoubleClick
+    ? 'cursor-pointer hover:ring-2 hover:ring-offset-1 hover:ring-current active:scale-95'
+    : ''
+  const title = onDoubleClick ? 'Double-click to advance status' : undefined
+
+  const inner = cycling ? (
+    <span className="opacity-50">{status.name}</span>
+  ) : (
+    <>{status.name}</>
+  )
+
   if (status.color) {
     return (
       <span
-        className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap"
+        className={`${base} ${interactive}`}
         style={{ backgroundColor: status.color + '25', color: status.color }}
+        onDoubleClick={onDoubleClick}
+        title={title}
       >
-        {status.name}
+        {inner}
       </span>
     )
   }
   return (
-    <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300">
-      {status.name}
+    <span
+      className={`${base} ${interactive} bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300`}
+      onDoubleClick={onDoubleClick}
+      title={title}
+    >
+      {inner}
     </span>
   )
 }
@@ -154,8 +180,26 @@ export function TransactionsPage() {
   const [formError, setFormError] = useState<string | null>(null)
   const [showCalculator, setShowCalculator] = useState(false)
 
+  const [cyclingIds, setCyclingIds] = useState<Set<string>>(new Set())
+
   const refetch = useCallback(() => setRefreshKey(k => k + 1), [])
   useTransactionEvents(refetch)
+
+  const handleStatusCycle = useCallback(async (tx: Transaction) => {
+    const active = paymentStatuses.filter(s => s.isActive)
+    if (active.length < 2) return
+    const idx = active.findIndex(s => s.id === tx.paymentStatusId)
+    const next = active[(idx + 1) % active.length]
+    setCyclingIds(prev => new Set(prev).add(tx.id))
+    try {
+      await transactionsApi.updatePaymentStatus(tx.id, next.id)
+      refetch()
+    } catch {
+      notify('Failed to update status', 'error')
+    } finally {
+      setCyclingIds(prev => { const s = new Set(prev); s.delete(tx.id); return s })
+    }
+  }, [paymentStatuses, refetch, notify])
 
   // load filter dropdowns once
   useEffect(() => {
@@ -593,7 +637,11 @@ export function TransactionsPage() {
                   </td>
                   <td className="px-4 py-3">
                     {tx.paymentStatus
-                      ? <StatusBadge status={tx.paymentStatus} />
+                      ? <StatusBadge
+                          status={tx.paymentStatus}
+                          onDoubleClick={() => handleStatusCycle(tx)}
+                          cycling={cyclingIds.has(tx.id)}
+                        />
                       : '—'}
                   </td>
                   <td className="px-4 py-3 text-gray-500 dark:text-gray-400 max-w-[160px] truncate" title={tx.notes ?? ''}>
