@@ -70,6 +70,8 @@ public class MandatoryPayment
         Notes = notes;
     }
 
+    public void UpdatePaymentStatus(Guid? paymentStatusId) => PaymentStatusId = paymentStatusId;
+
     public void Activate()   => IsActive = true;
     public void Deactivate() => IsActive = false;
 }

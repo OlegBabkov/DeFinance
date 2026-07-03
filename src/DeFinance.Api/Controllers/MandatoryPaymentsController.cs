@@ -65,6 +65,13 @@ public class MandatoryPaymentsController(ISender sender) : ControllerBase
         return result is null ? NotFound() : Ok(result);
     }
 
+    [HttpPatch("{id:guid}/payment-status")]
+    public async Task<IActionResult> UpdatePaymentStatus(Guid id, [FromBody] UpdatePaymentStatusRequest req, CancellationToken ct)
+    {
+        var ok = await sender.Send(new UpdateMandatoryPaymentStatusCommand(id, req.PaymentStatusId), ct);
+        return ok ? NoContent() : NotFound();
+    }
+
     [HttpPatch("reset-payment-statuses")]
     public async Task<IActionResult> ResetPaymentStatuses([FromQuery] Guid accountId, CancellationToken ct)
     {
@@ -72,3 +79,5 @@ public class MandatoryPaymentsController(ISender sender) : ControllerBase
         return Ok(new { updated = count });
     }
 }
+
+public record UpdatePaymentStatusRequest(Guid? PaymentStatusId);

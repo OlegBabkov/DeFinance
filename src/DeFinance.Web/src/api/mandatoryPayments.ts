@@ -98,6 +98,8 @@ export const mandatoryPaymentsApi = {
     client.patch<MandatoryPayment>(`/mandatory-payments/${id}/activate`).then(r => r.data),
   deactivate: (id: string) =>
     client.patch<MandatoryPayment>(`/mandatory-payments/${id}/deactivate`).then(r => r.data),
+  updatePaymentStatus: (id: string, paymentStatusId: string | null) =>
+    client.patch(`/mandatory-payments/${id}/payment-status`, { paymentStatusId }),
   resetPaymentStatuses: (accountId: string) =>
     client.patch<{ updated: number }>(`/mandatory-payments/reset-payment-statuses`, null, { params: { accountId } }).then(r => r.data),
 }
