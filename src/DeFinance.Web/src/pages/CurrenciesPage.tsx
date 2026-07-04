@@ -187,7 +187,7 @@ export function CurrenciesPage() {
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
               {items.map(currency => (
-                <tr key={currency.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                <tr key={currency.id} className={currency.isActive ? 'hover:bg-gray-50 dark:hover:bg-gray-700' : 'bg-gray-100 dark:bg-gray-900/50'}>
                   <td className="px-4 py-3 font-bold text-gray-700 dark:text-gray-300 w-12">{currency.symbol}</td>
                   <td className="px-4 py-3 font-mono text-gray-900 dark:text-gray-100">{currency.code}</td>
                   <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{currency.name}</td>

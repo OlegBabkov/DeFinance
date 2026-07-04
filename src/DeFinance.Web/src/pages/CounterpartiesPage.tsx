@@ -201,7 +201,7 @@ export function CounterpartiesPage() {
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
               {items.map(cp => (
-                <tr key={cp.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                <tr key={cp.id} className={cp.isActive ? 'hover:bg-gray-50 dark:hover:bg-gray-700' : 'bg-gray-100 dark:bg-gray-900/50'}>
                   <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{cp.name}</td>
                   <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{cp.type}</td>
                   <td className="px-4 py-3 text-gray-500 dark:text-gray-400 max-w-xs truncate">

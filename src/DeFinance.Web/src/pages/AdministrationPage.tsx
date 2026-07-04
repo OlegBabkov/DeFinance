@@ -238,7 +238,7 @@ function PaymentStatusesPanel() {
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-700 bg-white dark:bg-gray-800">
               {items.map(s => (
-                <tr key={s.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                <tr key={s.id} className={s.isActive ? 'hover:bg-gray-50 dark:hover:bg-gray-700' : 'bg-gray-100 dark:bg-gray-900/50'}>
                   <td className="px-3 py-2 font-medium text-gray-900 dark:text-gray-100">
                     <div className="flex items-center gap-2">
                       {s.color
