@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useNotify } from '../NotificationContext'
 import {
   mandatoryPaymentsApi,
@@ -32,6 +32,30 @@ const labelCls = 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-
 
 const filterCls =
   'px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500'
+
+function StatusBadge({
+  status,
+  onDoubleClick,
+  cycling,
+}: {
+  status: { name: string }
+  onDoubleClick?: () => void
+  cycling?: boolean
+}) {
+  const base = 'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap select-none transition-opacity'
+  const interactive = onDoubleClick
+    ? 'cursor-pointer hover:ring-2 hover:ring-offset-1 hover:ring-current active:scale-95'
+    : ''
+  return (
+    <span
+      className={`${base} ${interactive} bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300`}
+      onDoubleClick={onDoubleClick}
+      title={onDoubleClick ? 'Double-click to advance status' : undefined}
+    >
+      {cycling ? <span className="opacity-50">{status.name}</span> : status.name}
+    </span>
+  )
+}
 
 const OBLIGATION_COLORS: Record<string, string> = {
   SepaTransfer: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
@@ -88,6 +112,7 @@ export function MandatoryPage() {
   const [restBalance, setRestBalance] = useState<{ accountName: string; balance: number; symbol: string; code: string } | null>(null)
   const [confirmReset, setConfirmReset] = useState(false)
   const [resetting, setResetting] = useState(false)
+  const [cyclingIds, setCyclingIds] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     Promise.all([
@@ -133,6 +158,22 @@ export function MandatoryPage() {
   }, [debouncedSearch, isActiveFilter, accountFilter, categoryFilter, paymentStatusFilter, frequencyFilter, page, pageSize, sortBy, sortDirection, refreshKey])
 
   const refetch = () => setRefreshKey(k => k + 1)
+
+  const handleStatusCycle = useCallback(async (p: MandatoryPayment) => {
+    const active = paymentStatuses.filter(s => s.isActive)
+    if (active.length < 2) return
+    const idx = active.findIndex(s => s.id === p.paymentStatusId)
+    const next = active[(idx + 1) % active.length]
+    setCyclingIds(prev => new Set(prev).add(p.id))
+    try {
+      await mandatoryPaymentsApi.updatePaymentStatus(p.id, next.id)
+      refetch()
+    } catch {
+      notify('Failed to update status', 'error')
+    } finally {
+      setCyclingIds(prev => { const s = new Set(prev); s.delete(p.id); return s })
+    }
+  }, [paymentStatuses, notify])
 
   useEffect(() => {
     if (!accountFilter) { setRestBalance(null); return }
@@ -459,8 +500,16 @@ export function MandatoryPage() {
                   </td>
                   <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
                     {p.paymentStatus
-                      ? <span className="inline-flex items-center rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300 px-2 py-0.5 text-xs font-medium">{p.paymentStatus.name}</span>
-                      : <span className="text-gray-400 dark:text-gray-500">—</span>}
+                      ? <StatusBadge
+                          status={p.paymentStatus}
+                          onDoubleClick={() => handleStatusCycle(p)}
+                          cycling={cyclingIds.has(p.id)}
+                        />
+                      : <span
+                          className="text-gray-400 dark:text-gray-500 cursor-pointer select-none"
+                          onDoubleClick={() => handleStatusCycle(p)}
+                          title="Double-click to advance status"
+                        >—</span>}
                   </td>
                   <td className="px-4 py-3 text-gray-500 dark:text-gray-400 max-w-[160px] truncate" title={p.notes ?? ''}>
                     {p.notes || '—'}
