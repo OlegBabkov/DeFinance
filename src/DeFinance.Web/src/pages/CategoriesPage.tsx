@@ -303,7 +303,7 @@ export function CategoriesPage() {
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
               {items.map(cat => (
-                <tr key={cat.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                <tr key={cat.id} className={cat.isActive ? 'hover:bg-gray-50 dark:hover:bg-gray-700' : 'bg-gray-100 dark:bg-gray-900/50'}>
                   <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">
                     {cat.icon && <span className="mr-1">{cat.icon}</span>}
                     {cat.name}

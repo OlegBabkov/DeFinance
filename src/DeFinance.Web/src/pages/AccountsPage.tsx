@@ -286,7 +286,7 @@ export function AccountsPage() {
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
               {items.map((account, idx) => (
-                <tr key={account.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                <tr key={account.id} className={account.isActive ? 'hover:bg-gray-50 dark:hover:bg-gray-700' : 'bg-gray-100 dark:bg-gray-900/50'}>
                   {!isCustomSort && (
                     <td className="px-2 py-3 w-16">
                       <div className="flex flex-col items-center gap-0.5">

@@ -466,7 +466,7 @@ export function MandatoryPage() {
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
               {items.map(p => (
-                <tr key={p.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                <tr key={p.id} className={p.isActive ? 'hover:bg-gray-50 dark:hover:bg-gray-700' : 'bg-gray-100 dark:bg-gray-900/50'}>
                   <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{p.name}</td>
                   <td className="px-4 py-3 font-mono text-gray-900 dark:text-gray-100">
                     {p.currency?.symbol ?? ''} {p.amount.toFixed(2)}
