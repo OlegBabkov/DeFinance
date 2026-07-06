@@ -74,17 +74,25 @@ public class GenerateReportConsumer(
 
     private static (DateTime From, DateTime To) GetDateRange(ReportPeriod period)
     {
-        var to = DateTime.UtcNow;
-        var from = period switch
+        var now = DateTime.UtcNow;
+        return period switch
         {
-            ReportPeriod.OneDay       => to.AddDays(-1),
-            ReportPeriod.LastWeek     => to.AddDays(-7),
-            ReportPeriod.LastMonth    => to.AddMonths(-1),
-            ReportPeriod.LastTwoMonths => to.AddMonths(-2),
-            ReportPeriod.LastHalfYear => to.AddMonths(-6),
-            ReportPeriod.LastYear     => to.AddYears(-1),
+            ReportPeriod.OneDay        => (now.AddDays(-1), now),
+            ReportPeriod.LastWeek      => (now.AddDays(-7), now),
+            ReportPeriod.CurrentMonth  => (new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc), now),
+            ReportPeriod.LastMonth     => CalendarLastMonth(now),
+            ReportPeriod.LastTwoMonths => (now.AddMonths(-2), now),
+            ReportPeriod.LastHalfYear  => (now.AddMonths(-6), now),
+            ReportPeriod.LastYear      => (now.AddYears(-1), now),
             _ => throw new ArgumentOutOfRangeException(nameof(period))
         };
-        return (from, to);
+    }
+
+    private static (DateTime From, DateTime To) CalendarLastMonth(DateTime now)
+    {
+        var firstOfThisMonth = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+        var firstOfLastMonth = firstOfThisMonth.AddMonths(-1);
+        var endOfLastMonth   = firstOfThisMonth.AddTicks(-1);
+        return (firstOfLastMonth, endOfLastMonth);
     }
 }

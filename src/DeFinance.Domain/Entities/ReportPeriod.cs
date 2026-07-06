@@ -4,6 +4,7 @@ public enum ReportPeriod
 {
     OneDay,
     LastWeek,
+    CurrentMonth,
     LastMonth,
     LastTwoMonths,
     LastHalfYear,

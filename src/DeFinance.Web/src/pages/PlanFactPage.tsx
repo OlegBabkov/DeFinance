@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { usePersistedState } from '../hooks/usePersistedState'
 import { useNotify } from '../NotificationContext'
 import { planFactApi, type PlanFactCategoryRow, type PlanFactLineRow, type PlanFactMonthData, type PlanFactSummaryResponse } from '../api/planFact'
@@ -466,6 +466,40 @@ export function PlanFactPage() {
 
   const getMonthData = (month: number) => data?.months.find(m => m.month === month)
 
+  // Cascade opening balances forward from the most recent manual override.
+  // Each subsequent month's opening = previous month's closing (opening + income − expense).
+  const openingInfoByMonth = useMemo(() => {
+    const result = new Map<number, { factOpen: number; planOpen: number; isAuto: boolean }>()
+    if (!data) return result
+    const sorted = [...data.months].sort((a, b) => a.month - b.month)
+    let prevFactClose: number | null = null
+    let prevPlanClose: number | null = null
+    for (const m of sorted) {
+      const incomePlan = m.incomeCategories.reduce((s, c) => s + c.plan, 0)
+      const incomeFact = m.incomeCategories.reduce((s, c) => s + c.fact, 0)
+      const expensePlan = m.expenseCategories.reduce((s, c) => s + c.plan, 0)
+      const expenseFact = m.expenseCategories.reduce((s, c) => s + c.fact, 0)
+      let factOpen: number, planOpen: number, isAuto: boolean
+      if (m.openingBalanceIsOverride) {
+        factOpen = m.openingBalance
+        planOpen = m.planOpeningBalance ?? m.openingBalance
+        isAuto = false
+      } else if (prevFactClose !== null) {
+        factOpen = prevFactClose
+        planOpen = prevPlanClose!
+        isAuto = true
+      } else {
+        factOpen = m.openingBalance
+        planOpen = m.planOpeningBalance ?? m.openingBalance
+        isAuto = false
+      }
+      result.set(m.month, { factOpen, planOpen, isAuto })
+      prevFactClose = factOpen + incomeFact - expenseFact
+      prevPlanClose = planOpen + incomePlan - expensePlan
+    }
+    return result
+  }, [data])
+
   const combined = (() => {
     if (!data || orderedMonths.length === 0) return null
     const allMonths = orderedMonths.map(m => getMonthData(m)).filter(Boolean) as PlanFactMonthData[]
@@ -488,8 +522,9 @@ export function PlanFactPage() {
       }
     }
 
-    const firstOpening = allMonths[0].openingBalance
-    const firstPlanOpening = allMonths[0].planOpeningBalance ?? allMonths[0].openingBalance
+    const firstInfo = openingInfoByMonth.get(allMonths[0].month)
+    const firstOpening = firstInfo?.factOpen ?? allMonths[0].openingBalance
+    const firstPlanOpening = firstInfo?.planOpen ?? allMonths[0].planOpeningBalance ?? allMonths[0].openingBalance
     const totals = Array.from(allCategories.entries()).map(([id, v]) => ({
       categoryId: id,
       categoryName: v.name,
@@ -528,7 +563,12 @@ export function PlanFactPage() {
 
   const monthTotals = (month: number): MonthTotals | null => {
     const md = getMonthData(month)
-    return md ? calcMonthTotals(md) : null
+    if (!md) return null
+    const base = calcMonthTotals(md)
+    const info = openingInfoByMonth.get(month)
+    return info
+      ? { ...base, openingBalance: info.factOpen, planOpeningBalance: info.planOpen }
+      : base
   }
 
   const sectionHdrCls = 'px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-750'
@@ -651,27 +691,33 @@ export function PlanFactPage() {
                 </td>
                 {orderedMonths.map(m => {
                   const md = getMonthData(m)
-                  const ob = md?.openingBalance ?? 0
+                  const info = openingInfoByMonth.get(m)
+                  const ob = info?.factOpen ?? md?.openingBalance ?? 0
+                  const planOb = info?.planOpen ?? md?.planOpeningBalance ?? ob
                   const isOverride = md?.openingBalanceIsOverride ?? false
-                  const planOb = md?.planOpeningBalance
+                  const isAuto = info?.isAuto ?? false
                   const planIsOverride = md?.planOpeningBalanceIsOverride ?? false
                   return (
                     <>
                       <td
                         key={`${m}-ob-plan`}
-                        className={`px-2 py-2.5 text-right text-xs font-mono cursor-pointer select-none border-l border-gray-100 dark:border-gray-700 ${planColCls} ${planIsOverride ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-400 dark:text-gray-500'} hover:brightness-95 dark:hover:brightness-110`}
-                        title="Click to set plan opening balance"
-                        onClick={() => setPlanObModal({ year, month: m, currentValue: planOb ?? ob })}
+                        className={`px-2 py-2.5 text-right text-xs font-mono border-l border-gray-100 dark:border-gray-700 ${planColCls} ${isAuto ? 'text-indigo-400 dark:text-indigo-500' : planIsOverride ? 'text-indigo-600 dark:text-indigo-400 cursor-pointer select-none hover:brightness-95 dark:hover:brightness-110' : 'text-gray-400 dark:text-gray-500 cursor-pointer select-none hover:brightness-95 dark:hover:brightness-110'}`}
+                        title={isAuto ? 'Auto-calculated from previous month' : 'Click to set plan opening balance'}
+                        onClick={isAuto ? undefined : () => setPlanObModal({ year, month: m, currentValue: planOb })}
                       >
-                        {planIsOverride ? <>{fmt(planOb!)}<span className="ml-1 text-[10px] opacity-70">✎</span></> : '—'}
+                        {isAuto
+                          ? <>{fmt(planOb)}<span className="ml-1 text-[10px] opacity-60">↻</span></>
+                          : planIsOverride ? <>{fmt(planOb)}<span className="ml-1 text-[10px] opacity-70">✎</span></> : '—'}
                       </td>
                       <td
                         key={`${m}-ob-fact`}
-                        className={`px-2 py-2.5 text-right text-xs font-mono cursor-pointer select-none ${factColCls} ${isOverride ? 'text-amber-600 dark:text-amber-400' : signedColor(ob)} hover:brightness-95 dark:hover:brightness-110`}
-                        title="Click to override opening balance"
-                        onClick={() => setObModal({ year, month: m, currentValue: ob })}
+                        className={`px-2 py-2.5 text-right text-xs font-mono ${factColCls} ${isAuto ? signedColor(ob) : isOverride ? 'text-amber-600 dark:text-amber-400 cursor-pointer select-none hover:brightness-95 dark:hover:brightness-110' : `${signedColor(ob)} cursor-pointer select-none hover:brightness-95 dark:hover:brightness-110`}`}
+                        title={isAuto ? 'Auto-calculated from previous month' : 'Click to override opening balance'}
+                        onClick={isAuto ? undefined : () => setObModal({ year, month: m, currentValue: ob })}
                       >
-                        {fmt(ob)}{isOverride && <span className="ml-1 text-[10px] opacity-70">✎</span>}
+                        {fmt(ob)}{isAuto
+                          ? <span className="ml-1 text-[10px] opacity-60">↻</span>
+                          : isOverride && <span className="ml-1 text-[10px] opacity-70">✎</span>}
                       </td>
                       <td key={`${m}-ob-pct`} className="px-2 py-2.5 text-center text-gray-400 text-xs">—</td>
                     </>
