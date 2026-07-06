@@ -1,7 +1,7 @@
 import client from './client'
 
 export type ReportType = 'CashFlowStatement' | 'ExpenseCategoryBreakdown' | 'AccountBalanceSummary' | 'CounterpartySpending'
-export type ReportPeriod = 'OneDay' | 'LastWeek' | 'LastMonth' | 'LastTwoMonths' | 'LastHalfYear' | 'LastYear'
+export type ReportPeriod = 'OneDay' | 'LastWeek' | 'CurrentMonth' | 'LastMonth' | 'LastTwoMonths' | 'LastHalfYear' | 'LastYear'
 export type ReportStatus = 'Pending' | 'Processing' | 'Completed' | 'Failed'
 
 export interface Report {
@@ -34,7 +34,8 @@ export const REPORT_TYPE_LABELS: Record<ReportType, string> = {
 
 export const REPORT_PERIOD_LABELS: Record<ReportPeriod, string> = {
   OneDay:        'Last 24 Hours',
-  LastWeek:      'Last Week',
+  LastWeek:      'Last 7 Days',
+  CurrentMonth:  'Current Month',
   LastMonth:     'Last Month',
   LastTwoMonths: 'Last Two Months',
   LastHalfYear:  'Last Half Year',
