@@ -17,6 +17,7 @@ public class DeFinanceDbContext(DbContextOptions<DeFinanceDbContext> options) : 
     public DbSet<BudgetEntryLine> BudgetEntryLines => Set<BudgetEntryLine>();
     public DbSet<OpeningBalanceOverride> OpeningBalanceOverrides => Set<OpeningBalanceOverride>();
     public DbSet<Report> Reports => Set<Report>();
+    public DbSet<ExchangeRateHistory> ExchangeRateHistories => Set<ExchangeRateHistory>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder) =>
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(DeFinanceDbContext).Assembly);

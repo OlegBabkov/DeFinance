@@ -15,6 +15,7 @@ public interface ICurrencyRepository
         int page,
         int pageSize,
         CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Currency>> GetAllActiveAsync(CancellationToken cancellationToken = default);
     Task AddAsync(Currency currency, CancellationToken cancellationToken = default);
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

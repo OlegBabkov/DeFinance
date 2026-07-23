@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { usePersistedState } from '../hooks/usePersistedState'
 import { useNotify } from '../NotificationContext'
 import { currenciesApi, type Currency } from '../api/currencies'
+import { exchangeRatesApi, type ExchangeRateLatest } from '../api/exchangeRates'
 import { type PagedResult, type PageSize, type SortDirection } from '../api/common'
 import { Modal } from '../components/Modal'
 import { IconButton, PencilIcon, CheckCircleIcon, BanIcon } from '../components/IconButton'
@@ -10,6 +11,19 @@ import { SortableHeader } from '../components/SortableHeader'
 import { Spinner } from '../components/Spinner'
 
 type ModalState = null | 'create' | Currency
+
+function RateCell({ rate }: { rate: ExchangeRateLatest }) {
+  const trend = rate.previousRate !== null
+    ? rate.rate > rate.previousRate ? 'up' : rate.rate < rate.previousRate ? 'down' : 'flat'
+    : 'flat'
+  return (
+    <span className="inline-flex items-center gap-1">
+      <span className="text-gray-900 dark:text-gray-100">{rate.rate.toFixed(4)}</span>
+      {trend === 'up' && <span className="text-green-500 text-xs">↑</span>}
+      {trend === 'down' && <span className="text-red-500 text-xs">↓</span>}
+    </span>
+  )
+}
 
 const inputCls =
   'w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500'
@@ -40,6 +54,8 @@ export function CurrenciesPage() {
   const [sortBy, setSortBy] = usePersistedState<string | null>('cur_filter_sortBy', null)
   const [sortDirection, setSortDirection] = usePersistedState<SortDirection>('cur_filter_sortDirection', 'Asc')
   const [refreshKey, setRefreshKey] = useState(0)
+  const [rates, setRates] = useState<Record<string, ExchangeRateLatest>>({})
+  const [syncing, setSyncing] = useState(false)
 
   useEffect(() => {
     const t = setTimeout(() => { setDebouncedSearch(search); setPage(1) }, 400)
@@ -62,6 +78,29 @@ export function CurrenciesPage() {
       .finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
   }, [debouncedSearch, isActiveFilter, page, pageSize, sortBy, sortDirection, refreshKey])
+
+  useEffect(() => {
+    exchangeRatesApi.getLatest()
+      .then(list => {
+        const map: Record<string, ExchangeRateLatest> = {}
+        list.forEach(r => { map[r.currencyCode] = r })
+        setRates(map)
+      })
+      .catch(() => {})
+  }, [refreshKey])
+
+  const handleSync = async () => {
+    setSyncing(true)
+    try {
+      const { synced } = await exchangeRatesApi.sync()
+      notify(`Synced ${synced} exchange rate${synced !== 1 ? 's' : ''}`, 'success')
+      refetch()
+    } catch {
+      notify('Failed to sync rates', 'error')
+    } finally {
+      setSyncing(false)
+    }
+  }
 
   const refetch = () => setRefreshKey(k => k + 1)
 
@@ -121,12 +160,21 @@ export function CurrenciesPage() {
       <div className="px-8 pt-8 pb-4 shrink-0">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Currencies</h1>
-          <button
-            onClick={openCreate}
-            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors"
-          >
-            + New Currency
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleSync}
+              disabled={syncing}
+              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+            >
+              {syncing ? 'Syncing…' : '↻ Sync Rates'}
+            </button>
+            <button
+              onClick={openCreate}
+              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors"
+            >
+              + New Currency
+            </button>
+          </div>
         </div>
         <div className="flex items-center gap-3">
           <input
@@ -181,6 +229,7 @@ export function CurrenciesPage() {
                 <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Symbol</th>
                 <SortableHeader label="Code" field="code" sortBy={sortBy} sortDirection={sortDirection} onSort={handleSort} />
                 <SortableHeader label="Name" field="name" sortBy={sortBy} sortDirection={sortDirection} onSort={handleSort} />
+                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Rate (EUR)</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Status</th>
                 <th className="px-4 py-3" />
               </tr>
@@ -191,6 +240,14 @@ export function CurrenciesPage() {
                   <td className="px-4 py-3 font-bold text-gray-700 dark:text-gray-300 w-12">{currency.symbol}</td>
                   <td className="px-4 py-3 font-mono text-gray-900 dark:text-gray-100">{currency.code}</td>
                   <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{currency.name}</td>
+                  <td className="px-4 py-3 font-mono text-sm">
+                    {currency.code === 'EUR'
+                      ? <span className="text-gray-400 dark:text-gray-500">Base</span>
+                      : rates[currency.code]
+                        ? <RateCell rate={rates[currency.code]} />
+                        : <span className="text-gray-300 dark:text-gray-600">—</span>
+                    }
+                  </td>
                   <td className="px-4 py-3">
                     <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${currency.isActive ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'}`}>
                       {currency.isActive ? 'Active' : 'Inactive'}
@@ -206,7 +263,7 @@ export function CurrenciesPage() {
               ))}
               {items.length === 0 && !loading && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-gray-400 dark:text-gray-500">No currencies found.</td>
+                  <td colSpan={6} className="px-4 py-8 text-center text-gray-400 dark:text-gray-500">No currencies found.</td>
                 </tr>
               )}
             </tbody>
