@@ -54,6 +54,9 @@ public class CurrencyRepository(DeFinanceDbContext dbContext, ICacheService cach
         return (items, totalCount);
     }
 
+    public async Task<IReadOnlyList<Currency>> GetAllActiveAsync(CancellationToken cancellationToken = default) =>
+        await dbContext.Currencies.Where(c => c.IsActive).ToListAsync(cancellationToken);
+
     public async Task AddAsync(Currency currency, CancellationToken cancellationToken = default) =>
         await dbContext.Currencies.AddAsync(currency, cancellationToken);
 

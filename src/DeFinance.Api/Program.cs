@@ -52,6 +52,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddSignalR();
 builder.Services.AddHostedService<TransactionEventSubscriber>();
 builder.Services.AddHostedService<ReportGeneratedSubscriber>();
+builder.Services.AddHostedService<ExchangeRateSyncService>();
 
 builder.Services.AddMassTransit(x =>
 {

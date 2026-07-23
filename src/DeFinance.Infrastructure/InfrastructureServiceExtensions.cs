@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using StackExchange.Redis;
+using System.Net.Http.Headers;
 
 namespace DeFinance.Infrastructure;
 
@@ -34,6 +35,20 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<IBudgetEntryRepository, BudgetEntryRepository>();
         services.AddScoped<IOpeningBalanceOverrideRepository, OpeningBalanceOverrideRepository>();
         services.AddScoped<IReportRepository, ReportRepository>();
+        services.AddScoped<IExchangeRateHistoryRepository, ExchangeRateHistoryRepository>();
+
+        services.AddHttpClient("frankfurter", c =>
+        {
+            c.BaseAddress = new Uri("https://api.frankfurter.app/");
+            c.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        });
+        services.AddHttpClient("nbu", c =>
+        {
+            c.BaseAddress = new Uri("https://bank.gov.ua/");
+            c.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        });
+        services.AddScoped<IFrankfurterService, FrankfurterService>();
+        services.AddScoped<INbuService, NbuService>();
 
         services.AddScoped<IPasswordService, BCryptPasswordService>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
