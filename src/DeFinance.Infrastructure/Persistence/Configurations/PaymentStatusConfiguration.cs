@@ -12,5 +12,6 @@ public class PaymentStatusConfiguration : IEntityTypeConfiguration<PaymentStatus
         builder.Property(p => p.Name).HasMaxLength(100).IsRequired();
         builder.Property(p => p.Description).HasMaxLength(500);
         builder.Property(p => p.Color).HasMaxLength(7);
+        builder.Property(p => p.AffectsBalance).IsRequired();
     }
 }

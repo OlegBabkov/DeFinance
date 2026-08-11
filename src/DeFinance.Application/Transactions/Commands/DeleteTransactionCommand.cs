@@ -17,7 +17,8 @@ public class DeleteTransactionCommandHandler(ITransactionRepository transactionR
         var account  = transaction.Account!;
         var category = transaction.Category!;
 
-        account.AdjustBalance(-BalanceDelta(category.Type, transaction.Sum));
+        if (transaction.PaymentStatus!.AffectsBalance)
+            account.AdjustBalance(-BalanceDelta(category.Type, transaction.Sum));
 
         transactionRepository.Remove(transaction);
         await transactionRepository.SaveChangesAsync(cancellationToken);

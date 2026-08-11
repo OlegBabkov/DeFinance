@@ -11,11 +11,15 @@ public class UpdateTransactionCommandHandlerTests
     private readonly ITransactionRepository _transactionRepository = Substitute.For<ITransactionRepository>();
     private readonly IAccountRepository _accountRepository = Substitute.For<IAccountRepository>();
     private readonly ICategoryRepository _categoryRepository = Substitute.For<ICategoryRepository>();
+    private readonly IPaymentStatusRepository _paymentStatusRepository = Substitute.For<IPaymentStatusRepository>();
     private readonly UpdateTransactionCommandHandler _handler;
+
+    private static readonly PaymentStatus _affectsBalance = PaymentStatus.Create("Paid", null, affectsBalance: true);
 
     public UpdateTransactionCommandHandlerTests()
     {
-        _handler = new UpdateTransactionCommandHandler(_transactionRepository, _accountRepository, _categoryRepository);
+        _paymentStatusRepository.GetByIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns(_affectsBalance);
+        _handler = new UpdateTransactionCommandHandler(_transactionRepository, _accountRepository, _categoryRepository, _paymentStatusRepository);
     }
 
     private static Transaction MakeTransactionWithNavProps(Account account, Category category, decimal sum)
@@ -23,6 +27,7 @@ public class UpdateTransactionCommandHandlerTests
         var tx = Transaction.Create(DateTime.UtcNow, sum, 1m, Guid.NewGuid(), account.Id, category.Id, null, Guid.NewGuid(), Guid.NewGuid());
         typeof(Transaction).GetProperty("Account")!.SetValue(tx, account);
         typeof(Transaction).GetProperty("Category")!.SetValue(tx, category);
+        typeof(Transaction).GetProperty("PaymentStatus")!.SetValue(tx, _affectsBalance);
         return tx;
     }
 
