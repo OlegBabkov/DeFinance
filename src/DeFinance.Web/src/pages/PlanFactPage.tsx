@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { usePersistedState } from '../hooks/usePersistedState'
 import { useNotify } from '../NotificationContext'
 import { planFactApi, type PlanFactCategoryRow, type PlanFactLineRow, type PlanFactMonthData, type PlanFactSummaryResponse } from '../api/planFact'
@@ -24,11 +25,12 @@ const planColCls = 'bg-indigo-50/80 dark:bg-indigo-900/25'
 const factColCls = 'bg-stone-100/80 dark:bg-stone-700/30'
 
 function StarButton({ isImportant, onClick }: { isImportant: boolean; onClick: () => void }) {
+  const { t } = useTranslation()
   return (
     <button
       type="button"
       onClick={e => { e.stopPropagation(); onClick() }}
-      title={isImportant ? 'Remove from important' : 'Mark as important'}
+      title={isImportant ? t('planFact.star.removeImportant') : t('planFact.star.markImportant')}
       className={`flex items-center justify-center w-5 h-5 transition-colors ${
         isImportant
           ? 'text-amber-400 hover:text-amber-300'
@@ -111,10 +113,11 @@ function PlanCell({
   value: number
   onClick: () => void
 }) {
+  const { t } = useTranslation()
   return (
     <td
       className={`px-2 py-2 text-right text-xs text-indigo-600 dark:text-indigo-400 cursor-pointer ${planColCls} hover:brightness-95 dark:hover:brightness-110 hover:text-indigo-800 dark:hover:text-indigo-300 select-none font-mono`}
-      title="Click to set plan"
+      title={t('planFact.planCell.clickToSet')}
       onClick={onClick}
     >
       {value === 0 ? <span className="text-gray-300 dark:text-gray-600">+</span> : fmt(value)}
@@ -136,6 +139,7 @@ function PlanModal({
   onClose: () => void
   onSave: (value: string, rows: PlanRow[]) => void
 }) {
+  const { t } = useTranslation()
   const initialRows: PlanRow[] = state.savedLines.length > 0
     ? state.savedLines.map(l => ({ id: ++rowIdSeq, name: l.name, amount: l.amount.toString() }))
     : state.value
@@ -170,8 +174,8 @@ function PlanModal({
       <form onSubmit={handleSubmit}>
         {/* Column headers */}
         <div className="grid grid-cols-[1fr_10rem_2rem] gap-2 mb-1 px-1">
-          <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Name</span>
-          <span className="text-xs font-medium text-gray-500 dark:text-gray-400 text-right">Amount</span>
+          <span className="text-xs font-medium text-gray-500 dark:text-gray-400">{t('planFact.modal.name')}</span>
+          <span className="text-xs font-medium text-gray-500 dark:text-gray-400 text-right">{t('planFact.modal.amount')}</span>
           <span />
         </div>
 
@@ -183,7 +187,7 @@ function PlanModal({
                 type="text"
                 value={row.name}
                 onChange={e => updateRow(row.id, 'name', e.target.value)}
-                placeholder={`Item ${i + 1}`}
+                placeholder={t('planFact.modal.itemPlaceholder', { n: i + 1 })}
                 className={`${inputCls} w-full`}
                 autoFocus={i === 0}
               />
@@ -194,14 +198,14 @@ function PlanModal({
                   step="0.01"
                   value={row.amount}
                   onChange={e => updateRow(row.id, 'amount', e.target.value)}
-                  placeholder="0.00"
+                  placeholder={t('planFact.modal.amountPlaceholder')}
                   className={`${inputCls} w-full text-right pr-7 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
                 />
                 <button
                   type="button"
                   tabIndex={-1}
                   onClick={() => setCalcRowId(row.id)}
-                  title="Open calculator"
+                  title={t('planFact.modal.openCalculator')}
                   className="absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
                 >
                   <CalcIcon />
@@ -225,12 +229,12 @@ function PlanModal({
           onClick={addRow}
           className="flex items-center gap-1.5 text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 mb-5 transition-colors"
         >
-          <span className="text-base leading-none">+</span> Add row
+          {t('planFact.modal.addRow')}
         </button>
 
         {/* Total */}
         <div className="flex justify-end items-center gap-3 border-t border-gray-200 dark:border-gray-700 pt-3 mb-5">
-          <span className="text-sm text-gray-500 dark:text-gray-400">Total</span>
+          <span className="text-sm text-gray-500 dark:text-gray-400">{t('planFact.modal.total')}</span>
           <span className="text-base font-semibold text-gray-900 dark:text-gray-100 w-36 text-right font-mono">
             {fmt(total)}
           </span>
@@ -242,13 +246,13 @@ function PlanModal({
             onClick={onClose}
             className="px-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
           >
-            Cancel
+            {t('planFact.modal.cancel')}
           </button>
           <button
             type="submit"
             className="px-4 py-2 text-sm rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium transition-colors"
           >
-            Save
+            {t('planFact.modal.save')}
           </button>
         </div>
       </form>
@@ -271,7 +275,7 @@ interface OpeningBalanceModalState {
 
 function OpeningBalanceModal({
   state,
-  title = 'Opening Balance Override',
+  title,
   onClose,
   onSave,
 }: {
@@ -280,6 +284,7 @@ function OpeningBalanceModal({
   onClose: () => void
   onSave: (amount: number) => void
 }) {
+  const { t } = useTranslation()
   const [value, setValue] = useState(state.currentValue === 0 ? '' : state.currentValue.toFixed(2))
 
   const handleSubmit = (e: React.SyntheticEvent) => {
@@ -288,7 +293,7 @@ function OpeningBalanceModal({
   }
 
   return (
-    <Modal title={title} onClose={onClose}>
+    <Modal title={title ?? t('planFact.obModal.title')} onClose={onClose}>
       <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
         {MONTH_NAMES[state.month - 1]} {state.year}
       </p>
@@ -308,13 +313,13 @@ function OpeningBalanceModal({
             onClick={onClose}
             className="px-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
           >
-            Cancel
+            {t('planFact.modal.cancel')}
           </button>
           <button
             type="submit"
             className="px-4 py-2 text-sm rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium transition-colors"
           >
-            Save
+            {t('planFact.modal.save')}
           </button>
         </div>
       </form>
@@ -324,6 +329,7 @@ function OpeningBalanceModal({
 
 export function PlanFactPage() {
   const notify = useNotify()
+  const { t } = useTranslation()
   const [year, setYear] = usePersistedState('planfact:year', CURRENT_YEAR)
   const [selectedMonths, setSelectedMonths] = usePersistedState<number[]>('planfact:months', [CURRENT_MONTH])
   const [data, setData] = useState<PlanFactSummaryResponse | null>(null)
@@ -343,7 +349,7 @@ export function PlanFactPage() {
     setLoading(true)
     planFactApi.getSummary(year, orderedMonths, excludeSavings)
       .then(setData)
-      .catch(() => notify('Failed to load plan/fact data', 'error'))
+      .catch(() => notify(t('planFact.error.loadFailed'), 'error'))
       .finally(() => setLoading(false))
   }
 
@@ -389,7 +395,7 @@ export function PlanFactPage() {
     try {
       await planFactApi.upsertEntry(categoryId, y, m, amount, lines)
     } catch {
-      notify('Failed to save plan value', 'error')
+      notify(t('planFact.error.savePlanFailed'), 'error')
       fetchData()
     }
   }
@@ -411,7 +417,7 @@ export function PlanFactPage() {
     try {
       await categoriesApi.setImportance(categoryId, next)
     } catch {
-      notify('Failed to update importance', 'error')
+      notify(t('planFact.error.saveImportanceFailed'), 'error')
       fetchData()
     }
   }
@@ -435,7 +441,7 @@ export function PlanFactPage() {
     try {
       await planFactApi.upsertPlanOpeningBalance(y, m, amount)
     } catch {
-      notify('Failed to save plan opening balance', 'error')
+      notify(t('planFact.error.savePlanObFailed'), 'error')
       fetchData()
     }
   }
@@ -459,7 +465,7 @@ export function PlanFactPage() {
     try {
       await planFactApi.upsertOpeningBalance(y, m, amount)
     } catch {
-      notify('Failed to save opening balance', 'error')
+      notify(t('planFact.error.saveObFailed'), 'error')
       fetchData()
     }
   }
@@ -582,7 +588,7 @@ export function PlanFactPage() {
     <div className="h-full flex flex-col">
       {/* Header */}
       <div className="px-8 pt-8 pb-4 shrink-0">
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-4">Plan / Fact</h1>
+        <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-4">{t('planFact.title')}</h1>
 
         <div className="flex items-center gap-4 flex-wrap">
           {/* Year picker */}
@@ -631,7 +637,7 @@ export function PlanFactPage() {
                 : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-400'
             }`}
           >
-            {hideEmpty ? 'Show all categories' : 'Hide empty categories'}
+            {hideEmpty ? t('planFact.button.showAll') : t('planFact.button.hideEmpty')}
           </button>
 
           <button
@@ -642,7 +648,7 @@ export function PlanFactPage() {
                 : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-400'
             }`}
           >
-            {excludeSavings ? 'Include saving accounts' : 'Exclude saving accounts'}
+            {excludeSavings ? t('planFact.button.includeSavings') : t('planFact.button.excludeSavings')}
           </button>
 
           {loading && <Spinner size="sm" />}
@@ -657,7 +663,7 @@ export function PlanFactPage() {
               {/* Row 1: month group headers */}
               <tr className="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
                 <th className="px-4 py-2 text-left font-medium text-gray-500 dark:text-gray-400 w-48 min-w-[12rem] sticky left-0 bg-gray-50 dark:bg-gray-700 z-20 border-r border-gray-200 dark:border-gray-600">
-                  Category
+                  {t('planFact.table.category')}
                 </th>
                 {orderedMonths.map(m => (
                   <th key={m} colSpan={3} className="px-3 py-2 text-center font-semibold text-gray-700 dark:text-gray-200 border-l border-gray-200 dark:border-gray-600 min-w-[14rem]">
@@ -666,7 +672,7 @@ export function PlanFactPage() {
                 ))}
                 {showTotal && (
                   <th colSpan={3} className="px-3 py-2 text-center font-semibold text-indigo-700 dark:text-indigo-300 border-l border-gray-200 dark:border-gray-600 min-w-[14rem]">
-                    Total
+                    {t('planFact.table.total')}
                   </th>
                 )}
               </tr>
@@ -675,9 +681,9 @@ export function PlanFactPage() {
                 <th className="sticky left-0 bg-gray-50 dark:bg-gray-700 z-20 border-r border-gray-200 dark:border-gray-600" />
                 {Array.from({ length: colGroups }).map((_, gi) => (
                   <>
-                    <th key={`${gi}-plan`} className={`px-2 py-1 text-right font-semibold border-l border-gray-100 dark:border-gray-700 w-24 text-indigo-600 dark:text-indigo-400 ${planColCls}`}>Plan</th>
-                    <th key={`${gi}-fact`} className={`px-2 py-1 text-right font-semibold w-24 text-gray-500 dark:text-gray-400 ${factColCls}`}>Fact</th>
-                    <th key={`${gi}-pct`}  className="px-2 py-1 text-right font-medium w-16 text-gray-400 dark:text-gray-500 cursor-pointer select-none hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors" onClick={() => setShowDiff(d => !d)} title="Toggle % / difference">{showDiff ? 'Diff' : '%'}</th>
+                    <th key={`${gi}-plan`} className={`px-2 py-1 text-right font-semibold border-l border-gray-100 dark:border-gray-700 w-24 text-indigo-600 dark:text-indigo-400 ${planColCls}`}>{t('planFact.table.plan')}</th>
+                    <th key={`${gi}-fact`} className={`px-2 py-1 text-right font-semibold w-24 text-gray-500 dark:text-gray-400 ${factColCls}`}>{t('planFact.table.fact')}</th>
+                    <th key={`${gi}-pct`}  className="px-2 py-1 text-right font-medium w-16 text-gray-400 dark:text-gray-500 cursor-pointer select-none hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors" onClick={() => setShowDiff(d => !d)} title={t('planFact.toggle.togglePctDiff')}>{showDiff ? t('planFact.table.diff') : t('planFact.table.pct')}</th>
                   </>
                 ))}
               </tr>
@@ -687,7 +693,7 @@ export function PlanFactPage() {
               {/* Opening Balance */}
               <tr className={balRowCls}>
                 <td className="px-4 py-2.5 text-gray-700 dark:text-gray-200 sticky left-0 bg-inherit z-10 border-r border-gray-200 dark:border-gray-600 whitespace-nowrap">
-                  Opening Balance
+                  {t('planFact.table.openingBalance')}
                 </td>
                 {orderedMonths.map(m => {
                   const md = getMonthData(m)
@@ -702,7 +708,7 @@ export function PlanFactPage() {
                       <td
                         key={`${m}-ob-plan`}
                         className={`px-2 py-2.5 text-right text-xs font-mono border-l border-gray-100 dark:border-gray-700 ${planColCls} ${isAuto ? 'text-indigo-400 dark:text-indigo-500' : planIsOverride ? 'text-indigo-600 dark:text-indigo-400 cursor-pointer select-none hover:brightness-95 dark:hover:brightness-110' : 'text-gray-400 dark:text-gray-500 cursor-pointer select-none hover:brightness-95 dark:hover:brightness-110'}`}
-                        title={isAuto ? 'Auto-calculated from previous month' : 'Click to set plan opening balance'}
+                        title={isAuto ? t('planFact.ob.autoCalc') : t('planFact.ob.clickToSetPlan')}
                         onClick={isAuto ? undefined : () => setPlanObModal({ year, month: m, currentValue: planOb })}
                       >
                         {isAuto
@@ -712,7 +718,7 @@ export function PlanFactPage() {
                       <td
                         key={`${m}-ob-fact`}
                         className={`px-2 py-2.5 text-right text-xs font-mono ${factColCls} ${isAuto ? signedColor(ob) : isOverride ? 'text-amber-600 dark:text-amber-400 cursor-pointer select-none hover:brightness-95 dark:hover:brightness-110' : `${signedColor(ob)} cursor-pointer select-none hover:brightness-95 dark:hover:brightness-110`}`}
-                        title={isAuto ? 'Auto-calculated from previous month' : 'Click to override opening balance'}
+                        title={isAuto ? t('planFact.ob.autoCalc') : t('planFact.ob.clickToOverride')}
                         onClick={isAuto ? undefined : () => setObModal({ year, month: m, currentValue: ob })}
                       >
                         {fmt(ob)}{isAuto
@@ -734,7 +740,7 @@ export function PlanFactPage() {
 
               {/* Income section header */}
               <tr>
-                <td colSpan={totalCols} className={sectionHdrCls}>Income</td>
+                <td colSpan={totalCols} className={sectionHdrCls}>{t('planFact.section.income')}</td>
               </tr>
 
               {/* Income category rows */}
@@ -776,7 +782,7 @@ export function PlanFactPage() {
               {/* Total Income */}
               <tr className={totalRowCls}>
                 <td className="px-4 py-2 text-gray-800 dark:text-gray-100 sticky left-0 bg-gray-50 dark:bg-gray-800/80 z-10 border-r border-gray-200 dark:border-gray-600">
-                  Total Income
+                  {t('planFact.row.totalIncome')}
                 </td>
                 {orderedMonths.map(m => {
                   const t = monthTotals(m)
@@ -803,7 +809,7 @@ export function PlanFactPage() {
 
               {/* Expense section header */}
               <tr>
-                <td colSpan={totalCols} className={sectionHdrCls}>Losses</td>
+                <td colSpan={totalCols} className={sectionHdrCls}>{t('planFact.section.losses')}</td>
               </tr>
 
               {/* Expense category rows */}
@@ -845,7 +851,7 @@ export function PlanFactPage() {
               {/* Total Losses */}
               <tr className={totalRowCls}>
                 <td className="px-4 py-2 text-gray-800 dark:text-gray-100 sticky left-0 bg-gray-50 dark:bg-gray-800/80 z-10 border-r border-gray-200 dark:border-gray-600">
-                  Total Losses
+                  {t('planFact.row.totalLosses')}
                 </td>
                 {orderedMonths.map(m => {
                   const t = monthTotals(m)
@@ -873,7 +879,7 @@ export function PlanFactPage() {
               {/* Closing Balance */}
               <tr className={balRowCls}>
                 <td className="px-4 py-2.5 text-gray-700 dark:text-gray-200 sticky left-0 bg-inherit z-10 border-r border-gray-200 dark:border-gray-600 whitespace-nowrap">
-                  Closing Balance
+                  {t('planFact.table.closingBalance')}
                 </td>
                 {orderedMonths.map(m => {
                   const t = monthTotals(m)
@@ -935,7 +941,7 @@ export function PlanFactPage() {
       {planObModal && (
         <OpeningBalanceModal
           state={planObModal}
-          title="Plan Opening Balance"
+          title={t('planFact.obModal.planTitle')}
           onClose={() => setPlanObModal(null)}
           onSave={handlePlanObSave}
         />

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { usePersistedState } from '../hooks/usePersistedState'
 import { useNotify } from '../NotificationContext'
 import { accountsApi, type Account, type AccountType } from '../api/accounts'
@@ -24,6 +25,7 @@ const filterCls =
   'px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500'
 
 export function AccountsPage() {
+  const { t } = useTranslation()
   const notify = useNotify()
   const [result, setResult] = useState<PagedResult<Account> | null>(null)
   const [currencies, setCurrencies] = useState<Currency[]>([])
@@ -77,7 +79,7 @@ export function AccountsPage() {
       sortDirection,
     })
       .then(r => { if (!cancelled) { setResult(r); setError(null) } })
-      .catch(() => { if (!cancelled) setError('Failed to load accounts') })
+      .catch(() => { if (!cancelled) setError(t('accounts.error.loadFailed')) })
       .finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
   }, [debouncedSearch, isActiveFilter, typeFilter, page, pageSize, sortBy, sortDirection, refreshKey])
@@ -114,23 +116,23 @@ export function AccountsPage() {
     try {
       if (modal === 'create') {
         await accountsApi.create({ name: formName, type: formType, initialBalance: parseFloat(formBalance), currencyId: formCurrencyId })
-        notify('Account created', 'success')
+        notify(t('accounts.notify.created'), 'success')
       } else if (modal !== null) {
         await accountsApi.update(modal.id, { name: formName })
-        notify('Account updated', 'info')
+        notify(t('accounts.notify.updated'), 'info')
       }
       closeModal()
       refetch()
     } catch {
-      setFormError('Failed to save. Please check your input and try again.')
+      setFormError(t('accounts.error.saveFailed'))
     } finally {
       setSaving(false)
     }
   }
 
   const toggle = async (account: Account) => {
-    if (account.isActive) { await accountsApi.deactivate(account.id); notify('Account deactivated', 'error') }
-    else { await accountsApi.activate(account.id); notify('Account activated', 'success') }
+    if (account.isActive) { await accountsApi.deactivate(account.id); notify(t('accounts.notify.deactivated'), 'error') }
+    else { await accountsApi.activate(account.id); notify(t('accounts.notify.activated'), 'success') }
     refetch()
   }
 
@@ -159,7 +161,7 @@ export function AccountsPage() {
     try {
       await accountsApi.reorder(newItems.map(a => a.id))
     } catch {
-      notify('Failed to save order', 'error')
+      notify(t('accounts.notify.orderFailed'), 'error')
       setItems(items) // rollback
     }
   }
@@ -171,12 +173,12 @@ export function AccountsPage() {
     <div className="h-full flex flex-col">
       <div className="px-8 pt-8 pb-4 shrink-0">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Accounts</h1>
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{t('accounts.title')}</h1>
           <button
             onClick={openCreate}
             className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors"
           >
-            + New Account
+            {t('accounts.button.newAccount')}
           </button>
         </div>
         <div className="flex items-center gap-3">
@@ -184,16 +186,16 @@ export function AccountsPage() {
             type="search"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Search by name…"
+            placeholder={t('accounts.filter.searchByName')}
             className={`${filterCls} w-56`}
           />
           <select value={isActiveFilter} onChange={e => handleIsActiveChange(e.target.value)} className={filterCls}>
-            <option value="">All statuses</option>
-            <option value="true">Active only</option>
-            <option value="false">Inactive only</option>
+            <option value="">{t('accounts.filter.allStatuses')}</option>
+            <option value="true">{t('accounts.filter.activeOnly')}</option>
+            <option value="false">{t('accounts.filter.inactiveOnly')}</option>
           </select>
           <select value={typeFilter} onChange={e => handleTypeChange(e.target.value)} className={filterCls}>
-            <option value="">All types</option>
+            <option value="">{t('accounts.filter.allTypes')}</option>
             {ACCOUNT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
           </select>
 
@@ -211,7 +213,7 @@ export function AccountsPage() {
               type="number"
               min="0"
               step="any"
-              placeholder="Rate"
+              placeholder={t('accounts.conv.ratePlaceholder')}
               value={convRate}
               onChange={e => setConvRate(e.target.value)}
               className={`${filterCls} w-24`}
@@ -228,37 +230,37 @@ export function AccountsPage() {
       </div>
 
       {modal !== null && (
-        <Modal title={isEditing ? 'Edit Account' : 'New Account'} onClose={closeModal}>
+        <Modal title={isEditing ? t('accounts.modal.editTitle') : t('accounts.modal.newTitle')} onClose={closeModal}>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className={labelCls}>Name</label>
-              <input required maxLength={100} value={formName} onChange={e => setFormName(e.target.value)} className={inputCls} placeholder="My Account" />
+              <label className={labelCls}>{t('accounts.form.name')}</label>
+              <input required maxLength={100} value={formName} onChange={e => setFormName(e.target.value)} className={inputCls} placeholder={t('accounts.form.namePlaceholder')} />
             </div>
             {!isEditing && (
               <>
                 <div>
-                  <label className={labelCls}>Type</label>
+                  <label className={labelCls}>{t('accounts.form.type')}</label>
                   <select value={formType} onChange={e => setFormType(e.target.value as AccountType)} className={inputCls}>
                     {ACCOUNT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className={labelCls}>Currency</label>
+                  <label className={labelCls}>{t('accounts.form.currency')}</label>
                   <select value={formCurrencyId} onChange={e => setFormCurrencyId(e.target.value)} className={inputCls}>
                     {currencies.map(c => <option key={c.id} value={c.id}>{c.symbol} {c.code} — {c.name}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className={labelCls}>Initial Balance</label>
+                  <label className={labelCls}>{t('accounts.form.initialBalance')}</label>
                   <input required type="number" min="0" step="0.01" value={formBalance} onChange={e => setFormBalance(e.target.value)} className={inputCls} />
                 </div>
               </>
             )}
             {formError && <p className="text-sm text-red-500">{formError}</p>}
             <div className="flex justify-end gap-3 pt-2">
-              <button type="button" onClick={closeModal} className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100">Cancel</button>
+              <button type="button" onClick={closeModal} className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100">{t('accounts.button.cancel')}</button>
               <button type="submit" disabled={saving} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors">
-                {saving ? 'Saving…' : isEditing ? 'Save' : 'Create'}
+                {saving ? t('accounts.button.saving') : isEditing ? t('accounts.button.save') : t('accounts.button.create')}
               </button>
             </div>
           </form>
@@ -271,16 +273,16 @@ export function AccountsPage() {
             <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0 z-10">
               <tr>
                 {!isCustomSort && <th className="px-2 py-3 w-16" />}
-                <SortableHeader label="Name" field="name" sortBy={sortBy} sortDirection={sortDirection} onSort={handleSort} />
-                <SortableHeader label="Type" field="type" sortBy={sortBy} sortDirection={sortDirection} onSort={handleSort} />
-                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Currency</th>
-                <SortableHeader label="Balance" field="balance" sortBy={sortBy} sortDirection={sortDirection} onSort={handleSort} />
+                <SortableHeader label={t('accounts.table.name')} field="name" sortBy={sortBy} sortDirection={sortDirection} onSort={handleSort} />
+                <SortableHeader label={t('accounts.table.type')} field="type" sortBy={sortBy} sortDirection={sortDirection} onSort={handleSort} />
+                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">{t('accounts.table.currency')}</th>
+                <SortableHeader label={t('accounts.table.balance')} field="balance" sortBy={sortBy} sortDirection={sortDirection} onSort={handleSort} />
                 {showConv && (
                   <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">
                     In {convToCurrency?.symbol ?? ''} {convTo}
                   </th>
                 )}
-                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Status</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">{t('accounts.table.status')}</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
@@ -294,7 +296,7 @@ export function AccountsPage() {
                           onClick={() => moveAccount(idx, 'up')}
                           disabled={idx === 0}
                           className="p-0.5 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 disabled:opacity-20 disabled:cursor-default transition-colors"
-                          title="Move up"
+                          title={t('accounts.moveUp')}
                         >
                           ▲
                         </button>
@@ -302,7 +304,7 @@ export function AccountsPage() {
                           onClick={() => moveAccount(idx, 'down')}
                           disabled={idx === items.length - 1}
                           className="p-0.5 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 disabled:opacity-20 disabled:cursor-default transition-colors"
-                          title="Move down"
+                          title={t('accounts.moveDown')}
                         >
                           ▼
                         </button>
@@ -326,21 +328,21 @@ export function AccountsPage() {
                   )}
                   <td className="px-4 py-3">
                     <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${account.isActive ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'}`}>
-                      {account.isActive ? 'Active' : 'Inactive'}
+                      {account.isActive ? t('accounts.status.active') : t('accounts.status.inactive')}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="inline-flex items-center gap-1">
-                      <IconButton icon={<InfoIcon />} label="Details" onClick={() => setSelectedAccount(account)} className="text-gray-400 hover:text-blue-500 dark:hover:text-blue-400" />
-                      <IconButton icon={<PencilIcon />} label="Edit" onClick={() => openEdit(account)} className="text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400" />
-                      <IconButton icon={account.isActive ? <BanIcon /> : <CheckCircleIcon />} label={account.isActive ? 'Deactivate' : 'Activate'} onClick={() => toggle(account)} className={account.isActive ? 'text-gray-400 hover:text-red-500 dark:hover:text-red-400' : 'text-gray-400 hover:text-green-600 dark:hover:text-green-400'} />
+                      <IconButton icon={<InfoIcon />} label={t('accounts.action.details')} onClick={() => setSelectedAccount(account)} className="text-gray-400 hover:text-blue-500 dark:hover:text-blue-400" />
+                      <IconButton icon={<PencilIcon />} label={t('accounts.action.edit')} onClick={() => openEdit(account)} className="text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400" />
+                      <IconButton icon={account.isActive ? <BanIcon /> : <CheckCircleIcon />} label={account.isActive ? t('accounts.action.deactivate') : t('accounts.action.activate')} onClick={() => toggle(account)} className={account.isActive ? 'text-gray-400 hover:text-red-500 dark:hover:text-red-400' : 'text-gray-400 hover:text-green-600 dark:hover:text-green-400'} />
                     </div>
                   </td>
                 </tr>
               ))}
               {items.length === 0 && !loading && (
                 <tr>
-                  <td colSpan={6 + (isCustomSort ? 0 : 1) + (showConv ? 1 : 0)} className="px-4 py-8 text-center text-gray-400 dark:text-gray-500">No accounts found.</td>
+                  <td colSpan={6 + (isCustomSort ? 0 : 1) + (showConv ? 1 : 0)} className="px-4 py-8 text-center text-gray-400 dark:text-gray-500">{t('accounts.table.empty')}</td>
                 </tr>
               )}
             </tbody>

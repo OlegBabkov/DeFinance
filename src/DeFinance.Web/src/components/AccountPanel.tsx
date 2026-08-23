@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { type Account } from '../api/accounts'
 import { transactionsApi, type Transaction } from '../api/transactions'
 import { Spinner } from './Spinner'
@@ -31,6 +32,7 @@ function amountSign(type: string) {
 interface MonthSummary { income: number; losses: number; transferIn: number; transferOut: number }
 
 export function AccountPanel({ account, onClose }: Props) {
+  const { t } = useTranslation()
   const open = account !== null
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [monthSummary, setMonthSummary] = useState<MonthSummary | null>(null)
@@ -76,7 +78,7 @@ export function AccountPanel({ account, onClose }: Props) {
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-700 shrink-0">
-          <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">Account Details</span>
+          <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">{t('accountPanel.title')}</span>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors text-base leading-none"
@@ -88,38 +90,38 @@ export function AccountPanel({ account, onClose }: Props) {
         {/* Body */}
         <div className="flex-1 overflow-y-auto p-5 space-y-4">
           {/* This month summary */}
-          <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">This Month</p>
+          <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">{t('accountPanel.section.thisMonth')}</p>
           {monthSummary ? (() => {
             const net = monthSummary.income + monthSummary.transferIn - monthSummary.losses - monthSummary.transferOut
             const netColor = net > 0 ? 'text-emerald-600 dark:text-emerald-400' : net < 0 ? 'text-red-500 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'
             return (
               <ul className="space-y-0">
                 <li className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Income</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">{t('accountPanel.monthSummary.income')}</span>
                   <span className="text-sm font-mono font-medium text-emerald-600 dark:text-emerald-400">
                     {monthSummary.income > 0 ? `+ ${fmtNum(monthSummary.income, symbol)}` : fmtNum(0, symbol)}
                   </span>
                 </li>
                 {monthSummary.transferIn > 0 && (
                   <li className="flex items-center justify-between py-1 border-b border-gray-100 dark:border-gray-700 pl-3">
-                    <span className="text-xs text-gray-400 dark:text-gray-500">Transfer In</span>
+                    <span className="text-xs text-gray-400 dark:text-gray-500">{t('accountPanel.monthSummary.transferIn')}</span>
                     <span className="text-xs font-mono text-emerald-500 dark:text-emerald-500">+ {fmtNum(monthSummary.transferIn, symbol)}</span>
                   </li>
                 )}
                 <li className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Losses</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">{t('accountPanel.monthSummary.losses')}</span>
                   <span className="text-sm font-mono font-medium text-red-500 dark:text-red-400">
                     {monthSummary.losses > 0 ? `− ${fmtNum(monthSummary.losses, symbol)}` : fmtNum(0, symbol)}
                   </span>
                 </li>
                 {monthSummary.transferOut > 0 && (
                   <li className="flex items-center justify-between py-1 border-b border-gray-100 dark:border-gray-700 pl-3">
-                    <span className="text-xs text-gray-400 dark:text-gray-500">Transfer Out</span>
+                    <span className="text-xs text-gray-400 dark:text-gray-500">{t('accountPanel.monthSummary.transferOut')}</span>
                     <span className="text-xs font-mono text-red-400 dark:text-red-500">− {fmtNum(monthSummary.transferOut, symbol)}</span>
                   </li>
                 )}
                 <li className="flex items-center justify-between py-2">
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Net</span>
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('accountPanel.monthSummary.net')}</span>
                   <span className={`text-sm font-mono font-semibold ${netColor}`}>
                     {net > 0 ? '+ ' : net < 0 ? '− ' : ''}{fmtNum(Math.abs(net), symbol)}
                   </span>
@@ -132,7 +134,7 @@ export function AccountPanel({ account, onClose }: Props) {
 
           {/* Last transactions */}
           <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
-            Last 10 Transactions
+            {t('accountPanel.section.lastTransactions')}
           </p>
 
           {loading && (
@@ -140,7 +142,7 @@ export function AccountPanel({ account, onClose }: Props) {
           )}
 
           {!loading && transactions.length === 0 && (
-            <p className="text-xs text-gray-400 dark:text-gray-500">No transactions found.</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500">{t('accountPanel.empty')}</p>
           )}
 
           {!loading && transactions.length > 0 && (

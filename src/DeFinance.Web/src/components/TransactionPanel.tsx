@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { transactionsApi, type Transaction } from '../api/transactions'
 import { Spinner } from './Spinner'
 
@@ -38,6 +39,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 }
 
 export function TransactionPanel({ transaction, onClose }: Props) {
+  const { t } = useTranslation()
   const open = transaction !== null
   const tx = transaction
 
@@ -58,11 +60,11 @@ export function TransactionPanel({ transaction, onClose }: Props) {
 
   const detailRows: { label: string; value: React.ReactNode }[] = tx ? [
     {
-      label: 'Date',
+      label: t('txPanel.field.date'),
       value: <span className="font-mono text-xs">{fmtDate(tx.dateTime)}</span>,
     },
     {
-      label: 'Sum',
+      label: t('txPanel.field.sum'),
       value: (
         <span className="font-mono">
           <span className="text-xs text-gray-400 dark:text-gray-500 mr-0.5">{accountCurrency?.symbol ?? ''}</span>
@@ -72,11 +74,11 @@ export function TransactionPanel({ transaction, onClose }: Props) {
       ),
     },
     ...(tx.exchangeRate !== 1 ? [{
-      label: 'Exch. Rate',
+      label: t('txPanel.field.exchRate'),
       value: <span className="font-mono text-xs">{fmtNum(tx.exchangeRate, 4)}</span>,
     }] : []),
     {
-      label: 'In Main Currency',
+      label: t('txPanel.field.inMainCurrency'),
       value: (
         <span className="font-mono">
           <span className="text-xs text-gray-400 dark:text-gray-500 mr-0.5">{mainCurrencySymbol}</span>
@@ -85,7 +87,7 @@ export function TransactionPanel({ transaction, onClose }: Props) {
       ),
     },
     {
-      label: 'Category',
+      label: t('txPanel.field.category'),
       value: tx.category ? (
         <span className="flex items-center gap-1.5">
           {tx.category.color && <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: tx.category.color }} />}
@@ -96,11 +98,11 @@ export function TransactionPanel({ transaction, onClose }: Props) {
       ) : '—',
     },
     ...(tx.counterparty ? [{
-      label: 'Counterparty',
+      label: t('txPanel.field.counterparty'),
       value: tx.counterparty.name,
     }] : []),
     {
-      label: 'Payment Status',
+      label: t('txPanel.field.paymentStatus'),
       value: tx.paymentStatus ? (
         tx.paymentStatus.color
           ? <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium" style={{ backgroundColor: tx.paymentStatus.color + '25', color: tx.paymentStatus.color }}>{tx.paymentStatus.name}</span>
@@ -108,14 +110,14 @@ export function TransactionPanel({ transaction, onClose }: Props) {
       ) : '—',
     },
     ...(tx.notes ? [{
-      label: 'Notes',
+      label: t('txPanel.field.notes'),
       value: <span className="text-gray-600 dark:text-gray-400 italic">{tx.notes}</span>,
     }] : []),
   ] : []
 
   const categoryRows: { label: string; value: React.ReactNode }[] = tx?.category ? [
     {
-      label: 'Name',
+      label: t('txPanel.field.name'),
       value: (
         <span className="flex items-center gap-1.5">
           {tx.category.color && <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: tx.category.color }} />}
@@ -125,57 +127,57 @@ export function TransactionPanel({ transaction, onClose }: Props) {
       ),
     },
     ...(tx.category.parentName ? [{
-      label: 'Parent',
+      label: t('txPanel.field.parent'),
       value: tx.category.parentName,
     }] : []),
     {
-      label: 'Obligation',
+      label: t('txPanel.field.obligation'),
       value: tx.category.paymentObligation
         ? <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">{tx.category.paymentObligation}</span>
         : <span className="text-gray-300 dark:text-gray-600">—</span>,
     },
     {
-      label: 'Status',
+      label: t('txPanel.field.status'),
       value: tx.category.isActive
-        ? <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Active</span>
-        : <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400">Inactive</span>,
+        ? <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">{t('txPanel.status.active')}</span>
+        : <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400">{t('txPanel.status.inactive')}</span>,
     },
   ] : []
 
   const counterpartyRows: { label: string; value: React.ReactNode }[] = tx?.counterparty ? [
     {
-      label: 'Name',
+      label: t('txPanel.field.name'),
       value: <span className="font-medium">{tx.counterparty.name}</span>,
     },
     {
-      label: 'Type',
+      label: t('txPanel.field.type'),
       value: tx.counterparty.type,
     },
     ...(tx.counterparty.contactInfo ? [{
-      label: 'Contact Info',
+      label: t('txPanel.field.contactInfo'),
       value: <span className="text-gray-600 dark:text-gray-400">{tx.counterparty.contactInfo}</span>,
     }] : []),
     {
-      label: 'Status',
+      label: t('txPanel.field.status'),
       value: tx.counterparty.isActive
-        ? <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Active</span>
-        : <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400">Inactive</span>,
+        ? <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">{t('txPanel.status.active')}</span>
+        : <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400">{t('txPanel.status.inactive')}</span>,
     },
   ] : []
 
   const accountRows: { label: string; value: React.ReactNode }[] = tx?.account ? [
     {
-      label: 'Name',
+      label: t('txPanel.field.name'),
       value: <span className="font-medium">{tx.account.name}</span>,
     },
     {
-      label: 'Currency',
+      label: t('txPanel.field.currency'),
       value: accountCurrency
         ? <span>{accountCurrency.symbol} {accountCurrency.code} <span className="text-xs text-gray-400 dark:text-gray-500">— {accountCurrency.name}</span></span>
         : '—',
     },
     {
-      label: 'Current Balance',
+      label: t('txPanel.field.currentBalance'),
       value: (
         <span className="font-mono">
           <span className="text-xs text-gray-400 dark:text-gray-500 mr-0.5">{accountCurrency?.symbol ?? ''}</span>
@@ -184,7 +186,7 @@ export function TransactionPanel({ transaction, onClose }: Props) {
       ),
     },
     {
-      label: 'Balance before',
+      label: t('txPanel.field.balanceBefore'),
       value: balanceLoading
         ? <span className="text-gray-400 dark:text-gray-500"><Spinner size="sm" /></span>
         : balanceBefore !== null
@@ -212,7 +214,7 @@ export function TransactionPanel({ transaction, onClose }: Props) {
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-700 shrink-0">
-          <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">Transaction Details</span>
+          <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">{t('txPanel.title')}</span>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors text-base leading-none"
@@ -227,7 +229,7 @@ export function TransactionPanel({ transaction, onClose }: Props) {
             <>
               {/* — Details block — */}
               <div>
-                <SectionTitle>Details</SectionTitle>
+                <SectionTitle>{t('txPanel.section.details')}</SectionTitle>
                 <table className="w-full border-collapse">
                   <tbody>
                     {detailRows.map(r => <DetailRow key={r.label} label={r.label} value={r.value} />)}
@@ -240,7 +242,7 @@ export function TransactionPanel({ transaction, onClose }: Props) {
               {/* — Category block — */}
               {categoryRows.length > 0 && (
                 <div>
-                  <SectionTitle>Category</SectionTitle>
+                  <SectionTitle>{t('txPanel.section.category')}</SectionTitle>
                   <table className="w-full border-collapse">
                     <tbody>
                       {categoryRows.map(r => <DetailRow key={r.label} label={r.label} value={r.value} />)}
@@ -254,7 +256,7 @@ export function TransactionPanel({ transaction, onClose }: Props) {
               {/* — Account block — */}
               {accountRows.length > 0 && (
                 <div>
-                  <SectionTitle>Account</SectionTitle>
+                  <SectionTitle>{t('txPanel.section.account')}</SectionTitle>
                   <table className="w-full border-collapse">
                     <tbody>
                       {accountRows.map(r => <DetailRow key={r.label} label={r.label} value={r.value} />)}
@@ -268,7 +270,7 @@ export function TransactionPanel({ transaction, onClose }: Props) {
                 <>
                   <div className="border-t border-gray-200 dark:border-gray-700" />
                   <div>
-                    <SectionTitle>Counterparty</SectionTitle>
+                    <SectionTitle>{t('txPanel.section.counterparty')}</SectionTitle>
                     <table className="w-full border-collapse">
                       <tbody>
                         {counterpartyRows.map(r => <DetailRow key={r.label} label={r.label} value={r.value} />)}
@@ -281,11 +283,11 @@ export function TransactionPanel({ transaction, onClose }: Props) {
               {/* — Technical Info block — */}
               <div className="border-t border-gray-200 dark:border-gray-700" />
               <div>
-                <SectionTitle>Technical Info</SectionTitle>
+                <SectionTitle>{t('txPanel.section.technicalInfo')}</SectionTitle>
                 <table className="w-full border-collapse">
                   <tbody>
                     <DetailRow
-                      label="Transaction ID"
+                      label={t('txPanel.field.transactionId')}
                       value={<span className="font-mono text-xs text-gray-500 dark:text-gray-400 break-all">{tx.id}</span>}
                     />
                   </tbody>

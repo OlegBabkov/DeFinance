@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { type Counterparty } from '../api/counterparties'
 import { transactionsApi } from '../api/transactions'
 import { Spinner } from './Spinner'
@@ -30,6 +31,7 @@ function fmt(value: number) {
 }
 
 export function CounterpartyPanel({ counterparty, onClose }: Props) {
+  const { t } = useTranslation()
   const open = counterparty !== null
   const [stats, setStats] = useState<MonthStat[]>([])
   const [loading, setLoading] = useState(false)
@@ -82,7 +84,7 @@ export function CounterpartyPanel({ counterparty, onClose }: Props) {
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-700 shrink-0">
           <div className="min-w-0">
             <span className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate block">
-              {counterparty?.name ?? 'Counterparty Details'}
+              {counterparty?.name ?? t('counterpartyPanel.fallbackTitle')}
             </span>
             {counterparty?.type && (
               <span className="text-xs text-gray-400 dark:text-gray-500">{counterparty.type}</span>
@@ -99,7 +101,7 @@ export function CounterpartyPanel({ counterparty, onClose }: Props) {
         {/* Body */}
         <div className="flex-1 overflow-y-auto p-5 space-y-4">
           <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
-            Expenses — Last 6 Months
+            {t('counterpartyPanel.section.expenses')}
           </p>
 
           {loading && (

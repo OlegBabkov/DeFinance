@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { type Category } from '../api/categories'
 import { transactionsApi } from '../api/transactions'
 import { Spinner } from './Spinner'
@@ -29,12 +30,6 @@ function fmt(value: number) {
   return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
-function typeLabel(type: string) {
-  if (type === 'Income') return 'Income'
-  if (type === 'Expense') return 'Expenses'
-  return 'Transactions'
-}
-
 function amountStyle(type: string, total: number) {
   if (total === 0) return { color: 'text-gray-400 dark:text-gray-500', sign: '' }
   if (type === 'Income') return { color: 'text-emerald-600 dark:text-emerald-400', sign: '+ ' }
@@ -43,6 +38,7 @@ function amountStyle(type: string, total: number) {
 }
 
 export function CategoryPanel({ category, onClose }: Props) {
+  const { t } = useTranslation()
   const open = category !== null
   const [stats, setStats] = useState<MonthStat[]>([])
   const [loading, setLoading] = useState(false)
@@ -95,7 +91,7 @@ export function CategoryPanel({ category, onClose }: Props) {
           <div className="min-w-0">
             <span className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate block">
               {category?.icon && <span className="mr-1">{category.icon}</span>}
-              {category?.name ?? 'Category Details'}
+              {category?.name ?? t('categoryPanel.fallbackTitle')}
             </span>
             {category?.type && (
               <span className="text-xs text-gray-400 dark:text-gray-500">{category.type}</span>
@@ -112,7 +108,7 @@ export function CategoryPanel({ category, onClose }: Props) {
         {/* Body */}
         <div className="flex-1 overflow-y-auto p-5 space-y-4">
           <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
-            {typeLabel(category?.type ?? '')} — Last 6 Months
+            {category?.type === 'Income' ? t('categoryPanel.section.income') : category?.type === 'Expense' ? t('categoryPanel.section.expenses') : t('categoryPanel.section.transactions')}
           </p>
 
           {loading && (

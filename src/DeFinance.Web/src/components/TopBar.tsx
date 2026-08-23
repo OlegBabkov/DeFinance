@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { UserProfileCard } from './UserProfileCard'
 
 interface Props {
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export function TopBar({ username, onLogout, onUsernameChange, photoUrl, onPhotoChange, onOpenCalculator }: Props) {
+  const { t } = useTranslation()
   const initials = username.slice(0, 2).toUpperCase()
   const [cardOpen, setCardOpen] = useState(false)
   const avatarRef = useRef<HTMLButtonElement>(null)
@@ -20,7 +22,7 @@ export function TopBar({ username, onLogout, onUsernameChange, photoUrl, onPhoto
       <div className="flex items-center gap-3">
         <button
           onClick={onOpenCalculator}
-          title="Calculator"
+          title={t('topBar.calculator')}
           className="text-gray-400 hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
@@ -59,7 +61,7 @@ export function TopBar({ username, onLogout, onUsernameChange, photoUrl, onPhoto
           onClick={onLogout}
           className="text-xs text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
         >
-          Sign out
+          {t('topBar.signOut')}
         </button>
       </div>
     </header>

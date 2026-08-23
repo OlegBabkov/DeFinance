@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { PAGE_SIZES, type PageSize } from '../api/common'
 
 interface Props {
@@ -10,17 +11,18 @@ interface Props {
 }
 
 export function Pagination({ page, pageSize, totalCount, totalPages, onPageChange, onPageSizeChange }: Props) {
+  const { t } = useTranslation()
   const from = totalCount === 0 ? 0 : (page - 1) * pageSize + 1
   const to = Math.min(page * pageSize, totalCount)
 
   return (
     <div className="flex items-center justify-between px-4 py-2.5 border-t border-gray-200 dark:border-gray-700 shrink-0 text-xs text-gray-600 dark:text-gray-400">
       <span>
-        {totalCount === 0 ? 'No results' : `Showing ${from}–${to} of ${totalCount}`}
+        {totalCount === 0 ? t('pagination.noResults') : t('pagination.showing', { from, to, total: totalCount })}
       </span>
       <div className="flex items-center gap-5">
         <label className="flex items-center gap-1.5">
-          Per page
+          {t('pagination.perPage')}
           <select
             value={pageSize}
             onChange={e => onPageSizeChange(Number(e.target.value) as PageSize)}
@@ -35,7 +37,7 @@ export function Pagination({ page, pageSize, totalCount, totalPages, onPageChang
             disabled={page <= 1}
             className="px-2 py-0.5 rounded disabled:opacity-40 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:cursor-default transition-colors"
           >
-            ‹ Prev
+            {t('pagination.prev')}
           </button>
           <span className="px-2 tabular-nums">
             {page} / {Math.max(1, totalPages)}
@@ -45,7 +47,7 @@ export function Pagination({ page, pageSize, totalCount, totalPages, onPageChang
             disabled={page >= totalPages}
             className="px-2 py-0.5 rounded disabled:opacity-40 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:cursor-default transition-colors"
           >
-            Next ›
+            {t('pagination.next')}
           </button>
         </div>
       </div>

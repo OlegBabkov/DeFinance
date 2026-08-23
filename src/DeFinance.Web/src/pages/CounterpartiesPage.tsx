@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNotify } from '../NotificationContext'
 import { counterpartiesApi, type Counterparty, type CounterpartyType } from '../api/counterparties'
 import { type PagedResult, type PageSize, type SortDirection } from '../api/common'
@@ -24,6 +25,7 @@ const filterCls =
   'px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500'
 
 export function CounterpartiesPage() {
+  const { t } = useTranslation()
   const notify = useNotify()
   const { isFavorite, toggle: toggleFav } = useFavorites('counterparties')
   const [result, setResult] = useState<PagedResult<Counterparty> | null>(null)
@@ -66,7 +68,7 @@ export function CounterpartiesPage() {
       sortDirection,
     })
       .then(r => { if (!cancelled) { setResult(r); setError(null) } })
-      .catch(() => { if (!cancelled) setError('Failed to load counterparties') })
+      .catch(() => { if (!cancelled) setError(t('counterparties.error.loadFailed')) })
       .finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
   }, [debouncedSearch, isActiveFilter, typeFilter, page, pageSize, sortBy, sortDirection, refreshKey])
@@ -101,23 +103,23 @@ export function CounterpartiesPage() {
       const contactInfo = formContactInfo.trim() || null
       if (modal === 'create') {
         await counterpartiesApi.create({ name: formName, type: formType, contactInfo })
-        notify('Counterparty created', 'success')
+        notify(t('counterparties.notify.created'), 'success')
       } else if (modal !== null) {
         await counterpartiesApi.update(modal.id, { name: formName, type: formType, contactInfo })
-        notify('Counterparty updated', 'info')
+        notify(t('counterparties.notify.updated'), 'info')
       }
       closeModal()
       refetch()
     } catch {
-      setFormError('Failed to save. Please check your input and try again.')
+      setFormError(t('counterparties.error.saveFailed'))
     } finally {
       setSaving(false)
     }
   }
 
   const toggle = async (counterparty: Counterparty) => {
-    if (counterparty.isActive) { await counterpartiesApi.deactivate(counterparty.id); notify('Counterparty deactivated', 'error') }
-    else { await counterpartiesApi.activate(counterparty.id); notify('Counterparty activated', 'success') }
+    if (counterparty.isActive) { await counterpartiesApi.deactivate(counterparty.id); notify(t('counterparties.notify.deactivated'), 'error') }
+    else { await counterpartiesApi.activate(counterparty.id); notify(t('counterparties.notify.activated'), 'success') }
     refetch()
   }
 
@@ -130,12 +132,12 @@ export function CounterpartiesPage() {
     <div className="h-full flex flex-col">
       <div className="px-8 pt-8 pb-4 shrink-0">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Counterparties</h1>
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{t('counterparties.title')}</h1>
           <button
             onClick={openCreate}
             className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors"
           >
-            + New Counterparty
+            {t('counterparties.button.new')}
           </button>
         </div>
         <div className="flex items-center gap-3">
@@ -143,16 +145,16 @@ export function CounterpartiesPage() {
             type="search"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Search by name or contact…"
+            placeholder={t('counterparties.filter.searchByName')}
             className={`${filterCls} w-60`}
           />
           <select value={isActiveFilter} onChange={e => handleIsActiveChange(e.target.value)} className={filterCls}>
-            <option value="">All statuses</option>
-            <option value="true">Active only</option>
-            <option value="false">Inactive only</option>
+            <option value="">{t('counterparties.filter.allStatuses')}</option>
+            <option value="true">{t('counterparties.filter.activeOnly')}</option>
+            <option value="false">{t('counterparties.filter.inactiveOnly')}</option>
           </select>
           <select value={typeFilter} onChange={e => handleTypeChange(e.target.value)} className={filterCls}>
-            <option value="">All types</option>
+            <option value="">{t('counterparties.filter.allTypes')}</option>
             {COUNTERPARTY_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
           </select>
           {loading && <Spinner size="sm" />}
@@ -160,27 +162,27 @@ export function CounterpartiesPage() {
       </div>
 
       {modal !== null && (
-        <Modal title={isEditing ? 'Edit Counterparty' : 'New Counterparty'} onClose={closeModal}>
+        <Modal title={isEditing ? t('counterparties.modal.editTitle') : t('counterparties.modal.newTitle')} onClose={closeModal}>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className={labelCls}>Name</label>
-              <input required maxLength={100} value={formName} onChange={e => setFormName(e.target.value)} className={inputCls} placeholder="Counterparty name" />
+              <label className={labelCls}>{t('counterparties.form.name')}</label>
+              <input required maxLength={100} value={formName} onChange={e => setFormName(e.target.value)} className={inputCls} placeholder={t('counterparties.form.namePlaceholder')} />
             </div>
             <div>
-              <label className={labelCls}>Type</label>
+              <label className={labelCls}>{t('counterparties.form.type')}</label>
               <select value={formType} onChange={e => setFormType(e.target.value as CounterpartyType)} className={inputCls}>
                 {COUNTERPARTY_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
             <div>
-              <label className={labelCls}>Contact Info (optional)</label>
-              <textarea maxLength={500} value={formContactInfo} onChange={e => setFormContactInfo(e.target.value)} className={`${inputCls} resize-none`} rows={3} placeholder="Email, phone, address…" />
+              <label className={labelCls}>{t('counterparties.form.contactInfo')}</label>
+              <textarea maxLength={500} value={formContactInfo} onChange={e => setFormContactInfo(e.target.value)} className={`${inputCls} resize-none`} rows={3} placeholder={t('counterparties.form.contactInfoPlaceholder')} />
             </div>
             {formError && <p className="text-sm text-red-500">{formError}</p>}
             <div className="flex justify-end gap-3 pt-2">
-              <button type="button" onClick={closeModal} className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100">Cancel</button>
+              <button type="button" onClick={closeModal} className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100">{t('counterparties.button.cancel')}</button>
               <button type="submit" disabled={saving} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors">
-                {saving ? 'Saving…' : isEditing ? 'Save' : 'Create'}
+                {saving ? t('counterparties.button.saving') : isEditing ? t('counterparties.button.save') : t('counterparties.button.create')}
               </button>
             </div>
           </form>
@@ -192,10 +194,10 @@ export function CounterpartiesPage() {
           <table className="w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
             <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0 z-10">
               <tr>
-                <SortableHeader label="Name" field="name" sortBy={sortBy} sortDirection={sortDirection} onSort={handleSort} />
-                <SortableHeader label="Type" field="type" sortBy={sortBy} sortDirection={sortDirection} onSort={handleSort} />
-                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Contact Info</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Status</th>
+                <SortableHeader label={t('counterparties.table.name')} field="name" sortBy={sortBy} sortDirection={sortDirection} onSort={handleSort} />
+                <SortableHeader label={t('counterparties.table.type')} field="type" sortBy={sortBy} sortDirection={sortDirection} onSort={handleSort} />
+                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">{t('counterparties.table.contactInfo')}</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">{t('counterparties.table.status')}</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
@@ -209,30 +211,30 @@ export function CounterpartiesPage() {
                   </td>
                   <td className="px-4 py-3">
                     <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${cp.isActive ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'}`}>
-                      {cp.isActive ? 'Active' : 'Inactive'}
+                      {cp.isActive ? t('counterparties.status.active') : t('counterparties.status.inactive')}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="inline-flex items-center gap-1">
                       <IconButton
                         icon={isFavorite(cp.id) ? <StarFilledIcon /> : <StarIcon />}
-                        label={isFavorite(cp.id) ? 'Remove from favourites' : 'Add to favourites'}
+                        label={isFavorite(cp.id) ? t('counterparties.action.removeFromFavourites') : t('counterparties.action.addToFavourites')}
                         onClick={() => {
                           const added = toggleFav(cp.id)
-                          notify(added ? `"${cp.name}" added to favourites` : `"${cp.name}" removed from favourites`, added ? 'success' : 'info')
+                          notify(added ? t('counterparties.notify.addedToFavourites', { name: cp.name }) : t('counterparties.notify.removedFromFavourites', { name: cp.name }), added ? 'success' : 'info')
                         }}
                         className={isFavorite(cp.id) ? 'text-amber-400 hover:text-amber-500' : 'text-gray-300 hover:text-amber-400 dark:text-gray-600 dark:hover:text-amber-400'}
                       />
-                      <IconButton icon={<InfoIcon />} label="Details" onClick={() => setSelectedCounterparty(cp)} className="text-gray-400 hover:text-blue-500 dark:hover:text-blue-400" />
-                      <IconButton icon={<PencilIcon />} label="Edit" onClick={() => openEdit(cp)} className="text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400" />
-                      <IconButton icon={cp.isActive ? <BanIcon /> : <CheckCircleIcon />} label={cp.isActive ? 'Deactivate' : 'Activate'} onClick={() => toggle(cp)} className={cp.isActive ? 'text-gray-400 hover:text-red-500 dark:hover:text-red-400' : 'text-gray-400 hover:text-green-600 dark:hover:text-green-400'} />
+                      <IconButton icon={<InfoIcon />} label={t('counterparties.action.details')} onClick={() => setSelectedCounterparty(cp)} className="text-gray-400 hover:text-blue-500 dark:hover:text-blue-400" />
+                      <IconButton icon={<PencilIcon />} label={t('counterparties.action.edit')} onClick={() => openEdit(cp)} className="text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400" />
+                      <IconButton icon={cp.isActive ? <BanIcon /> : <CheckCircleIcon />} label={cp.isActive ? t('counterparties.action.deactivate') : t('counterparties.action.activate')} onClick={() => toggle(cp)} className={cp.isActive ? 'text-gray-400 hover:text-red-500 dark:hover:text-red-400' : 'text-gray-400 hover:text-green-600 dark:hover:text-green-400'} />
                     </div>
                   </td>
                 </tr>
               ))}
               {items.length === 0 && !loading && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-gray-400 dark:text-gray-500">No counterparties found.</td>
+                  <td colSpan={5} className="px-4 py-8 text-center text-gray-400 dark:text-gray-500">{t('counterparties.table.empty')}</td>
                 </tr>
               )}
             </tbody>

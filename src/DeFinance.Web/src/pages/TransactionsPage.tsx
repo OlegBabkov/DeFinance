@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNotify } from '../NotificationContext'
 import { useMainCurrency } from '../MainCurrencyContext'
 import { transactionsApi, type Transaction, type TransactionListResult, type CreateTransactionRequest, type TransactionPaymentStatus } from '../api/transactions'
@@ -61,11 +62,12 @@ function StatusBadge({
   onDoubleClick?: () => void
   cycling?: boolean
 }) {
+  const { t } = useTranslation()
   const base = 'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap select-none transition-opacity'
   const interactive = onDoubleClick
     ? 'cursor-pointer hover:ring-2 hover:ring-offset-1 hover:ring-current active:scale-95'
     : ''
-  const title = onDoubleClick ? 'Double-click to advance status' : undefined
+  const title = onDoubleClick ? t('transactions.badge.doubleClickAdvance') : undefined
 
   const inner = cycling ? (
     <span className="opacity-50">{status.name}</span>
@@ -139,6 +141,7 @@ function txToForm(tx: Transaction): FormState {
 }
 
 export function TransactionsPage() {
+  const { t } = useTranslation()
   const notify = useNotify()
   const { mainCurrency } = useMainCurrency()
   const { favorites: favCats } = useFavorites('categories')
@@ -195,7 +198,7 @@ export function TransactionsPage() {
       await transactionsApi.updatePaymentStatus(tx.id, next.id)
       refetch()
     } catch {
-      notify('Failed to update status', 'error')
+      notify(t('transactions.notify.statusUpdateFailed'), 'error')
     } finally {
       setCyclingIds(prev => { const s = new Set(prev); s.delete(tx.id); return s })
     }
@@ -234,7 +237,7 @@ export function TransactionsPage() {
       sortDirection,
     })
       .then(r => { if (!cancelled) { setResult(r); setError(null) } })
-      .catch(() => { if (!cancelled) setError('Failed to load transactions') })
+      .catch(() => { if (!cancelled) setError(t('transactions.error.loadFailed')) })
       .finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
   }, [dateFrom, dateTo, accountId, categoryId, counterpartyId, paymentStatusId,
@@ -310,12 +313,12 @@ export function TransactionsPage() {
       const selectedAccount = accounts.find(a => a.id === form.accountId)
       const diffCurrency = selectedAccount?.currencyId !== mainCurrency?.id
       if (form.dateTime > todayDate()) {
-        setFormError('Transaction date cannot be in the future.')
+        setFormError(t('transactions.error.futureDateForbidden'))
         setSaving(false)
         return
       }
       if (diffCurrency && parseFloat(form.exchangeRate) === 1) {
-        setFormError('Exchange rate cannot be 1 when the account currency differs from the main currency.')
+        setFormError(t('transactions.error.exchangeRateOne'))
         setSaving(false)
         return
       }
@@ -332,28 +335,28 @@ export function TransactionsPage() {
       }
       if (modal === 'create' || modal === 'duplicate') {
         await transactionsApi.create(req)
-        notify('Transaction created', 'success')
+        notify(t('transactions.notify.created'), 'success')
       } else if (modal !== null) {
         await transactionsApi.update(modal.id, { id: modal.id, ...req })
-        notify('Transaction updated', 'info')
+        notify(t('transactions.notify.updated'), 'info')
       }
       closeModal()
       refetch()
     } catch {
-      setFormError('Failed to save. Please check your input and try again.')
+      setFormError(t('transactions.error.saveFailed'))
     } finally {
       setSaving(false)
     }
   }
 
   const handleDelete = async (tx: Transaction) => {
-    if (!confirm(`Delete this transaction (${tx.category?.name ?? ''} ${tx.sum})?`)) return
+    if (!confirm(t('transactions.confirm.delete', { category: tx.category?.name ?? '', sum: tx.sum }))) return
     try {
       await transactionsApi.remove(tx.id)
-      notify('Transaction deleted', 'error')
+      notify(t('transactions.notify.deleted'), 'error')
       refetch()
     } catch {
-      alert('Failed to delete transaction.')
+      alert(t('transactions.alert.deleteFailed'))
     }
   }
 
@@ -367,14 +370,14 @@ export function TransactionsPage() {
       {/* Header */}
       <div className="px-8 pt-8 pb-4 shrink-0">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Transactions</h1>
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{t('transactions.title')}</h1>
           <div className="flex items-center gap-3">
             {loading && <Spinner size="sm" />}
             <button
               onClick={openCreate}
               className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors"
             >
-              + New Transaction
+              {t('transactions.button.newTransaction')}
             </button>
           </div>
         </div>
@@ -382,20 +385,20 @@ export function TransactionsPage() {
         {/* Filters — row 1 */}
         <div className="flex flex-wrap items-center gap-3 mb-2">
           <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-500 dark:text-gray-400">From</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">{t('transactions.filter.from')}</span>
             <input type="date" value={dateFrom} onChange={e => { setDateFrom(e.target.value); setPage(1) }} className={filterCls} />
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-500 dark:text-gray-400">To</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">{t('transactions.filter.to')}</span>
             <input type="date" value={dateTo} onChange={e => { setDateTo(e.target.value); setPage(1) }} className={filterCls} />
           </div>
           <input
             type="search" value={notes} onChange={e => setNotes(e.target.value)}
-            placeholder="Search notes…" className={`${filterCls} w-44`}
+            placeholder={t('transactions.filter.searchNotes')} className={`${filterCls} w-44`}
           />
           {hasFilters && (
             <button onClick={resetFilters} className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">
-              Clear filters
+              {t('transactions.filter.clearFilters')}
             </button>
           )}
         </div>
@@ -403,23 +406,23 @@ export function TransactionsPage() {
         {/* Filters — row 2 */}
         <div className="flex flex-wrap items-center gap-3">
           <select value={accountId} onChange={e => { setAccountId(e.target.value); setPage(1) }} className={filterCls}>
-            <option value="">All accounts</option>
+            <option value="">{t('transactions.filter.allAccounts')}</option>
             {accounts.filter(a => a.isActive).map(a => <option key={a.id} value={a.id}>{a.name}{a.currency ? ` (${a.currency.code})` : ''}</option>)}
           </select>
           <select value={categoryId} onChange={e => { setCategoryId(e.target.value); setPage(1) }} className={filterCls}>
-            <option value="">All categories</option>
+            <option value="">{t('transactions.filter.allCategories')}</option>
             {sortByFavorites(categories.filter(c => c.isActive), favCats).map(c => <option key={c.id} value={c.id}>{favCats.has(c.id) ? `★ ${c.name}` : c.name}</option>)}
           </select>
           <select value={counterpartyId} onChange={e => { setCounterpartyId(e.target.value); setPage(1) }} className={filterCls}>
-            <option value="">All counterparties</option>
+            <option value="">{t('transactions.filter.allCounterparties')}</option>
             {sortByFavorites(counterparties.filter(c => c.isActive), favCps).map(c => <option key={c.id} value={c.id}>{favCps.has(c.id) ? `★ ${c.name}` : c.name}</option>)}
           </select>
           <select value={paymentStatusId} onChange={e => { setPaymentStatusId(e.target.value); setPage(1) }} className={filterCls}>
-            <option value="">All statuses</option>
+            <option value="">{t('transactions.filter.allStatuses')}</option>
             {paymentStatuses.filter(s => s.isActive).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
           <select value={inCurrencyId} onChange={e => { setInCurrencyId(e.target.value); setPage(1) }} className={filterCls}>
-            <option value="">All base currencies</option>
+            <option value="">{t('transactions.filter.allBaseCurrencies')}</option>
             {currencies.filter(c => c.isActive).map(c => <option key={c.id} value={c.id}>{c.symbol} {c.code}</option>)}
           </select>
         </div>
@@ -440,7 +443,7 @@ export function TransactionsPage() {
             </span>
             {showAccountSum && (
               <span className="text-sm">
-                <span className="text-xs text-gray-400 dark:text-gray-500 mr-1">Balance ({acctCurrency!.code})</span>
+                <span className="text-xs text-gray-400 dark:text-gray-500 mr-1">{t('transactions.totals.balance')} ({acctCurrency!.code})</span>
                 <span className={`font-mono font-medium ${balanceColor(result.totalSum)}`}>
                   {acctCurrency!.symbol}{fmtBalance(result.totalSum)}
                 </span>
@@ -448,7 +451,7 @@ export function TransactionsPage() {
             )}
             <span className="text-sm">
               <span className="text-xs text-gray-400 dark:text-gray-500 mr-1">
-                {showAccountSum ? `Balance (${mainCurrency?.code ?? ''})` : 'Balance'}
+                {showAccountSum ? `${t('transactions.totals.balance')} (${mainCurrency?.code ?? ''})` : t('transactions.totals.balance')}
               </span>
               <span className={`font-mono font-medium ${balanceColor(result.totalAmountInCurrency)}`}>
                 {mainCurrency?.symbol ?? ''}{fmtBalance(result.totalAmountInCurrency)}
@@ -460,36 +463,36 @@ export function TransactionsPage() {
 
       {/* Modal */}
       {modal !== null && (
-        <Modal title={modal === 'create' ? 'New Transaction' : modal === 'duplicate' ? 'Duplicate Transaction' : 'Edit Transaction'} onClose={closeModal}>
+        <Modal title={modal === 'create' ? t('transactions.modal.newTitle') : modal === 'duplicate' ? t('transactions.modal.duplicateTitle') : t('transactions.modal.editTitle')} onClose={closeModal}>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className={labelCls}>Date</label>
+                <label className={labelCls}>{t('transactions.form.date')}</label>
                 <input required type="date" max={todayDate()} value={form.dateTime} onChange={setField('dateTime')} className={inputCls} />
               </div>
               <div>
-                <label className={labelCls}>Account</label>
+                <label className={labelCls}>{t('transactions.form.account')}</label>
                 <select required value={form.accountId} onChange={onAccountChange} className={inputCls}>
-                  <option value="">Select account</option>
+                  <option value="">{t('transactions.form.selectAccount')}</option>
                   {activeOrCurrent(accounts, form.accountId).map(a => <option key={a.id} value={a.id}>{a.name}{a.currency ? ` (${a.currency.code})` : ''}</option>)}
                 </select>
               </div>
               <div>
-                <label className={labelCls}>Category</label>
+                <label className={labelCls}>{t('transactions.form.category')}</label>
                 <select required value={form.categoryId} onChange={setField('categoryId')} className={inputCls}>
-                  <option value="">Select category</option>
+                  <option value="">{t('transactions.form.selectCategory')}</option>
                   {sortByFavorites(activeOrCurrent(categories, form.categoryId), favCats).map(c => <option key={c.id} value={c.id}>{favCats.has(c.id) ? `★ ${c.name}` : c.name}</option>)}
                 </select>
               </div>
               <div>
-                <label className={labelCls}>Payment Status</label>
+                <label className={labelCls}>{t('transactions.form.paymentStatus')}</label>
                 <select required value={form.paymentStatusId} onChange={setField('paymentStatusId')} className={inputCls}>
-                  <option value="">Select status</option>
+                  <option value="">{t('transactions.form.selectStatus')}</option>
                   {activeOrCurrent(paymentStatuses, form.paymentStatusId).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                 </select>
               </div>
               <div>
-                <label className={labelCls}>Sum</label>
+                <label className={labelCls}>{t('transactions.form.sum')}</label>
                 <div className="relative">
                   <input
                     required
@@ -505,7 +508,7 @@ export function TransactionsPage() {
                     type="button"
                     onClick={() => setShowCalculator(true)}
                     tabIndex={-1}
-                    title="Open calculator"
+                    title={t('transactions.form.openCalculator')}
                     className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
                   >
                     <CalcIcon />
@@ -513,7 +516,7 @@ export function TransactionsPage() {
                 </div>
               </div>
               <div>
-                <label className={labelCls}>Exchange Rate</label>
+                <label className={labelCls}>{t('transactions.form.exchangeRate')}</label>
                 {(() => {
                   const sameAsMain = !!form.accountId && accounts.find(a => a.id === form.accountId)?.currencyId === mainCurrency?.id
                   return (
@@ -531,7 +534,7 @@ export function TransactionsPage() {
                 })()}
               </div>
               <div>
-                <label className={labelCls}>Currency</label>
+                <label className={labelCls}>{t('transactions.form.currency')}</label>
                 <input
                   disabled
                   value={(() => { const c = accounts.find(a => a.id === form.accountId)?.currency; return c ? `${c.symbol} ${c.code}` : '—' })()}
@@ -539,7 +542,7 @@ export function TransactionsPage() {
                 />
               </div>
               <div>
-                <label className={labelCls}>In Main Currency</label>
+                <label className={labelCls}>{t('transactions.form.inMainCurrency')}</label>
                 <input
                   disabled
                   value={(() => { const r = parseFloat(form.exchangeRate); const v = parseFloat(form.sum) / r; return isNaN(v) || !isFinite(v) ? '—' : num(v) })()}
@@ -547,15 +550,15 @@ export function TransactionsPage() {
                 />
               </div>
               <div>
-                <label className={labelCls}>Counterparty <span className="text-gray-400 font-normal">(optional)</span></label>
+                <label className={labelCls}>{t('transactions.form.counterparty')} <span className="text-gray-400 font-normal">{t('transactions.form.counterpartyOptional')}</span></label>
                 <select value={form.counterpartyId} onChange={setField('counterpartyId')} className={inputCls}>
-                  <option value="">None</option>
+                  <option value="">{t('transactions.form.noCounterparty')}</option>
                   {sortByFavorites(activeOrCurrent(counterparties, form.counterpartyId), favCps).map(c => <option key={c.id} value={c.id}>{favCps.has(c.id) ? `★ ${c.name}` : c.name}</option>)}
                 </select>
               </div>
             </div>
             <div>
-              <label className={labelCls}>Notes <span className="text-gray-400 font-normal">(optional)</span></label>
+              <label className={labelCls}>{t('transactions.form.notes')} <span className="text-gray-400 font-normal">{t('transactions.form.notesOptional')}</span></label>
               <textarea
                 value={form.notes} onChange={setField('notes')} maxLength={500} rows={2}
                 className={`${inputCls} resize-none`} placeholder="…"
@@ -564,10 +567,10 @@ export function TransactionsPage() {
             {formError && <p className="text-sm text-red-500">{formError}</p>}
             <div className="flex justify-end gap-3 pt-2">
               <button type="button" onClick={closeModal} className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100">
-                Cancel
+                {t('transactions.button.cancel')}
               </button>
               <button type="submit" disabled={saving} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors">
-                {saving ? 'Saving…' : modal === 'create' || modal === 'duplicate' ? 'Create' : 'Save'}
+                {saving ? t('transactions.button.saving') : modal === 'create' || modal === 'duplicate' ? t('transactions.button.create') : t('transactions.button.save')}
               </button>
             </div>
           </form>
@@ -583,19 +586,19 @@ export function TransactionsPage() {
 
       {/* Table */}
       <div className="flex flex-col flex-1 min-h-0 mx-8 mb-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto">
           <table className="w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
             <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0 z-10">
               <tr>
-                <SortableHeader label="Date & Time" field="datetime" sortBy={sortBy} sortDirection={sortDirection} onSort={handleSort} />
-                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Account</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Category</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Counterparty</th>
-                <SortableHeader label="Sum" field="sum" sortBy={sortBy} sortDirection={sortDirection} onSort={handleSort} />
-                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Exch. Rate</th>
-                <SortableHeader label="In Main Currency" field="amountincurrency" sortBy={sortBy} sortDirection={sortDirection} onSort={handleSort} />
-                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Status</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Notes</th>
+                <SortableHeader label={t('transactions.table.dateTime')} field="datetime" sortBy={sortBy} sortDirection={sortDirection} onSort={handleSort} />
+                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">{t('transactions.table.account')}</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">{t('transactions.table.category')}</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">{t('transactions.table.counterparty')}</th>
+                <SortableHeader label={t('transactions.table.sum')} field="sum" sortBy={sortBy} sortDirection={sortDirection} onSort={handleSort} />
+                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">{t('transactions.table.exchRate')}</th>
+                <SortableHeader label={t('transactions.table.inMainCurrency')} field="amountincurrency" sortBy={sortBy} sortDirection={sortDirection} onSort={handleSort} />
+                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">{t('transactions.table.status')}</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">{t('transactions.table.notes')}</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
@@ -649,13 +652,13 @@ export function TransactionsPage() {
                   </td>
                   <td className="px-4 py-3 text-right whitespace-nowrap">
                     <div className="inline-flex items-center gap-1">
-                      <IconButton icon={<InfoIcon />} label="Details" onClick={() => setSelectedTx(tx)}
+                      <IconButton icon={<InfoIcon />} label={t('transactions.action.details')} onClick={() => setSelectedTx(tx)}
                         className="text-gray-400 hover:text-blue-500 dark:hover:text-blue-400" />
-                      <IconButton icon={<PencilIcon />} label="Edit" onClick={() => openEdit(tx)}
+                      <IconButton icon={<PencilIcon />} label={t('transactions.action.edit')} onClick={() => openEdit(tx)}
                         className="text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400" />
-                      <IconButton icon={<CopyIcon />} label="Duplicate" onClick={() => openDuplicate(tx)}
+                      <IconButton icon={<CopyIcon />} label={t('transactions.action.duplicate')} onClick={() => openDuplicate(tx)}
                         className="text-gray-400 hover:text-emerald-500 dark:hover:text-emerald-400" />
-                      <IconButton icon={<TrashIcon />} label="Delete" onClick={() => handleDelete(tx)}
+                      <IconButton icon={<TrashIcon />} label={t('transactions.action.delete')} onClick={() => handleDelete(tx)}
                         className="text-gray-400 hover:text-red-500 dark:hover:text-red-400" />
                     </div>
                   </td>
@@ -664,7 +667,7 @@ export function TransactionsPage() {
               {items.length === 0 && !loading && (
                 <tr>
                   <td colSpan={10} className="px-4 py-12 text-center text-gray-400 dark:text-gray-500">
-                    No transactions found.
+                    {t('transactions.table.empty')}
                   </td>
                 </tr>
               )}

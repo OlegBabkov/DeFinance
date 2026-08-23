@@ -1,11 +1,14 @@
 import { NavLink, Outlet } from 'react-router-dom'
-
-const tabs = [
-  { to: '/',                       label: 'Overview',      end: true },
-  { to: '/transactions-dashboard', label: 'Transactions',  end: false },
-]
+import { useTranslation } from 'react-i18next'
 
 export function DashboardsLayout() {
+  const { t } = useTranslation()
+
+  const tabs = [
+    { to: '/',                       label: t('dashboardsLayout.tab.overview'),      end: true },
+    { to: '/transactions-dashboard', label: t('dashboardsLayout.tab.transactions'),  end: false },
+  ]
+
   return (
     <div className="h-full flex flex-col overflow-hidden">
       <div className="px-6 pt-4 pb-0 shrink-0 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
