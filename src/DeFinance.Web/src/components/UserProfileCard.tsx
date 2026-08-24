@@ -27,11 +27,11 @@ export function UserProfileCard({ onClose, onUsernameChange, onPhotoChange, anch
   const [phone, setPhone] = useState('')
   const [profileSaving, setProfileSaving] = useState(false)
 
-  const [language, setLanguage] = useState<'en' | 'de' | 'fr' | 'uk' | 'es' | 'pl' | 'it' | 'sv' | 'no'>(
-    () => (localStorage.getItem('lang') as 'en' | 'de' | 'fr' | 'uk' | 'es' | 'pl' | 'it' | 'sv' | 'no') ?? 'en'
+  const [language, setLanguage] = useState<'en' | 'de' | 'fr' | 'uk' | 'es' | 'pl' | 'it' | 'sv' | 'no' | 'fi' | 'el' | 'bg'>(
+    () => (localStorage.getItem('lang') as 'en' | 'de' | 'fr' | 'uk' | 'es' | 'pl' | 'it' | 'sv' | 'no' | 'fi' | 'el' | 'bg') ?? 'en'
   )
 
-  function handleLanguageChange(lang: 'en' | 'de' | 'fr' | 'uk' | 'es' | 'pl' | 'it' | 'sv' | 'no') {
+  function handleLanguageChange(lang: 'en' | 'de' | 'fr' | 'uk' | 'es' | 'pl' | 'it' | 'sv' | 'no' | 'fi' | 'el' | 'bg') {
     setLanguage(lang)
     localStorage.setItem('lang', lang)
     i18n.changeLanguage(lang)
@@ -220,6 +220,9 @@ export function UserProfileCard({ onClose, onUsernameChange, onPhotoChange, anch
                 { code: 'it', label: t('userProfile.lang.italian'),  Flag: FlagIT },
                 { code: 'sv', label: t('userProfile.lang.swedish'),  Flag: FlagSE },
                 { code: 'no', label: t('userProfile.lang.norwegian'), Flag: FlagNO },
+                { code: 'fi', label: t('userProfile.lang.finnish'),   Flag: FlagFI },
+                { code: 'el', label: t('userProfile.lang.greek'),      Flag: FlagGR },
+                { code: 'bg', label: t('userProfile.lang.bulgarian'),  Flag: FlagBG },
               ] as const).map(({ code, Flag, label }) => (
                 <button
                   key={code}
@@ -235,9 +238,12 @@ export function UserProfileCard({ onClose, onUsernameChange, onPhotoChange, anch
                 </button>
               ))}
               {([
-                { Flag: FlagFI, label: 'Suomi (coming soon)' },
-                { Flag: FlagGR, label: 'Ελληνικά (coming soon)' },
-                { Flag: FlagBG, label: 'Български (coming soon)' },
+                { Flag: FlagCZ, label: 'Čeština (coming soon)' },
+                { Flag: FlagSI, label: 'Slovenščina (coming soon)' },
+                { Flag: FlagHR, label: 'Hrvatski (coming soon)' },
+                { Flag: FlagSK, label: 'Slovenčina (coming soon)' },
+                { Flag: FlagRO, label: 'Română (coming soon)' },
+                { Flag: FlagHU, label: 'Magyar (coming soon)' },
               ]).map(({ Flag, label }) => (
                 <button
                   key={label}
@@ -408,6 +414,88 @@ function FlagBG() {
       <rect width="3" height="2" fill="#fff" />
       <rect y="0.667" width="3" height="0.667" fill="#00966E" />
       <rect y="1.333" width="3" height="0.667" fill="#D62612" />
+    </svg>
+  )
+}
+
+function FlagCZ() {
+  return (
+    <svg viewBox="0 0 3 2" className="w-full h-full" preserveAspectRatio="xMidYMid slice">
+      <rect width="3" height="1" fill="#fff" />
+      <rect y="1" width="3" height="1" fill="#D7141A" />
+      <polygon points="0,0 1.2,1 0,2" fill="#11457E" />
+    </svg>
+  )
+}
+
+function FlagSI() {
+  return (
+    <svg viewBox="0 0 3 2" className="w-full h-full" preserveAspectRatio="xMidYMid slice">
+      <rect width="3" height="0.667" fill="#003DA5" />
+      <rect y="0.667" width="3" height="0.667" fill="#fff" />
+      <rect y="1.333" width="3" height="0.667" fill="#E21B23" />
+      <rect x="0.1" y="0.15" width="0.55" height="0.55" fill="#003DA5" rx="0.04" />
+      <polygon points="0.375,0.18 0.42,0.32 0.57,0.32 0.45,0.41 0.49,0.56 0.375,0.47 0.26,0.56 0.3,0.41 0.18,0.32 0.33,0.32" fill="#FFDD00" />
+    </svg>
+  )
+}
+
+function FlagHR() {
+  return (
+    <svg viewBox="0 0 3 2" className="w-full h-full" preserveAspectRatio="xMidYMid slice">
+      <rect width="3" height="0.667" fill="#FF0000" />
+      <rect y="0.667" width="3" height="0.667" fill="#fff" />
+      <rect y="1.333" width="3" height="0.667" fill="#0035AD" />
+      <rect x="1.05" y="0.3" width="0.9" height="0.9" fill="#fff" />
+      <rect x="1.05" y="0.3" width="0.15" height="0.15" fill="#FF0000" />
+      <rect x="1.2" y="0.3" width="0.15" height="0.15" fill="#fff" />
+      <rect x="1.35" y="0.3" width="0.15" height="0.15" fill="#FF0000" />
+      <rect x="1.5" y="0.3" width="0.15" height="0.15" fill="#fff" />
+      <rect x="1.65" y="0.3" width="0.15" height="0.15" fill="#FF0000" />
+      <rect x="1.05" y="0.45" width="0.15" height="0.15" fill="#fff" />
+      <rect x="1.2" y="0.45" width="0.15" height="0.15" fill="#FF0000" />
+      <rect x="1.35" y="0.45" width="0.15" height="0.15" fill="#fff" />
+      <rect x="1.5" y="0.45" width="0.15" height="0.15" fill="#FF0000" />
+      <rect x="1.65" y="0.45" width="0.15" height="0.15" fill="#fff" />
+      <rect x="1.05" y="0.6" width="0.15" height="0.15" fill="#FF0000" />
+      <rect x="1.2" y="0.6" width="0.15" height="0.15" fill="#fff" />
+      <rect x="1.35" y="0.6" width="0.15" height="0.15" fill="#FF0000" />
+      <rect x="1.5" y="0.6" width="0.15" height="0.15" fill="#fff" />
+      <rect x="1.65" y="0.6" width="0.15" height="0.15" fill="#FF0000" />
+    </svg>
+  )
+}
+
+function FlagSK() {
+  return (
+    <svg viewBox="0 0 3 2" className="w-full h-full" preserveAspectRatio="xMidYMid slice">
+      <rect width="3" height="0.667" fill="#fff" />
+      <rect y="0.667" width="3" height="0.667" fill="#0B4FD8" />
+      <rect y="1.333" width="3" height="0.667" fill="#EE1C25" />
+      <rect x="0.1" y="0.25" width="0.65" height="1.1" fill="#fff" rx="0.06" />
+      <rect x="0.1" y="0.25" width="0.65" height="1.1" fill="#EE1C25" rx="0.06" />
+      <rect x="0.2" y="0.35" width="0.45" height="0.6" fill="#fff" />
+      <rect x="0.2" y="0.65" width="0.45" height="0.3" fill="#0B4FD8" />
+    </svg>
+  )
+}
+
+function FlagRO() {
+  return (
+    <svg viewBox="0 0 3 2" className="w-full h-full" preserveAspectRatio="xMidYMid slice">
+      <rect width="1" height="2" fill="#002B7F" />
+      <rect x="1" width="1" height="2" fill="#FCD116" />
+      <rect x="2" width="1" height="2" fill="#CE1126" />
+    </svg>
+  )
+}
+
+function FlagHU() {
+  return (
+    <svg viewBox="0 0 3 2" className="w-full h-full" preserveAspectRatio="xMidYMid slice">
+      <rect width="3" height="0.667" fill="#CE2939" />
+      <rect y="0.667" width="3" height="0.667" fill="#fff" />
+      <rect y="1.333" width="3" height="0.667" fill="#477050" />
     </svg>
   )
 }

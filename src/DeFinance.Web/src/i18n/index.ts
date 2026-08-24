@@ -9,6 +9,9 @@ import pl from './locales/pl'
 import it from './locales/it'
 import sv from './locales/sv'
 import no from './locales/no'
+import fi from './locales/fi'
+import el from './locales/el'
+import bg from './locales/bg'
 
 const savedLang = localStorage.getItem('lang') ?? 'en'
 
@@ -25,6 +28,9 @@ i18n
       it: { translation: it },
       sv: { translation: sv },
       no: { translation: no },
+      fi: { translation: fi },
+      el: { translation: el },
+      bg: { translation: bg },
     },
     lng: savedLang,
     fallbackLng: 'en',
