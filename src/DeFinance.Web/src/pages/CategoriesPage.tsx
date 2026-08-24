@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNotify } from '../NotificationContext'
 import {
   categoriesApi,
@@ -28,9 +29,9 @@ type Tab = 'Income' | 'Expense' | 'Transfer'
 type ModalState = null | 'create' | Category
 
 const TABS: { id: Tab; label: string }[] = [
-  { id: 'Income', label: 'Income' },
-  { id: 'Expense', label: 'Losses' },
-  { id: 'Transfer', label: 'Transfers' },
+  { id: 'Income', label: 'categories.tab.income' },
+  { id: 'Expense', label: 'categories.tab.losses' },
+  { id: 'Transfer', label: 'categories.tab.transfers' },
 ]
 
 const inputCls =
@@ -42,6 +43,7 @@ const filterCls =
   'px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500'
 
 export function CategoriesPage() {
+  const { t } = useTranslation()
   const notify = useNotify()
   const { isFavorite, toggle: toggleFav } = useFavorites('categories')
   const [result, setResult] = useState<PagedResult<Category> | null>(null)
@@ -99,7 +101,7 @@ export function CategoriesPage() {
       : categoriesApi.getAll({ ...baseParams, type: tab })
     fetch
       .then(r => { if (!cancelled) { setResult(r); setError(null) } })
-      .catch(() => { if (!cancelled) setError('Failed to load categories') })
+      .catch(() => { if (!cancelled) setError(t('categories.error.loadFailed')) })
       .finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
   }, [tab, debouncedSearch, isActiveFilter, obligationFilter, page, pageSize, sortBy, sortDirection, refreshKey])
@@ -147,23 +149,23 @@ export function CategoriesPage() {
       const categoryType: CategoryType = tab === 'Transfer' ? formTransferType : (tab as CategoryType)
       if (modal === 'create') {
         await categoriesApi.create({ name: formName, type: categoryType, color, icon, parentId: formParentId || null, paymentObligation })
-        notify('Category created', 'success')
+        notify(t('categories.notify.created'), 'success')
       } else if (modal !== null) {
         await categoriesApi.update(modal.id, { name: formName, color, icon, paymentObligation })
-        notify('Category updated', 'info')
+        notify(t('categories.notify.updated'), 'info')
       }
       closeModal()
       refetch()
     } catch {
-      setFormError('Failed to save. Please check your input and try again.')
+      setFormError(t('categories.error.saveFailed'))
     } finally {
       setSaving(false)
     }
   }
 
   const toggle = async (category: Category) => {
-    if (category.isActive) { await categoriesApi.deactivate(category.id); notify('Category deactivated', 'error') }
-    else { await categoriesApi.activate(category.id); notify('Category activated', 'success') }
+    if (category.isActive) { await categoriesApi.deactivate(category.id); notify(t('categories.notify.deactivated'), 'error') }
+    else { await categoriesApi.activate(category.id); notify(t('categories.notify.activated'), 'success') }
     refetch()
   }
 
@@ -179,12 +181,12 @@ export function CategoriesPage() {
     <div className="h-full flex flex-col">
       <div className="px-8 pt-8 pb-0 shrink-0">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Categories</h1>
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{t('categories.title')}</h1>
           <button
             onClick={openCreate}
             className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors"
           >
-            + New Category
+            {t('categories.button.newCategory')}
           </button>
         </div>
         <div className="flex items-center gap-3 mb-3">
@@ -192,17 +194,17 @@ export function CategoriesPage() {
             type="search"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Search by name…"
+            placeholder={t('categories.filter.searchByName')}
             className={`${filterCls} w-52`}
           />
           <select value={isActiveFilter} onChange={e => handleIsActiveChange(e.target.value)} className={filterCls}>
-            <option value="">All statuses</option>
-            <option value="true">Active only</option>
-            <option value="false">Inactive only</option>
+            <option value="">{t('categories.filter.allStatuses')}</option>
+            <option value="true">{t('categories.filter.activeOnly')}</option>
+            <option value="false">{t('categories.filter.inactiveOnly')}</option>
           </select>
           {tab !== 'Transfer' && (
             <select value={obligationFilter} onChange={e => handleObligationChange(e.target.value)} className={filterCls}>
-              <option value="">All obligations</option>
+              <option value="">{t('categories.filter.allObligations')}</option>
               {PAYMENT_OBLIGATIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
           )}
@@ -219,7 +221,7 @@ export function CategoriesPage() {
                   : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
               }`}
             >
-              {label}
+              {t(label)}
               {tab === id && result != null && (
                 <span className="ml-2 rounded-full bg-gray-100 dark:bg-gray-700 px-2 py-0.5 text-xs text-gray-600 dark:text-gray-300">
                   {result.totalCount}
@@ -231,28 +233,28 @@ export function CategoriesPage() {
       </div>
 
       {modal !== null && (
-        <Modal title={isEditing ? 'Edit Category' : `New ${tab === 'Transfer' ? 'Transfer' : tab} Category`} onClose={closeModal}>
+        <Modal title={isEditing ? t('categories.modal.editTitle') : `New ${tab === 'Transfer' ? 'Transfer' : tab} Category`} onClose={closeModal}>
           <form onSubmit={handleSubmit} className="space-y-4">
             {!isEditing && tab === 'Transfer' && (
               <div>
-                <label className={labelCls}>Transfer Type</label>
+                <label className={labelCls}>{t('categories.form.transferType')}</label>
                 <select value={formTransferType} onChange={e => setFormTransferType(e.target.value as 'TransferIn' | 'TransferOut')} className={inputCls}>
-                  <option value="TransferIn">Transfer In (funds arriving)</option>
-                  <option value="TransferOut">Transfer Out (funds leaving)</option>
+                  <option value="TransferIn">{t('categories.form.transferIn')}</option>
+                  <option value="TransferOut">{t('categories.form.transferOut')}</option>
                 </select>
               </div>
             )}
             <div>
-              <label className={labelCls}>Name</label>
-              <input required maxLength={100} value={formName} onChange={e => setFormName(e.target.value)} className={inputCls} placeholder="Category name" />
+              <label className={labelCls}>{t('categories.form.name')}</label>
+              <input required maxLength={100} value={formName} onChange={e => setFormName(e.target.value)} className={inputCls} placeholder={t('categories.form.namePlaceholder')} />
             </div>
             <div className="flex gap-4">
               <div className="flex-1">
-                <label className={labelCls}>Icon (emoji)</label>
+                <label className={labelCls}>{t('categories.form.icon')}</label>
                 <EmojiPicker value={formIcon} onChange={setFormIcon} />
               </div>
               <div>
-                <label className={labelCls}>Color</label>
+                <label className={labelCls}>{t('categories.form.color')}</label>
                 <div className="flex items-center gap-2 mt-1">
                   <input type="color" value={formColor} onChange={e => setFormColor(e.target.value)} className="h-9 w-14 rounded border border-gray-300 dark:border-gray-600 cursor-pointer bg-white dark:bg-gray-700 p-0.5" />
                   <span className="text-xs font-mono text-gray-500 dark:text-gray-400">{formColor}</span>
@@ -261,9 +263,9 @@ export function CategoriesPage() {
             </div>
             {!isEditing && parentOptions.length > 0 && (
               <div>
-                <label className={labelCls}>Parent Category (optional)</label>
+                <label className={labelCls}>{t('categories.form.parentCategory')}</label>
                 <select value={formParentId} onChange={e => setFormParentId(e.target.value)} className={inputCls}>
-                  <option value="">— None —</option>
+                  <option value="">{t('categories.form.noParent')}</option>
                   {parentOptions.map(c => (
                     <option key={c.id} value={c.id}>{c.icon ? `${c.icon} ` : ''}{c.name}</option>
                   ))}
@@ -271,17 +273,17 @@ export function CategoriesPage() {
               </div>
             )}
             <div>
-              <label className={labelCls}>Payment Obligation (optional)</label>
+              <label className={labelCls}>{t('categories.form.paymentObligation')}</label>
               <select value={formPaymentObligation} onChange={e => setFormPaymentObligation(e.target.value as CategoryPaymentObligation | '')} className={inputCls}>
-                <option value="">— None —</option>
+                <option value="">{t('categories.form.noObligation')}</option>
                 {PAYMENT_OBLIGATIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
             </div>
             {formError && <p className="text-sm text-red-500">{formError}</p>}
             <div className="flex justify-end gap-3 pt-2">
-              <button type="button" onClick={closeModal} className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100">Cancel</button>
+              <button type="button" onClick={closeModal} className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100">{t('categories.button.cancel')}</button>
               <button type="submit" disabled={saving} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors">
-                {saving ? 'Saving…' : isEditing ? 'Save' : 'Create'}
+                {saving ? t('categories.button.saving') : isEditing ? t('categories.button.save') : t('categories.button.create')}
               </button>
             </div>
           </form>
@@ -293,11 +295,11 @@ export function CategoriesPage() {
           <table className="w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
             <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0 z-10">
               <tr>
-                <SortableHeader label="Name" field="name" sortBy={sortBy} sortDirection={sortDirection} onSort={handleSort} />
-                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Color</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Parent</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Obligation</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Status</th>
+                <SortableHeader label={t('categories.table.name')} field="name" sortBy={sortBy} sortDirection={sortDirection} onSort={handleSort} />
+                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">{t('categories.table.color')}</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">{t('categories.table.parent')}</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">{t('categories.table.obligation')}</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">{t('categories.table.status')}</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
@@ -330,30 +332,30 @@ export function CategoriesPage() {
                   </td>
                   <td className="px-4 py-3">
                     <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${cat.isActive ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'}`}>
-                      {cat.isActive ? 'Active' : 'Inactive'}
+                      {cat.isActive ? t('categories.status.active') : t('categories.status.inactive')}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="inline-flex items-center gap-1">
                       <IconButton
                         icon={isFavorite(cat.id) ? <StarFilledIcon /> : <StarIcon />}
-                        label={isFavorite(cat.id) ? 'Remove from favourites' : 'Add to favourites'}
+                        label={isFavorite(cat.id) ? t('categories.action.removeFromFavourites') : t('categories.action.addToFavourites')}
                         onClick={() => {
                           const added = toggleFav(cat.id)
-                          notify(added ? `"${cat.name}" added to favourites` : `"${cat.name}" removed from favourites`, added ? 'success' : 'info')
+                          notify(added ? t('categories.notify.addedToFavourites', { name: cat.name }) : t('categories.notify.removedFromFavourites', { name: cat.name }), added ? 'success' : 'info')
                         }}
                         className={isFavorite(cat.id) ? 'text-amber-400 hover:text-amber-500' : 'text-gray-300 hover:text-amber-400 dark:text-gray-600 dark:hover:text-amber-400'}
                       />
-                      <IconButton icon={<InfoIcon />} label="Details" onClick={() => setSelectedCategory(cat)} className="text-gray-400 hover:text-blue-500 dark:hover:text-blue-400" />
-                      <IconButton icon={<PencilIcon />} label="Edit" onClick={() => openEdit(cat)} className="text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400" />
-                      <IconButton icon={cat.isActive ? <BanIcon /> : <CheckCircleIcon />} label={cat.isActive ? 'Deactivate' : 'Activate'} onClick={() => toggle(cat)} className={cat.isActive ? 'text-gray-400 hover:text-red-500 dark:hover:text-red-400' : 'text-gray-400 hover:text-green-600 dark:hover:text-green-400'} />
+                      <IconButton icon={<InfoIcon />} label={t('categories.action.details')} onClick={() => setSelectedCategory(cat)} className="text-gray-400 hover:text-blue-500 dark:hover:text-blue-400" />
+                      <IconButton icon={<PencilIcon />} label={t('categories.action.edit')} onClick={() => openEdit(cat)} className="text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400" />
+                      <IconButton icon={cat.isActive ? <BanIcon /> : <CheckCircleIcon />} label={cat.isActive ? t('categories.action.deactivate') : t('categories.action.activate')} onClick={() => toggle(cat)} className={cat.isActive ? 'text-gray-400 hover:text-red-500 dark:hover:text-red-400' : 'text-gray-400 hover:text-green-600 dark:hover:text-green-400'} />
                     </div>
                   </td>
                 </tr>
               ))}
               {items.length === 0 && !loading && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-gray-400 dark:text-gray-500">No categories found.</td>
+                  <td colSpan={6} className="px-4 py-8 text-center text-gray-400 dark:text-gray-500">{t('categories.table.empty')}</td>
                 </tr>
               )}
             </tbody>

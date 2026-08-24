@@ -15,7 +15,7 @@ public class UpdateUserCommandHandlerTests
 
     public UpdateUserCommandHandlerTests()
     {
-        _handler = new UpdateUserCommandHandler(_repository, _passwordService);
+        _handler = new UpdateUserCommandHandler(_repository);
     }
 
     [Fact]

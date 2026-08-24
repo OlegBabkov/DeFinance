@@ -9,6 +9,7 @@ import { useMainCurrency } from '../MainCurrencyContext'
 import { useTheme } from '../ThemeContext'
 import { useTransactionEvents } from '../hooks/useTransactionEvents'
 import { Spinner } from '../components/Spinner'
+import { useTranslation } from 'react-i18next'
 
 const PALETTE = ['#6366f1','#f59e0b','#10b981','#ef4444','#3b82f6','#8b5cf6','#ec4899','#14b8a6','#f97316','#84cc16']
 
@@ -82,6 +83,7 @@ function PeriodTabs<T extends number>({ options, value, onChange, format }: Peri
 export function DashboardPage() {
   const { mainCurrency } = useMainCurrency()
   const { dark } = useTheme()
+  const { t } = useTranslation()
   const sym = mainCurrency?.symbol ?? '€'
 
   const [accounts, setAccounts]       = useState<Account[]>([])
@@ -119,7 +121,7 @@ export function DashboardPage() {
     ]).then(([accs, txns]) => {
       setAccounts(accs.items)
       setTransactions(txns)
-    }).catch(() => setError('Failed to load dashboard data.'))
+    }).catch(() => setError(t('dashboard.error.loadFailed')))
       .finally(() => setLoading(false))
   }, [refreshKey])
 
@@ -165,8 +167,8 @@ export function DashboardPage() {
       })
       return {
         month: m.label,
-        Income:   monthTx.filter(t => t.category?.type === 'Income').reduce((s, t) => s + t.amountInCurrency, 0),
-        Expenses: monthTx.filter(t => t.category?.type === 'Expense').reduce((s, t) => s + t.amountInCurrency, 0),
+        [t('dashboard.chart.incomeBar')]:   monthTx.filter(tx => tx.category?.type === 'Income').reduce((s, tx) => s + tx.amountInCurrency, 0),
+        [t('dashboard.chart.expensesBar')]: monthTx.filter(tx => tx.category?.type === 'Expense').reduce((s, tx) => s + tx.amountInCurrency, 0),
       }
     })
   }, [transactions, cashFlowMonths])
@@ -199,12 +201,12 @@ export function DashboardPage() {
 
   return (
     <div className="p-6 space-y-6 overflow-y-auto h-full">
-      <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Dashboard</h1>
+      <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{t('dashboard.title')}</h1>
 
       {/* Stat cards */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Monthly Summary</span>
+          <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{t('dashboard.section.monthlySummary')}</span>
           <PeriodTabs
             options={STAT_OFFSETS}
             value={statOffset}
@@ -214,25 +216,25 @@ export function DashboardPage() {
         </div>
         <div className="grid grid-cols-4 gap-4">
           <StatCard
-            label="Active Accounts"
+            label={t('dashboard.stat.activeAccounts')}
             value={String(accounts.length)}
             sub={uniqueCurrencies || undefined}
           />
           <StatCard
-            label="Income"
+            label={t('dashboard.stat.income')}
             value={fmt(monthIncome, sym)}
             valueColor="text-emerald-600 dark:text-emerald-400"
           />
           <StatCard
-            label="Expenses"
+            label={t('dashboard.stat.expenses')}
             value={fmt(monthExpenses, sym)}
             valueColor="text-rose-600 dark:text-rose-400"
           />
           <StatCard
-            label="Net"
+            label={t('dashboard.stat.net')}
             value={fmt(monthNet, sym)}
             valueColor={monthNet >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}
-            sub={monthNet >= 0 ? 'On track' : 'Over budget'}
+            sub={monthNet >= 0 ? t('dashboard.stat.onTrack') : t('dashboard.stat.overBudget')}
           />
         </div>
       </div>
@@ -243,15 +245,15 @@ export function DashboardPage() {
         {/* Donut: Spending by Category */}
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
           <div className="flex items-start justify-between mb-0.5">
-            <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Spending by Category</h2>
+            <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">{t('dashboard.chart.spendingByCategory')}</h2>
             <PeriodTabs options={DAY_OPTIONS} value={categoryDays} onChange={setCategoryDays} format={dayLabel} />
           </div>
           <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">
-            {categoryDays === 365 ? 'Last year' : `Last ${categoryDays} days`} — expenses only
+            {categoryDays === 365 ? t('dashboard.chart.lastYear') : t('dashboard.chart.lastNDays', { n: categoryDays })} {t('dashboard.chart.expensesOnly')}
           </p>
           {categoryData.length === 0 ? (
             <div className="flex items-center justify-center h-56 text-gray-400 dark:text-gray-500 text-sm">
-              No expense data for this period
+              {t('dashboard.chart.noExpenseData')}
             </div>
           ) : (() => {
             const total = categoryData.reduce((s, c) => s + c.value, 0)
@@ -284,7 +286,7 @@ export function DashboardPage() {
                     />
                   </PieChart>
                   <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                    <span className="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-wide">Total</span>
+                    <span className="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-wide">{t('dashboard.chart.total')}</span>
                     <span className="text-sm font-bold text-gray-800 dark:text-gray-200 mt-0.5">{fmt(total, sym)}</span>
                   </div>
                 </div>
@@ -310,11 +312,11 @@ export function DashboardPage() {
         {/* Bar: Monthly Cash Flow */}
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
           <div className="flex items-start justify-between mb-0.5">
-            <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Monthly Cash Flow</h2>
+            <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">{t('dashboard.chart.monthlyCashFlow')}</h2>
             <PeriodTabs options={MONTH_OPTIONS} value={cashFlowMonths} onChange={setCashFlowMonths} format={monthLabel} />
           </div>
           <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">
-            Income vs Expenses — last {cashFlowMonths === 12 ? 'year' : `${cashFlowMonths} month${cashFlowMonths > 1 ? 's' : ''}`}
+            {t('dashboard.chart.incomeVsExpenses')} {cashFlowMonths === 12 ? t('dashboard.chart.year') : `${cashFlowMonths} ${cashFlowMonths > 1 ? t('dashboard.chart.months') : t('dashboard.chart.month')}`}
           </p>
           <ResponsiveContainer width="100%" height={280}>
             <BarChart data={barData} barCategoryGap="30%">
@@ -339,8 +341,8 @@ export function DashboardPage() {
               <Legend
                 formatter={value => <span style={{ color: tickColor, fontSize: 12 }}>{value}</span>}
               />
-              <Bar dataKey="Income"   fill="#10b981" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="Expenses" fill="#f43f5e" radius={[4, 4, 0, 0]} />
+              <Bar dataKey={t('dashboard.chart.incomeBar')}   fill="#10b981" radius={[4, 4, 0, 0]} />
+              <Bar dataKey={t('dashboard.chart.expensesBar')} fill="#f43f5e" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>

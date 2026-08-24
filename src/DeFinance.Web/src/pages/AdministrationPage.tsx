@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import * as signalR from '@microsoft/signalr'
 import { useNotify } from '../NotificationContext'
 import { useMainCurrency } from '../MainCurrencyContext'
@@ -32,6 +33,7 @@ const filterCls =
 // Payment Statuses Panel (unchanged)
 // ─────────────────────────────────────────────────────────────
 function PaymentStatusesPanel() {
+  const { t } = useTranslation()
   const notify = useNotify()
   const [result, setResult] = useState<PagedResult<PaymentStatus> | null>(null)
   const [loading, setLoading] = useState(true)
@@ -53,8 +55,8 @@ function PaymentStatusesPanel() {
   const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {
-    const t = setTimeout(() => { setDebouncedSearch(search); setPage(1) }, 400)
-    return () => clearTimeout(t)
+    const timer = setTimeout(() => { setDebouncedSearch(search); setPage(1) }, 400)
+    return () => clearTimeout(timer)
   }, [search])
 
   useEffect(() => {
@@ -69,7 +71,7 @@ function PaymentStatusesPanel() {
       sortDirection,
     })
       .then(r => { if (!cancelled) { setResult(r); setError(null) } })
-      .catch(() => { if (!cancelled) setError('Failed to load payment statuses') })
+      .catch(() => { if (!cancelled) setError(t('admin.paymentStatus.error.loadFailed')) })
       .finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
   }, [debouncedSearch, isActiveFilter, page, pageSize, sortBy, sortDirection, refreshKey])
@@ -101,10 +103,10 @@ function PaymentStatusesPanel() {
       const description = formDescription.trim() || null
       if (modal === 'create') {
         await paymentStatusesApi.create({ name: formName, description, color: formColor })
-        notify('Payment status created', 'success')
+        notify(t('admin.paymentStatus.notify.created'), 'success')
       } else if (modal !== null) {
         await paymentStatusesApi.update(modal.id, { name: formName, description, color: formColor })
-        notify('Payment status updated', 'info')
+        notify(t('admin.paymentStatus.notify.updated'), 'info')
       }
       closeModal()
       refetch()
@@ -116,8 +118,8 @@ function PaymentStatusesPanel() {
   }
 
   const toggle = async (status: PaymentStatus) => {
-    if (status.isActive) { await paymentStatusesApi.deactivate(status.id); notify('Payment status deactivated', 'error') }
-    else { await paymentStatusesApi.activate(status.id); notify('Payment status activated', 'success') }
+    if (status.isActive) { await paymentStatusesApi.deactivate(status.id); notify(t('admin.paymentStatus.notify.deactivated'), 'error') }
+    else { await paymentStatusesApi.activate(status.id); notify(t('admin.paymentStatus.notify.activated'), 'success') }
     refetch()
   }
 
@@ -126,32 +128,32 @@ function PaymentStatusesPanel() {
   return (
     <>
       {modal !== null && (
-        <Modal title={isEditing ? 'Edit Payment Status' : 'New Payment Status'} onClose={closeModal}>
+        <Modal title={isEditing ? t('admin.paymentStatus.modal.editTitle') : t('admin.paymentStatus.modal.newTitle')} onClose={closeModal}>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className={labelCls}>Name</label>
+              <label className={labelCls}>{t('admin.paymentStatus.form.name')}</label>
               <input
                 required
                 maxLength={100}
                 value={formName}
                 onChange={e => setFormName(e.target.value)}
                 className={inputCls}
-                placeholder="Status name"
+                placeholder={t('admin.paymentStatus.form.namePlaceholder')}
               />
             </div>
             <div>
-              <label className={labelCls}>Description (optional)</label>
+              <label className={labelCls}>{t('admin.paymentStatus.form.description')}</label>
               <textarea
                 maxLength={500}
                 value={formDescription}
                 onChange={e => setFormDescription(e.target.value)}
                 className={`${inputCls} resize-none`}
                 rows={2}
-                placeholder="Short description…"
+                placeholder={t('admin.paymentStatus.form.descriptionPlaceholder')}
               />
             </div>
             <div>
-              <label className={labelCls}>Color (optional)</label>
+              <label className={labelCls}>{t('admin.paymentStatus.form.color')}</label>
               <div className="flex items-center gap-3">
                 <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 cursor-pointer select-none">
                   <input
@@ -160,7 +162,7 @@ function PaymentStatusesPanel() {
                     onChange={e => setFormColor(e.target.checked ? '#6366f1' : null)}
                     className="rounded"
                   />
-                  Custom color
+                  {t('admin.paymentStatus.form.customColor')}
                 </label>
                 {formColor !== null && (
                   <>
@@ -174,7 +176,7 @@ function PaymentStatusesPanel() {
                       className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
                       style={{ backgroundColor: formColor + '25', color: formColor }}
                     >
-                      {formName || 'Preview'}
+                      {formName || t('admin.paymentStatus.form.colorPreview')}
                     </span>
                   </>
                 )}
@@ -187,14 +189,14 @@ function PaymentStatusesPanel() {
                 onClick={closeModal}
                 className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
               >
-                Cancel
+                {t('admin.paymentStatus.button.cancel')}
               </button>
               <button
                 type="submit"
                 disabled={saving}
                 className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors"
               >
-                {saving ? 'Saving…' : isEditing ? 'Save' : 'Create'}
+                {saving ? t('admin.paymentStatus.button.saving') : isEditing ? t('admin.paymentStatus.button.save') : t('admin.paymentStatus.button.create')}
               </button>
             </div>
           </form>
@@ -206,20 +208,20 @@ function PaymentStatusesPanel() {
           type="search"
           value={search}
           onChange={e => setSearch(e.target.value)}
-          placeholder="Search…"
+          placeholder={t('admin.paymentStatus.filter.search')}
           className={`${filterCls} w-36`}
         />
         <select value={isActiveFilter} onChange={e => { setIsActiveFilter(e.target.value); setPage(1) }} className={filterCls}>
-          <option value="">All statuses</option>
-          <option value="true">Active only</option>
-          <option value="false">Inactive only</option>
+          <option value="">{t('admin.paymentStatus.filter.allStatuses')}</option>
+          <option value="true">{t('admin.paymentStatus.filter.activeOnly')}</option>
+          <option value="false">{t('admin.paymentStatus.filter.inactiveOnly')}</option>
         </select>
         {loading && <Spinner size="sm" />}
         <button
           onClick={openCreate}
           className="ml-auto px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium rounded-lg transition-colors"
         >
-          + New
+          {t('admin.paymentStatus.button.new')}
         </button>
       </div>
 
@@ -230,9 +232,9 @@ function PaymentStatusesPanel() {
           <table className="w-full divide-y divide-gray-200 dark:divide-gray-700 text-xs">
             <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0 z-10">
               <tr>
-                <SortableHeader label="Name" field="name" sortBy={sortBy} sortDirection={sortDirection} onSort={handleSort} />
-                <th className="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400">Description</th>
-                <th className="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400">Status</th>
+                <SortableHeader label={t('admin.paymentStatus.table.name')} field="name" sortBy={sortBy} sortDirection={sortDirection} onSort={handleSort} />
+                <th className="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400">{t('admin.paymentStatus.table.description')}</th>
+                <th className="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400">{t('admin.paymentStatus.table.status')}</th>
                 <th className="px-3 py-2" />
               </tr>
             </thead>
@@ -259,20 +261,20 @@ function PaymentStatusesPanel() {
                           : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'
                       }`}
                     >
-                      {s.isActive ? 'Active' : 'Inactive'}
+                      {s.isActive ? t('admin.paymentStatus.status.active') : t('admin.paymentStatus.status.inactive')}
                     </span>
                   </td>
                   <td className="px-3 py-2 text-right">
                     <div className="inline-flex items-center gap-1">
                       <IconButton
                         icon={<PencilIcon />}
-                        label="Edit"
+                        label={t('admin.paymentStatus.action.edit')}
                         onClick={() => openEdit(s)}
                         className="text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400"
                       />
                       <IconButton
                         icon={s.isActive ? <BanIcon /> : <CheckCircleIcon />}
-                        label={s.isActive ? 'Deactivate' : 'Activate'}
+                        label={s.isActive ? t('admin.paymentStatus.action.deactivate') : t('admin.paymentStatus.action.activate')}
                         onClick={() => toggle(s)}
                         className={s.isActive ? 'text-gray-400 hover:text-red-500 dark:hover:text-red-400' : 'text-gray-400 hover:text-green-600 dark:hover:text-green-400'}
                       />
@@ -283,7 +285,7 @@ function PaymentStatusesPanel() {
               {items.length === 0 && !loading && (
                 <tr>
                   <td colSpan={4} className="px-3 py-6 text-center text-gray-400 dark:text-gray-500">
-                    No payment statuses found.
+                    {t('admin.paymentStatus.table.empty')}
                   </td>
                 </tr>
               )}
@@ -309,15 +311,16 @@ function PaymentStatusesPanel() {
 // Main Currency Panel (unchanged)
 // ─────────────────────────────────────────────────────────────
 function MainCurrencyPanel() {
+  const { t } = useTranslation()
   const { currencies, mainCurrency, setMainCurrencyId } = useMainCurrency()
 
   return (
     <div className="flex flex-col gap-4">
       <p className="text-xs text-gray-500 dark:text-gray-400">
-        Choose the currency used to display the <strong>In Main Currency</strong> column in the Transactions table. Stored locally in your browser.
+        {t('admin.mainCurrency.description')}
       </p>
       <div>
-        <label className={labelCls}>Main Currency</label>
+        <label className={labelCls}>{t('admin.mainCurrency.label')}</label>
         <select
           value={mainCurrency?.id ?? ''}
           onChange={e => setMainCurrencyId(e.target.value)}
@@ -345,13 +348,6 @@ function MainCurrencyPanel() {
 // Reports Panel
 // ─────────────────────────────────────────────────────────────
 
-const REPORT_TYPE_DESCRIPTIONS: Record<ReportType, string> = {
-  CashFlowStatement:        'Daily income vs. expenses with net cash flow over the period.',
-  ExpenseCategoryBreakdown: 'Spending grouped by category with proportion bars.',
-  AccountBalanceSummary:    'Opening and closing balances per account with change summary.',
-  CounterpartySpending:     'Total transactions per counterparty with amount and proportion bars.',
-}
-
 const STATUS_STYLES: Record<string, string> = {
   Pending:    'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300',
   Processing: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
@@ -377,6 +373,7 @@ async function downloadReport(id: string, fileName: string) {
 }
 
 function ReportsPanel() {
+  const { t } = useTranslation()
   const notify = useNotify()
 
   const [reportType, setReportType] = useState<ReportType>('CashFlowStatement')
@@ -422,9 +419,9 @@ function ReportsPanel() {
       refreshRef.current()
       if (data.success) {
         setReadyReportId(data.reportId)
-        notifyRef.current('Report is ready for download', 'success')
+        notifyRef.current(t('admin.reports.notify.ready'), 'success')
       } else {
-        notifyRef.current('Report generation failed', 'error')
+        notifyRef.current(t('admin.reports.notify.failed'), 'error')
       }
     })
 
@@ -447,9 +444,9 @@ function ReportsPanel() {
           if (!wasActive) return
           if (r.status === 'Completed') {
             setReadyReportId(r.id)
-            notifyRef.current('Report is ready for download', 'success')
+            notifyRef.current(t('admin.reports.notify.ready'), 'success')
           } else if (r.status === 'Failed') {
-            notifyRef.current('Report generation failed', 'error')
+            notifyRef.current(t('admin.reports.notify.failed'), 'error')
           }
         })
         setReports(latest)
@@ -469,12 +466,19 @@ function ReportsPanel() {
         counterpartyIds: counterpartyIds.length > 0 ? counterpartyIds : undefined,
       })
       await refreshReports()
-      notify('Report queued — you\'ll be notified when it\'s ready', 'info')
+      notify(t('admin.reports.notify.queued'), 'info')
     } catch {
-      notify('Failed to generate report', 'error')
+      notify(t('admin.reports.notify.generateFailed'), 'error')
     } finally {
       setGenerating(false)
     }
+  }
+
+  const reportTypeDescriptions: Record<ReportType, string> = {
+    CashFlowStatement:        t('admin.reports.type.cashFlowDesc'),
+    ExpenseCategoryBreakdown: t('admin.reports.type.expenseBreakdownDesc'),
+    AccountBalanceSummary:    t('admin.reports.type.accountBalanceDesc'),
+    CounterpartySpending:     t('admin.reports.type.counterpartySpendingDesc'),
   }
 
   const expenseCategories = categories.filter(c => c.type === 'Expense' || c.type === 'TransferOut')
@@ -485,7 +489,7 @@ function ReportsPanel() {
       <div className="w-72 flex-shrink-0 flex flex-col gap-4">
         {/* Report type cards */}
         <div>
-          <label className={labelCls}>Report Type</label>
+          <label className={labelCls}>{t('admin.reports.reportType')}</label>
           <div className="flex flex-col gap-2">
             {(Object.keys(REPORT_TYPE_LABELS) as ReportType[]).map(rt => (
               <button
@@ -501,7 +505,7 @@ function ReportsPanel() {
                   {REPORT_TYPE_LABELS[rt]}
                 </p>
                 <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 leading-relaxed">
-                  {REPORT_TYPE_DESCRIPTIONS[rt]}
+                  {reportTypeDescriptions[rt]}
                 </p>
               </button>
             ))}
@@ -510,7 +514,7 @@ function ReportsPanel() {
 
         {/* Period */}
         <div>
-          <label className={labelCls}>Period</label>
+          <label className={labelCls}>{t('admin.reports.period')}</label>
           <select value={period} onChange={e => setPeriod(e.target.value as ReportPeriod)} className={inputCls}>
             {(Object.keys(REPORT_PERIOD_LABELS) as ReportPeriod[]).map(p => (
               <option key={p} value={p}>{REPORT_PERIOD_LABELS[p]}</option>
@@ -521,9 +525,9 @@ function ReportsPanel() {
         {/* Dynamic filter fields */}
         {reportType === 'CashFlowStatement' && (
           <div>
-            <label className={labelCls}>Account (optional)</label>
+            <label className={labelCls}>{t('admin.reports.account')}</label>
             <select value={accountId} onChange={e => setAccountId(e.target.value)} className={inputCls}>
-              <option value="">All accounts</option>
+              <option value="">{t('admin.reports.allAccounts')}</option>
               {accounts.map(a => (
                 <option key={a.id} value={a.id}>{a.name} ({a.currency?.code ?? '?'})</option>
               ))}
@@ -534,19 +538,19 @@ function ReportsPanel() {
         {reportType === 'ExpenseCategoryBreakdown' && (
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center justify-between">
-              <label className={labelCls}>Categories (optional)</label>
+              <label className={labelCls}>{t('admin.reports.categories')}</label>
               {categoryIds.length > 0 && (
                 <button
                   onClick={() => setCategoryIds([])}
                   className="text-xs text-indigo-500 hover:text-indigo-700 dark:text-indigo-400"
                 >
-                  Clear ({categoryIds.length})
+                  {t('admin.reports.clearCategories', { n: categoryIds.length })}
                 </button>
               )}
             </div>
             <div className="max-h-44 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-600 divide-y divide-gray-100 dark:divide-gray-700">
               {expenseCategories.length === 0 && (
-                <p className="px-3 py-2 text-xs text-gray-400">No expense categories found.</p>
+                <p className="px-3 py-2 text-xs text-gray-400">{t('admin.reports.noExpenseCategories')}</p>
               )}
               {expenseCategories.map(c => {
                 const checked = categoryIds.includes(c.id)
@@ -574,7 +578,7 @@ function ReportsPanel() {
               })}
             </div>
             {categoryIds.length === 0 && (
-              <p className="text-xs text-gray-400 dark:text-gray-500">Leave empty to include all categories.</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500">{t('admin.reports.leaveEmptyCategories')}</p>
             )}
           </div>
         )}
@@ -582,19 +586,19 @@ function ReportsPanel() {
         {reportType === 'CounterpartySpending' && (
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center justify-between">
-              <label className={labelCls}>Counterparties (optional)</label>
+              <label className={labelCls}>{t('admin.reports.counterparties')}</label>
               {counterpartyIds.length > 0 && (
                 <button
                   onClick={() => setCounterpartyIds([])}
                   className="text-xs text-indigo-500 hover:text-indigo-700 dark:text-indigo-400"
                 >
-                  Clear ({counterpartyIds.length})
+                  {t('admin.reports.clearCounterparties', { n: counterpartyIds.length })}
                 </button>
               )}
             </div>
             <div className="max-h-44 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-600 divide-y divide-gray-100 dark:divide-gray-700">
               {counterparties.length === 0 && (
-                <p className="px-3 py-2 text-xs text-gray-400">No counterparties found.</p>
+                <p className="px-3 py-2 text-xs text-gray-400">{t('admin.reports.noCounterparties')}</p>
               )}
               {counterparties.map(cp => {
                 const checked = counterpartyIds.includes(cp.id)
@@ -623,7 +627,7 @@ function ReportsPanel() {
               })}
             </div>
             {counterpartyIds.length === 0 && (
-              <p className="text-xs text-gray-400 dark:text-gray-500">Leave empty to include all counterparties.</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500">{t('admin.reports.leaveEmptyCounterparties')}</p>
             )}
           </div>
         )}
@@ -634,13 +638,13 @@ function ReportsPanel() {
           className="mt-auto w-full px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
         >
           {generating ? (
-            <><Spinner size="sm" /><span>Queuing…</span></>
+            <><Spinner size="sm" /><span>{t('admin.reports.queuing')}</span></>
           ) : (
             <>
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
               </svg>
-              Generate Report
+              {t('admin.reports.generate')}
             </>
           )}
         </button>
@@ -649,7 +653,7 @@ function ReportsPanel() {
       {/* ── History ── */}
       <div className="flex-1 flex flex-col min-h-0">
         <div className="flex items-center justify-between mb-2">
-          <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Report History</p>
+          <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t('admin.reports.history')}</p>
           {loadingReports && <Spinner size="sm" />}
         </div>
 
@@ -657,10 +661,10 @@ function ReportsPanel() {
           <table className="w-full divide-y divide-gray-200 dark:divide-gray-700 text-xs">
             <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0 z-10">
               <tr>
-                <th className="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400">Type</th>
-                <th className="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400">Period</th>
-                <th className="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400">Status</th>
-                <th className="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400">Created</th>
+                <th className="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400">{t('admin.reports.table.type')}</th>
+                <th className="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400">{t('admin.reports.table.period')}</th>
+                <th className="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400">{t('admin.reports.table.status')}</th>
+                <th className="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400">{t('admin.reports.table.created')}</th>
                 <th className="px-3 py-2" />
               </tr>
             </thead>
@@ -698,7 +702,7 @@ function ReportsPanel() {
                         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
                         </svg>
-                        Download
+                        {t('admin.reports.download')}
                       </button>
                     )}
                   </td>
@@ -707,7 +711,7 @@ function ReportsPanel() {
               {reports.length === 0 && !loadingReports && (
                 <tr>
                   <td colSpan={5} className="px-3 py-8 text-center text-gray-400 dark:text-gray-500">
-                    No reports generated yet. Choose a type and click <strong>Generate Report</strong>.
+                    {t('admin.reports.table.empty')}
                   </td>
                 </tr>
               )}
@@ -723,16 +727,17 @@ function ReportsPanel() {
 // Page layout
 // ─────────────────────────────────────────────────────────────
 export function AdministrationPage() {
+  const { t } = useTranslation()
   return (
     <div className="p-6 h-full flex flex-col">
-      <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">Administration</h1>
+      <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">{t('admin.title')}</h1>
 
       <div className="flex-1 grid grid-cols-2 gap-4 min-h-0" style={{ gridTemplateRows: 'minmax(0,1fr) minmax(0,1fr)' }}>
-        <Panel title="Payment Statuses">
+        <Panel title={t('admin.panel.paymentStatuses')}>
           <PaymentStatusesPanel />
         </Panel>
 
-        <Panel title="Main Currency">
+        <Panel title={t('admin.panel.mainCurrency')}>
           <MainCurrencyPanel />
         </Panel>
 
@@ -741,7 +746,7 @@ export function AdministrationPage() {
             <svg className="w-4 h-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
             </svg>
-            <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Reports</h2>
+            <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">{t('admin.panel.reports')}</h2>
           </div>
           <div className="flex-1 p-4 overflow-auto min-h-0">
             <ReportsPanel />

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 function evaluate(expr: string): number | null {
   const sanitized = expr.replace(/[^0-9+\-*/().\s]/g, '').trim()
@@ -85,6 +86,7 @@ interface ModalProps {
 }
 
 export function CalculatorModal({ onApply, onClose }: ModalProps) {
+  const { t } = useTranslation()
   const [expr, setExpr] = useState('')
   const result = evaluate(expr)
   const valid = result !== null
@@ -102,7 +104,7 @@ export function CalculatorModal({ onApply, onClose }: ModalProps) {
       <div className="absolute inset-0 bg-black/30" onClick={onClose} />
       <div className="relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-4 w-72">
         <div className="flex items-center justify-between mb-3">
-          <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">Calculator</span>
+          <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t('calculator.title')}</span>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 leading-none">✕</button>
         </div>
         <Keypad expr={expr} setExpr={setExpr} onClose={onClose} />
@@ -111,7 +113,7 @@ export function CalculatorModal({ onApply, onClose }: ModalProps) {
           disabled={!valid}
           onClick={apply}
         >
-          Apply {valid ? `= ${result!.toFixed(2)}` : ''}
+          {valid ? t('calculator.applyWithResult', { result: result!.toFixed(2) }) : t('calculator.apply')}
         </button>
       </div>
     </div>
@@ -124,6 +126,7 @@ interface FloatingProps {
 }
 
 export function FloatingCalculator({ onClose }: FloatingProps) {
+  const { t } = useTranslation()
   const [expr, setExpr] = useState('')
   const [pos, setPos] = useState({ x: window.innerWidth - 284, y: 80 })
   const dragging = useRef(false)
@@ -164,7 +167,7 @@ export function FloatingCalculator({ onClose }: FloatingProps) {
         className="flex items-center justify-between px-3 py-2 border-b border-gray-200 dark:border-gray-700 cursor-grab active:cursor-grabbing"
         onMouseDown={onMouseDown}
       >
-        <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Calculator</span>
+        <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t('calculator.title')}</span>
         <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-sm leading-none">✕</button>
       </div>
       <div className="p-3">

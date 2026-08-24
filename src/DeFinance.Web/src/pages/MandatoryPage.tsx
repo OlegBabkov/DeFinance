@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNotify } from '../NotificationContext'
 import {
   mandatoryPaymentsApi,
@@ -42,6 +43,7 @@ function StatusBadge({
   onDoubleClick?: () => void
   cycling?: boolean
 }) {
+  const { t } = useTranslation()
   const base = 'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap select-none transition-opacity'
   const interactive = onDoubleClick
     ? 'cursor-pointer hover:ring-2 hover:ring-offset-1 hover:ring-current active:scale-95'
@@ -50,7 +52,7 @@ function StatusBadge({
     <span
       className={`${base} ${interactive} bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300`}
       onDoubleClick={onDoubleClick}
-      title={onDoubleClick ? 'Double-click to advance status' : undefined}
+      title={onDoubleClick ? t('mandatory.badge.doubleClickAdvance') : undefined}
     >
       {cycling ? <span className="opacity-50">{status.name}</span> : status.name}
     </span>
@@ -63,15 +65,12 @@ const OBLIGATION_COLORS: Record<string, string> = {
   NonMandatory: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400',
 }
 
-function dayLabel(frequency: PaymentFrequency): string {
-  return frequency === 'Weekly' ? 'Day of Week (1=Mon…7=Sun)' : 'Day of Month (1–31)'
-}
-
 function dayMax(frequency: PaymentFrequency): number {
   return frequency === 'Weekly' ? 7 : 31
 }
 
 export function MandatoryPage() {
+  const { t } = useTranslation()
   const notify = useNotify()
   const { favorites: favCats } = useFavorites('categories')
   const [result, setResult] = useState<PagedResult<MandatoryPayment> | null>(null)
@@ -131,8 +130,8 @@ export function MandatoryPage() {
   }, [])
 
   useEffect(() => {
-    const t = setTimeout(() => { setDebouncedSearch(search); setPage(1) }, 400)
-    return () => clearTimeout(t)
+    const timer = setTimeout(() => { setDebouncedSearch(search); setPage(1) }, 400)
+    return () => clearTimeout(timer)
   }, [search])
 
   useEffect(() => {
@@ -152,7 +151,7 @@ export function MandatoryPage() {
     }
     mandatoryPaymentsApi.getAll(query)
       .then(r => { if (!cancelled) { setResult(r); setError(null) } })
-      .catch(() => { if (!cancelled) setError('Failed to load mandatory payments') })
+      .catch(() => { if (!cancelled) setError(t('mandatory.error.loadFailed')) })
       .finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
   }, [debouncedSearch, isActiveFilter, accountFilter, categoryFilter, paymentStatusFilter, frequencyFilter, page, pageSize, sortBy, sortDirection, refreshKey])
@@ -169,7 +168,7 @@ export function MandatoryPage() {
       await mandatoryPaymentsApi.updatePaymentStatus(p.id, next.id)
       refetch()
     } catch {
-      notify('Failed to update status', 'error')
+      notify(t('mandatory.error.statusUpdateFailed'), 'error')
     } finally {
       setCyclingIds(prev => { const s = new Set(prev); s.delete(p.id); return s })
     }
@@ -254,14 +253,14 @@ export function MandatoryPage() {
       }
       if (modal === 'create') {
         await mandatoryPaymentsApi.create(req)
-        notify('Mandatory payment created', 'success')
+        notify(t('mandatory.notify.created'), 'success')
       } else if (modal !== null) {
         await mandatoryPaymentsApi.update(modal.id, { ...req, id: modal.id })
-        notify('Mandatory payment updated', 'info')
+        notify(t('mandatory.notify.updated'), 'info')
       }
       closeModal(); refetch()
     } catch {
-      setFormError('Failed to save. Please check your input and try again.')
+      setFormError(t('mandatory.error.saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -272,10 +271,10 @@ export function MandatoryPage() {
     setResetting(true)
     try {
       const { updated } = await mandatoryPaymentsApi.resetPaymentStatuses(accountFilter)
-      notify(`Reset ${updated} payment status${updated !== 1 ? 'es' : ''}`, 'info')
+      notify(t('mandatory.notify.resetDone', { n: updated }), 'info')
       refetch()
     } catch {
-      notify('Failed to reset payment statuses', 'error')
+      notify(t('mandatory.error.resetFailed'), 'error')
     } finally {
       setResetting(false)
       setConfirmReset(false)
@@ -283,8 +282,8 @@ export function MandatoryPage() {
   }
 
   const toggle = async (p: MandatoryPayment) => {
-    if (p.isActive) { await mandatoryPaymentsApi.deactivate(p.id); notify('Payment deactivated', 'error') }
-    else { await mandatoryPaymentsApi.activate(p.id); notify('Payment activated', 'success') }
+    if (p.isActive) { await mandatoryPaymentsApi.deactivate(p.id); notify(t('mandatory.notify.deactivated'), 'error') }
+    else { await mandatoryPaymentsApi.activate(p.id); notify(t('mandatory.notify.activated'), 'success') }
     refetch()
   }
 
@@ -297,20 +296,20 @@ export function MandatoryPage() {
     <div className="h-full flex flex-col">
       <div className="px-8 pt-8 pb-4 shrink-0">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Mandatory Payments</h1>
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{t('mandatory.title')}</h1>
           <div className="flex flex-col items-end gap-2">
             <button
               onClick={openCreate}
               className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors"
             >
-              + New Payment
+              {t('mandatory.button.new')}
             </button>
             {accountFilter && (
               <button
                 onClick={() => setConfirmReset(true)}
                 className="px-3 py-1.5 text-sm text-red-600 dark:text-red-400 border border-red-300 dark:border-red-700 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors whitespace-nowrap"
               >
-                Reset payment statuses
+                {t('mandatory.button.resetStatuses')}
               </button>
             )}
           </div>
@@ -320,33 +319,33 @@ export function MandatoryPage() {
             type="search"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Search by name…"
+            placeholder={t('mandatory.filter.searchByName')}
             className={`${filterCls} w-48`}
           />
           <select value={isActiveFilter} onChange={e => { setIsActiveFilter(e.target.value); setPage(1) }} className={filterCls}>
-            <option value="">All statuses</option>
-            <option value="true">Active only</option>
-            <option value="false">Inactive only</option>
+            <option value="">{t('mandatory.filter.allStatuses')}</option>
+            <option value="true">{t('mandatory.filter.activeOnly')}</option>
+            <option value="false">{t('mandatory.filter.inactiveOnly')}</option>
           </select>
           <select value={accountFilter} onChange={e => { setAccountFilter(e.target.value); setPage(1) }} className={filterCls}>
-            <option value="">All accounts</option>
+            <option value="">{t('mandatory.filter.allAccounts')}</option>
             {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
           </select>
           <select value={categoryFilter} onChange={e => { setCategoryFilter(e.target.value); setPage(1) }} className={filterCls}>
-            <option value="">All categories</option>
+            <option value="">{t('mandatory.filter.allCategories')}</option>
             {sortByFavorites(categories, favCats).map(c => <option key={c.id} value={c.id}>{favCats.has(c.id) ? `★ ${c.name}` : c.name}</option>)}
           </select>
           <select value={paymentStatusFilter} onChange={e => { setPaymentStatusFilter(e.target.value); setPage(1) }} className={filterCls}>
-            <option value="">All statuses</option>
+            <option value="">{t('mandatory.filter.allStatuses')}</option>
             {paymentStatuses.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
           <select value={frequencyFilter} onChange={e => { setFrequencyFilter(e.target.value); setPage(1) }} className={filterCls}>
-            <option value="">All frequencies</option>
+            <option value="">{t('mandatory.filter.allFrequencies')}</option>
             {FREQUENCIES.map(f => <option key={f} value={f}>{FREQUENCY_LABELS[f]}</option>)}
           </select>
           {restBalance && (
             <span className="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
-              Rest after {restBalance.accountName}:{' '}
+              {t('mandatory.restAfter', { accountName: restBalance.accountName })}{' '}
               <span className={`font-mono font-medium ${restBalance.balance >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>
                 {restBalance.symbol}{restBalance.balance.toFixed(2)}
               </span>
@@ -358,15 +357,14 @@ export function MandatoryPage() {
       </div>
 
       {confirmReset && accountFilter && (
-        <Modal title="Reset Payment Statuses" onClose={() => setConfirmReset(false)}>
+        <Modal title={t('mandatory.resetModal.title')} onClose={() => setConfirmReset(false)}>
           <p className="text-sm text-gray-700 dark:text-gray-300">
-            This will set the payment status to <span className="font-medium">None</span> for all mandatory payments on account{' '}
-            <span className="font-semibold">{accounts.find(a => a.id === accountFilter)?.name}</span>.
+            {t('mandatory.resetModal.body', { accountName: accounts.find(a => a.id === accountFilter)?.name })}
           </p>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">This cannot be undone. Continue?</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('mandatory.resetModal.warning')}</p>
           <div className="flex justify-end gap-3 pt-4">
             <button type="button" onClick={() => setConfirmReset(false)} className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100">
-              Cancel
+              {t('mandatory.resetModal.cancel')}
             </button>
             <button
               type="button"
@@ -374,73 +372,73 @@ export function MandatoryPage() {
               onClick={handleResetStatuses}
               className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors"
             >
-              {resetting ? 'Resetting…' : 'Yes, reset'}
+              {resetting ? t('mandatory.resetModal.resetting') : t('mandatory.resetModal.confirm')}
             </button>
           </div>
         </Modal>
       )}
 
       {modal !== null && (
-        <Modal title={isEditing ? 'Edit Payment' : 'New Mandatory Payment'} onClose={closeModal}>
+        <Modal title={isEditing ? t('mandatory.modal.editTitle') : t('mandatory.modal.newTitle')} onClose={closeModal}>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className={labelCls}>Name</label>
-              <input required maxLength={200} value={formName} onChange={e => setFormName(e.target.value)} className={inputCls} placeholder="e.g. Rent" />
+              <label className={labelCls}>{t('mandatory.form.name')}</label>
+              <input required maxLength={200} value={formName} onChange={e => setFormName(e.target.value)} className={inputCls} placeholder={t('mandatory.form.namePlaceholder')} />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className={labelCls}>Amount</label>
+                <label className={labelCls}>{t('mandatory.form.amount')}</label>
                 <input required type="number" min="0.01" step="0.01" value={formAmount} onChange={e => setFormAmount(e.target.value)} className={inputCls} />
               </div>
               <div>
-                <label className={labelCls}>Currency</label>
+                <label className={labelCls}>{t('mandatory.form.currency')}</label>
                 <select value={formCurrencyId} onChange={e => setFormCurrencyId(e.target.value)} className={inputCls}>
                   {currencies.map(c => <option key={c.id} value={c.id}>{c.symbol} {c.code}</option>)}
                 </select>
               </div>
             </div>
             <div>
-              <label className={labelCls}>Account (Bank)</label>
+              <label className={labelCls}>{t('mandatory.form.account')}</label>
               <select required value={formAccountId} onChange={e => setFormAccountId(e.target.value)} className={inputCls}>
-                <option value="">Select account…</option>
+                <option value="">{t('mandatory.form.selectAccount')}</option>
                 {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
               </select>
             </div>
             <div>
-              <label className={labelCls}>Category (optional)</label>
+              <label className={labelCls}>{t('mandatory.form.category')}</label>
               <select value={formCategoryId} onChange={e => setFormCategoryId(e.target.value)} className={inputCls}>
-                <option value="">No category</option>
+                <option value="">{t('mandatory.form.noCategory')}</option>
                 {sortByFavorites(categories, favCats).map(c => <option key={c.id} value={c.id}>{favCats.has(c.id) ? `★ ${c.name}` : c.name}</option>)}
               </select>
             </div>
             <div>
-              <label className={labelCls}>Payment Status (optional)</label>
+              <label className={labelCls}>{t('mandatory.form.paymentStatus')}</label>
               <select value={formPaymentStatusId} onChange={e => setFormPaymentStatusId(e.target.value)} className={inputCls}>
-                <option value="">No status</option>
+                <option value="">{t('mandatory.form.noStatus')}</option>
                 {paymentStatuses.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className={labelCls}>Frequency</label>
+                <label className={labelCls}>{t('mandatory.form.frequency')}</label>
                 <select value={formFrequency} onChange={e => { setFormFrequency(e.target.value as PaymentFrequency); setFormDay('1') }} className={inputCls}>
                   {FREQUENCIES.map(f => <option key={f} value={f}>{FREQUENCY_LABELS[f]}</option>)}
                 </select>
               </div>
               <div>
-                <label className={labelCls}>{dayLabel(formFrequency)}</label>
+                <label className={labelCls}>{formFrequency === 'Weekly' ? t('mandatory.form.dayOfWeek') : t('mandatory.form.dayOfMonth')}</label>
                 <input required type="number" min="1" max={dayMax(formFrequency)} value={formDay} onChange={e => setFormDay(e.target.value)} className={inputCls} />
               </div>
             </div>
             <div>
-              <label className={labelCls}>Notes (optional)</label>
-              <textarea maxLength={500} value={formNotes} onChange={e => setFormNotes(e.target.value)} rows={2} className={`${inputCls} resize-none`} placeholder="Any additional details…" />
+              <label className={labelCls}>{t('mandatory.form.notes')}</label>
+              <textarea maxLength={500} value={formNotes} onChange={e => setFormNotes(e.target.value)} rows={2} className={`${inputCls} resize-none`} placeholder={t('mandatory.form.notesPlaceholder')} />
             </div>
             {formError && <p className="text-sm text-red-500">{formError}</p>}
             <div className="flex justify-end gap-3 pt-2">
-              <button type="button" onClick={closeModal} className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100">Cancel</button>
+              <button type="button" onClick={closeModal} className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100">{t('mandatory.button.cancel')}</button>
               <button type="submit" disabled={saving} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors">
-                {saving ? 'Saving…' : isEditing ? 'Save' : 'Create'}
+                {saving ? t('mandatory.button.saving') : isEditing ? t('mandatory.button.save') : t('mandatory.button.create')}
               </button>
             </div>
           </form>
@@ -452,15 +450,15 @@ export function MandatoryPage() {
           <table className="w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
             <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0 z-10">
               <tr>
-                <SortableHeader label="Name" field="name" sortBy={sortBy} sortDirection={sortDirection} onSort={handleSort} />
-                <SortableHeader label="Amount" field="amount" sortBy={sortBy} sortDirection={sortDirection} onSort={handleSort} />
-                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Account</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Frequency</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Day</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Category</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Payment Status</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Notes</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Status</th>
+                <SortableHeader label={t('mandatory.table.name')} field="name" sortBy={sortBy} sortDirection={sortDirection} onSort={handleSort} />
+                <SortableHeader label={t('mandatory.table.amount')} field="amount" sortBy={sortBy} sortDirection={sortDirection} onSort={handleSort} />
+                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">{t('mandatory.table.account')}</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">{t('mandatory.table.frequency')}</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">{t('mandatory.table.day')}</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">{t('mandatory.table.category')}</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">{t('mandatory.table.paymentStatus')}</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">{t('mandatory.table.notes')}</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">{t('mandatory.table.status')}</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
@@ -508,7 +506,7 @@ export function MandatoryPage() {
                       : <span
                           className="text-gray-400 dark:text-gray-500 cursor-pointer select-none"
                           onDoubleClick={() => handleStatusCycle(p)}
-                          title="Double-click to advance status"
+                          title={t('mandatory.badge.doubleClickAdvance')}
                         >—</span>}
                   </td>
                   <td className="px-4 py-3 text-gray-500 dark:text-gray-400 max-w-[160px] truncate" title={p.notes ?? ''}>
@@ -516,15 +514,15 @@ export function MandatoryPage() {
                   </td>
                   <td className="px-4 py-3">
                     <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${p.isActive ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'}`}>
-                      {p.isActive ? 'Active' : 'Inactive'}
+                      {p.isActive ? t('mandatory.status.active') : t('mandatory.status.inactive')}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="inline-flex items-center gap-1">
-                      <IconButton icon={<PencilIcon />} label="Edit" onClick={() => openEdit(p)} className="text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400" />
+                      <IconButton icon={<PencilIcon />} label={t('mandatory.action.edit')} onClick={() => openEdit(p)} className="text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400" />
                       <IconButton
                         icon={p.isActive ? <BanIcon /> : <CheckCircleIcon />}
-                        label={p.isActive ? 'Deactivate' : 'Activate'}
+                        label={p.isActive ? t('mandatory.action.deactivate') : t('mandatory.action.activate')}
                         onClick={() => toggle(p)}
                         className={p.isActive ? 'text-gray-400 hover:text-red-500 dark:hover:text-red-400' : 'text-gray-400 hover:text-green-600 dark:hover:text-green-400'}
                       />
@@ -534,7 +532,7 @@ export function MandatoryPage() {
               ))}
               {items.length === 0 && !loading && (
                 <tr>
-                  <td colSpan={10} className="px-4 py-8 text-center text-gray-400 dark:text-gray-500">No mandatory payments found.</td>
+                  <td colSpan={10} className="px-4 py-8 text-center text-gray-400 dark:text-gray-500">{t('mandatory.table.empty')}</td>
                 </tr>
               )}
             </tbody>

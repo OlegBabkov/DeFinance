@@ -8,6 +8,7 @@ import { categoriesApi, type Category } from '../api/categories'
 import { useMainCurrency } from '../MainCurrencyContext'
 import { useTheme } from '../ThemeContext'
 import { Spinner } from '../components/Spinner'
+import { useTranslation } from 'react-i18next'
 
 const PALETTE = ['#6366f1','#f59e0b','#10b981','#ef4444','#3b82f6','#8b5cf6','#ec4899','#14b8a6','#f97316','#84cc16']
 
@@ -39,6 +40,7 @@ function getCatColor(cat: Category, allCats: Category[]) {
 export function TransactionsDashboardPage() {
   const { mainCurrency } = useMainCurrency()
   const { dark } = useTheme()
+  const { t } = useTranslation()
   const sym = mainCurrency?.symbol ?? '€'
 
   const [categories, setCategories] = useState<Category[]>([])
@@ -126,7 +128,7 @@ export function TransactionsDashboardPage() {
 
   return (
     <div className="p-6 space-y-5 overflow-y-auto h-full">
-      <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Transactions Dashboard</h1>
+      <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{t('txDashboard.title')}</h1>
 
       {/* Controls row */}
       <div className="flex items-center gap-3 flex-wrap">
@@ -139,7 +141,7 @@ export function TransactionsDashboardPage() {
           >
             {catsLoading
               ? <Spinner size="sm" />
-              : <span>{selectedIds.size === 0 ? 'Select categories…' : `${selectedIds.size} selected`}</span>
+              : <span>{selectedIds.size === 0 ? t('txDashboard.selectCategories') : t('txDashboard.selectedCount', { n: selectedIds.size })}</span>
             }
             <span className="text-gray-400 text-xs">▾</span>
           </button>
@@ -148,8 +150,8 @@ export function TransactionsDashboardPage() {
             <div className="absolute top-full mt-1 left-0 z-30 w-60 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-xl overflow-hidden">
               <div className="max-h-72 overflow-y-auto">
                 {[
-                  { label: 'Income', items: incomeCategories },
-                  { label: 'Expense', items: expenseCategories },
+                  { label: t('txDashboard.group.income'), items: incomeCategories },
+                  { label: t('txDashboard.group.expense'), items: expenseCategories },
                 ].map(group => group.items.length === 0 ? null : (
                   <div key={group.label}>
                     <div className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-700/60 sticky top-0">
@@ -180,7 +182,7 @@ export function TransactionsDashboardPage() {
                     onClick={() => setSelectedIdList([])}
                     className="text-xs text-gray-400 hover:text-red-500 transition-colors"
                   >
-                    Clear all
+                    {t('txDashboard.clearAll')}
                   </button>
                 </div>
               )}
@@ -232,7 +234,7 @@ export function TransactionsDashboardPage() {
         ) : selectedIds.size === 0 ? (
           <div className="flex flex-col items-center justify-center h-80 gap-3 text-gray-400 dark:text-gray-500">
             <span className="text-4xl">📊</span>
-            <span className="text-sm">Select one or more categories above to see the monthly trend</span>
+            <span className="text-sm">{t('txDashboard.emptyHint')}</span>
           </div>
         ) : (
           <ResponsiveContainer width="100%" height={380}>

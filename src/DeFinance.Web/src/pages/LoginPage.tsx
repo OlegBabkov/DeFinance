@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { authApi, saveToken } from '../api/auth'
 
 const inputCls =
@@ -25,6 +26,7 @@ export function LoginPage({ onLogin }: Props) {
 
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const { t } = useTranslation()
 
   const switchMode = (m: 'login' | 'register') => { setMode(m); setError(null) }
 
@@ -37,7 +39,7 @@ export function LoginPage({ onLogin }: Props) {
       saveToken(res.token)
       onLogin(res.username)
     } catch {
-      setError('Invalid username or password.')
+      setError(t('login.error.invalidCredentials'))
     } finally {
       setLoading(false)
     }
@@ -46,7 +48,7 @@ export function LoginPage({ onLogin }: Props) {
   const handleRegister = async (e: { preventDefault(): void }) => {
     e.preventDefault()
     setError(null)
-    if (regPassword !== regConfirm) { setError('Passwords do not match.'); return }
+    if (regPassword !== regConfirm) { setError(t('login.error.passwordsMismatch')); return }
     setLoading(true)
     try {
       await authApi.register({ username: regUsername, email: regEmail, password: regPassword, confirmPassword: regConfirm })
@@ -58,9 +60,9 @@ export function LoginPage({ onLogin }: Props) {
         ?.response?.data
       if (msg?.errors) {
         const first = Object.values(msg.errors).flat()[0]
-        setError(first ?? 'Registration failed.')
+        setError(first ?? t('login.error.registrationFailed'))
       } else {
-        setError(msg?.message ?? 'Registration failed. Please check your input.')
+        setError(msg?.message ?? t('login.error.registrationFailedCheck'))
       }
     } finally {
       setLoading(false)
@@ -75,7 +77,7 @@ export function LoginPage({ onLogin }: Props) {
             💰 DeFinance
           </span>
           <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-            {mode === 'login' ? 'Sign in to your account' : 'Create a new account'}
+            {mode === 'login' ? t('login.subtitle.signIn') : t('login.subtitle.register')}
           </p>
         </div>
 
@@ -91,7 +93,7 @@ export function LoginPage({ onLogin }: Props) {
                   : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
               }`}
             >
-              Sign In
+              {t('login.tab.signIn')}
             </button>
             <button
               type="button"
@@ -102,26 +104,26 @@ export function LoginPage({ onLogin }: Props) {
                   : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
               }`}
             >
-              Sign Up
+              {t('login.tab.signUp')}
             </button>
           </div>
 
           {mode === 'login' ? (
             <form onSubmit={handleLogin} className="space-y-5">
               <div>
-                <label className={labelCls}>Username</label>
+                <label className={labelCls}>{t('login.field.username')}</label>
                 <input
                   required autoFocus type="text"
                   value={loginUsername} onChange={e => setLoginUsername(e.target.value)}
-                  className={inputCls} placeholder="Enter your username"
+                  className={inputCls} placeholder={t('login.placeholder.username')}
                 />
               </div>
               <div>
-                <label className={labelCls}>Password</label>
+                <label className={labelCls}>{t('login.field.password')}</label>
                 <input
                   required type="password"
                   value={loginPassword} onChange={e => setLoginPassword(e.target.value)}
-                  className={inputCls} placeholder="Enter your password"
+                  className={inputCls} placeholder={t('login.placeholder.password')}
                 />
               </div>
               {error && <p className="text-sm text-red-500">{error}</p>}
@@ -129,41 +131,41 @@ export function LoginPage({ onLogin }: Props) {
                 type="submit" disabled={loading}
                 className="w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors"
               >
-                {loading ? 'Signing in…' : 'Sign In'}
+                {loading ? t('login.button.signingIn') : t('login.button.signIn')}
               </button>
             </form>
           ) : (
             <form onSubmit={handleRegister} className="space-y-5">
               <div>
-                <label className={labelCls}>Username</label>
+                <label className={labelCls}>{t('login.field.username')}</label>
                 <input
                   required autoFocus type="text"
                   value={regUsername} onChange={e => setRegUsername(e.target.value)}
-                  className={inputCls} placeholder="Choose a username"
+                  className={inputCls} placeholder={t('login.placeholder.chooseUsername')}
                 />
               </div>
               <div>
-                <label className={labelCls}>Email</label>
+                <label className={labelCls}>{t('login.field.email')}</label>
                 <input
                   required type="email"
                   value={regEmail} onChange={e => setRegEmail(e.target.value)}
-                  className={inputCls} placeholder="your@email.com"
+                  className={inputCls} placeholder={t('login.placeholder.email')}
                 />
               </div>
               <div>
-                <label className={labelCls}>Password</label>
+                <label className={labelCls}>{t('login.field.password')}</label>
                 <input
                   required type="password" minLength={6}
                   value={regPassword} onChange={e => setRegPassword(e.target.value)}
-                  className={inputCls} placeholder="Min. 6 characters"
+                  className={inputCls} placeholder={t('login.placeholder.minPassword')}
                 />
               </div>
               <div>
-                <label className={labelCls}>Confirm Password</label>
+                <label className={labelCls}>{t('login.field.confirmPassword')}</label>
                 <input
                   required type="password"
                   value={regConfirm} onChange={e => setRegConfirm(e.target.value)}
-                  className={inputCls} placeholder="Repeat your password"
+                  className={inputCls} placeholder={t('login.placeholder.repeatPassword')}
                 />
               </div>
               {error && <p className="text-sm text-red-500">{error}</p>}
@@ -171,7 +173,7 @@ export function LoginPage({ onLogin }: Props) {
                 type="submit" disabled={loading}
                 className="w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors"
               >
-                {loading ? 'Creating account…' : 'Create Account'}
+                {loading ? t('login.button.creatingAccount') : t('login.button.createAccount')}
               </button>
             </form>
           )}

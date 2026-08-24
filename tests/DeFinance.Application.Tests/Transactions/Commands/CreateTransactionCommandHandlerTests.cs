@@ -12,13 +12,17 @@ public class CreateTransactionCommandHandlerTests
     private readonly ITransactionRepository _transactionRepository = Substitute.For<ITransactionRepository>();
     private readonly IAccountRepository _accountRepository = Substitute.For<IAccountRepository>();
     private readonly ICategoryRepository _categoryRepository = Substitute.For<ICategoryRepository>();
+    private readonly IPaymentStatusRepository _paymentStatusRepository = Substitute.For<IPaymentStatusRepository>();
     private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
     private readonly CreateTransactionCommandHandler _handler;
+
+    private static readonly PaymentStatus _affectsBalance = PaymentStatus.Create("Paid", null, affectsBalance: true);
 
     public CreateTransactionCommandHandlerTests()
     {
         _currentUserService.UserId.Returns(Guid.NewGuid());
-        _handler = new CreateTransactionCommandHandler(_transactionRepository, _accountRepository, _categoryRepository, _currentUserService);
+        _paymentStatusRepository.GetByIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns(_affectsBalance);
+        _handler = new CreateTransactionCommandHandler(_transactionRepository, _accountRepository, _categoryRepository, _paymentStatusRepository, _currentUserService);
     }
 
     private static Account MakeAccount(decimal balance = 0m) =>

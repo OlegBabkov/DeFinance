@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { usePersistedState } from '../hooks/usePersistedState'
 import { useNotify } from '../NotificationContext'
 import { currenciesApi, type Currency } from '../api/currencies'
@@ -34,6 +35,7 @@ const filterCls =
   'px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500'
 
 export function CurrenciesPage() {
+  const { t } = useTranslation()
   const notify = useNotify()
   const [result, setResult] = useState<PagedResult<Currency> | null>(null)
   const [loading, setLoading] = useState(true)
@@ -74,7 +76,7 @@ export function CurrenciesPage() {
       sortDirection,
     })
       .then(r => { if (!cancelled) { setResult(r); setError(null) } })
-      .catch(() => { if (!cancelled) setError('Failed to load currencies') })
+      .catch(() => { if (!cancelled) setError(t('currencies.error.loadFailed')) })
       .finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
   }, [debouncedSearch, isActiveFilter, page, pageSize, sortBy, sortDirection, refreshKey])
@@ -93,10 +95,10 @@ export function CurrenciesPage() {
     setSyncing(true)
     try {
       const { synced } = await exchangeRatesApi.sync()
-      notify(`Synced ${synced} exchange rate${synced !== 1 ? 's' : ''}`, 'success')
+      notify(t('currencies.notify.synced', { n: synced }), 'success')
       refetch()
     } catch {
-      notify('Failed to sync rates', 'error')
+      notify(t('currencies.notify.syncFailed'), 'error')
     } finally {
       setSyncing(false)
     }
@@ -130,23 +132,23 @@ export function CurrenciesPage() {
     try {
       if (modal === 'create') {
         await currenciesApi.create({ code: formCode, name: formName, symbol: formSymbol })
-        notify('Currency created', 'success')
+        notify(t('currencies.notify.created'), 'success')
       } else if (modal !== null) {
         await currenciesApi.update(modal.id, { name: formName, symbol: formSymbol })
-        notify('Currency updated', 'info')
+        notify(t('currencies.notify.updated'), 'info')
       }
       closeModal()
       refetch()
     } catch {
-      setFormError('Failed to save. Please check your input and try again.')
+      setFormError(t('currencies.error.saveFailed'))
     } finally {
       setSaving(false)
     }
   }
 
   const toggle = async (currency: Currency) => {
-    if (currency.isActive) { await currenciesApi.deactivate(currency.id); notify('Currency deactivated', 'error') }
-    else { await currenciesApi.activate(currency.id); notify('Currency activated', 'success') }
+    if (currency.isActive) { await currenciesApi.deactivate(currency.id); notify(t('currencies.notify.deactivated'), 'error') }
+    else { await currenciesApi.activate(currency.id); notify(t('currencies.notify.activated'), 'success') }
     refetch()
   }
 
@@ -159,20 +161,20 @@ export function CurrenciesPage() {
     <div className="h-full flex flex-col">
       <div className="px-8 pt-8 pb-4 shrink-0">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Currencies</h1>
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{t('currencies.title')}</h1>
           <div className="flex items-center gap-2">
             <button
               onClick={handleSync}
               disabled={syncing}
               className="px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
             >
-              {syncing ? 'Syncing…' : '↻ Sync Rates'}
+              {syncing ? t('currencies.button.syncing') : t('currencies.button.syncRates')}
             </button>
             <button
               onClick={openCreate}
               className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors"
             >
-              + New Currency
+              {t('currencies.button.new')}
             </button>
           </div>
         </div>
@@ -181,40 +183,40 @@ export function CurrenciesPage() {
             type="search"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Search by name, code or symbol…"
+            placeholder={t('currencies.filter.searchByName')}
             className={`${filterCls} w-64`}
           />
           <select value={isActiveFilter} onChange={e => handleIsActiveChange(e.target.value)} className={filterCls}>
-            <option value="">All statuses</option>
-            <option value="true">Active only</option>
-            <option value="false">Inactive only</option>
+            <option value="">{t('currencies.filter.allStatuses')}</option>
+            <option value="true">{t('currencies.filter.activeOnly')}</option>
+            <option value="false">{t('currencies.filter.inactiveOnly')}</option>
           </select>
           {loading && <Spinner size="sm" />}
         </div>
       </div>
 
       {modal !== null && (
-        <Modal title={isEditing ? 'Edit Currency' : 'New Currency'} onClose={closeModal}>
+        <Modal title={isEditing ? t('currencies.modal.editTitle') : t('currencies.modal.newTitle')} onClose={closeModal}>
           <form onSubmit={handleSubmit} className="space-y-4">
             {!isEditing && (
               <div>
-                <label className={labelCls}>Code</label>
-                <input required maxLength={10} value={formCode} onChange={e => setFormCode(e.target.value.toUpperCase())} className={inputCls} placeholder="USD" />
+                <label className={labelCls}>{t('currencies.form.code')}</label>
+                <input required maxLength={10} value={formCode} onChange={e => setFormCode(e.target.value.toUpperCase())} className={inputCls} placeholder={t('currencies.form.codePlaceholder')} />
               </div>
             )}
             <div>
-              <label className={labelCls}>Name</label>
-              <input required maxLength={100} value={formName} onChange={e => setFormName(e.target.value)} className={inputCls} placeholder="US Dollar" />
+              <label className={labelCls}>{t('currencies.form.name')}</label>
+              <input required maxLength={100} value={formName} onChange={e => setFormName(e.target.value)} className={inputCls} placeholder={t('currencies.form.namePlaceholder')} />
             </div>
             <div>
-              <label className={labelCls}>Symbol</label>
-              <input required maxLength={10} value={formSymbol} onChange={e => setFormSymbol(e.target.value)} className={inputCls} placeholder="$" />
+              <label className={labelCls}>{t('currencies.form.symbol')}</label>
+              <input required maxLength={10} value={formSymbol} onChange={e => setFormSymbol(e.target.value)} className={inputCls} placeholder={t('currencies.form.symbolPlaceholder')} />
             </div>
             {formError && <p className="text-sm text-red-500">{formError}</p>}
             <div className="flex justify-end gap-3 pt-2">
-              <button type="button" onClick={closeModal} className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100">Cancel</button>
+              <button type="button" onClick={closeModal} className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100">{t('currencies.button.cancel')}</button>
               <button type="submit" disabled={saving} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors">
-                {saving ? 'Saving…' : isEditing ? 'Save' : 'Create'}
+                {saving ? t('currencies.button.saving') : isEditing ? t('currencies.button.save') : t('currencies.button.create')}
               </button>
             </div>
           </form>
@@ -226,11 +228,11 @@ export function CurrenciesPage() {
           <table className="w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
             <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0 z-10">
               <tr>
-                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Symbol</th>
-                <SortableHeader label="Code" field="code" sortBy={sortBy} sortDirection={sortDirection} onSort={handleSort} />
-                <SortableHeader label="Name" field="name" sortBy={sortBy} sortDirection={sortDirection} onSort={handleSort} />
-                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Rate (EUR)</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Status</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">{t('currencies.table.symbol')}</th>
+                <SortableHeader label={t('currencies.table.code')} field="code" sortBy={sortBy} sortDirection={sortDirection} onSort={handleSort} />
+                <SortableHeader label={t('currencies.table.name')} field="name" sortBy={sortBy} sortDirection={sortDirection} onSort={handleSort} />
+                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">{t('currencies.table.rateEur')}</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">{t('currencies.table.status')}</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
@@ -242,7 +244,7 @@ export function CurrenciesPage() {
                   <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{currency.name}</td>
                   <td className="px-4 py-3 font-mono text-sm">
                     {currency.code === 'EUR'
-                      ? <span className="text-gray-400 dark:text-gray-500">Base</span>
+                      ? <span className="text-gray-400 dark:text-gray-500">{t('currencies.table.rateBase')}</span>
                       : rates[currency.code]
                         ? <RateCell rate={rates[currency.code]} />
                         : <span className="text-gray-300 dark:text-gray-600">—</span>
@@ -250,20 +252,20 @@ export function CurrenciesPage() {
                   </td>
                   <td className="px-4 py-3">
                     <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${currency.isActive ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'}`}>
-                      {currency.isActive ? 'Active' : 'Inactive'}
+                      {currency.isActive ? t('currencies.status.active') : t('currencies.status.inactive')}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="inline-flex items-center gap-1">
-                      <IconButton icon={<PencilIcon />} label="Edit" onClick={() => openEdit(currency)} className="text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400" />
-                      <IconButton icon={currency.isActive ? <BanIcon /> : <CheckCircleIcon />} label={currency.isActive ? 'Deactivate' : 'Activate'} onClick={() => toggle(currency)} className={currency.isActive ? 'text-gray-400 hover:text-red-500 dark:hover:text-red-400' : 'text-gray-400 hover:text-green-600 dark:hover:text-green-400'} />
+                      <IconButton icon={<PencilIcon />} label={t('currencies.action.edit')} onClick={() => openEdit(currency)} className="text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400" />
+                      <IconButton icon={currency.isActive ? <BanIcon /> : <CheckCircleIcon />} label={currency.isActive ? t('currencies.action.deactivate') : t('currencies.action.activate')} onClick={() => toggle(currency)} className={currency.isActive ? 'text-gray-400 hover:text-red-500 dark:hover:text-red-400' : 'text-gray-400 hover:text-green-600 dark:hover:text-green-400'} />
                     </div>
                   </td>
                 </tr>
               ))}
               {items.length === 0 && !loading && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-gray-400 dark:text-gray-500">No currencies found.</td>
+                  <td colSpan={6} className="px-4 py-8 text-center text-gray-400 dark:text-gray-500">{t('currencies.table.empty')}</td>
                 </tr>
               )}
             </tbody>

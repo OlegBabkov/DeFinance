@@ -23,6 +23,7 @@ public class CreateTransactionCommandHandler(
     ITransactionRepository transactionRepository,
     IAccountRepository accountRepository,
     ICategoryRepository categoryRepository,
+    IPaymentStatusRepository paymentStatusRepository,
     ICurrentUserService currentUserService)
     : IRequestHandler<CreateTransactionCommand, TransactionResponse>
 {
@@ -32,13 +33,16 @@ public class CreateTransactionCommandHandler(
             ?? throw new InvalidOperationException($"Account {request.AccountId} not found.");
         var category = await categoryRepository.GetByIdAsync(request.CategoryId, cancellationToken)
             ?? throw new InvalidOperationException($"Category {request.CategoryId} not found.");
+        var paymentStatus = await paymentStatusRepository.GetByIdAsync(request.PaymentStatusId, cancellationToken)
+            ?? throw new InvalidOperationException($"PaymentStatus {request.PaymentStatusId} not found.");
 
         var transaction = Transaction.Create(
             request.DateTime, request.Sum, request.ExchangeRate,
             request.InCurrencyId, request.AccountId, request.CategoryId,
             request.CounterpartyId, request.PaymentStatusId, currentUserService.UserId, request.Notes);
 
-        account.AdjustBalance(BalanceDelta(category.Type, request.Sum));
+        if (paymentStatus.AffectsBalance)
+            account.AdjustBalance(BalanceDelta(category.Type, request.Sum));
 
         await transactionRepository.AddAsync(transaction, cancellationToken);
         await transactionRepository.SaveChangesAsync(cancellationToken);

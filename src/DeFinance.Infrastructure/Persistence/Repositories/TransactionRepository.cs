@@ -21,6 +21,7 @@ public class TransactionRepository(DeFinanceDbContext dbContext, ICacheService c
             .Where(t => t.UserId == _userId)
             .Where(t => t.DateTime >= yearStart && t.DateTime < yearEnd && monthList.Contains(t.DateTime.Month))
             .Where(t => !excludeSavings || t.Account!.Type != AccountType.Savings)
+            .Where(t => t.PaymentStatus!.AffectsBalance)
             .GroupBy(t => new { t.CategoryId, t.DateTime.Month })
             .Select(g => new { g.Key.CategoryId, g.Key.Month, Total = g.Sum(t => t.AmountInCurrency) })
             .ToListAsync(cancellationToken);
@@ -33,6 +34,7 @@ public class TransactionRepository(DeFinanceDbContext dbContext, ICacheService c
             .Where(t => t.UserId == _userId)
             .Where(t => t.DateTime < before)
             .Where(t => !excludeSavings || t.Account!.Type != AccountType.Savings)
+            .Where(t => t.PaymentStatus!.AffectsBalance)
             .SumAsync(t =>
                 (t.Category!.Type == CategoryType.Income || t.Category!.Type == CategoryType.TransferIn) ? t.AmountInCurrency :
                 (t.Category!.Type == CategoryType.Expense || t.Category!.Type == CategoryType.TransferOut) ? -t.AmountInCurrency : 0m,
@@ -68,25 +70,29 @@ public class TransactionRepository(DeFinanceDbContext dbContext, ICacheService c
             .Where(t => t.UserId == _userId)
             .Include(t => t.Account)
             .Include(t => t.Category).ThenInclude(c => c!.Parent)
+            .Include(t => t.PaymentStatus)
             .FirstOrDefaultAsync(t => t.Id == transactionId, cancellationToken);
 
         if (tx?.Account is null) return null;
 
-        // Contributions from same-account transactions strictly after this one
+        // Contributions from same-account non-rejected transactions strictly after this one
         var laterAdjustment = await dbContext.Transactions
             .Where(t => t.UserId == _userId)
             .Where(t => t.AccountId == tx.AccountId && t.DateTime > tx.DateTime)
+            .Where(t => t.PaymentStatus!.AffectsBalance)
             .SumAsync(t =>
                 t.Category!.Type == CategoryType.Income  ?  t.Sum :
                 t.Category!.Type == CategoryType.Expense ? -t.Sum : 0m,
                 cancellationToken);
 
-        decimal txContribution = tx.Category?.Type switch
-        {
-            CategoryType.Income  =>  tx.Sum,
-            CategoryType.Expense => -tx.Sum,
-            _                    =>  0m,
-        };
+        decimal txContribution = tx.PaymentStatus?.AffectsBalance == true
+            ? tx.Category?.Type switch
+            {
+                CategoryType.Income  =>  tx.Sum,
+                CategoryType.Expense => -tx.Sum,
+                _                    =>  0m,
+            }
+            : 0m;
 
         return tx.Account.Balance - txContribution - laterAdjustment;
     }

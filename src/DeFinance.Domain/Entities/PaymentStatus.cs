@@ -7,17 +7,19 @@ public class PaymentStatus
     public string? Description { get; private set; }
     public string? Color { get; private set; }
     public bool IsActive { get; private set; }
+    public bool AffectsBalance { get; private set; }
 
     private PaymentStatus() { }
 
-    public static PaymentStatus Create(string name, string? description, string? color = null) =>
+    public static PaymentStatus Create(string name, string? description, string? color = null, bool affectsBalance = true) =>
         new()
         {
             Id = Guid.NewGuid(),
             Name = name,
             Description = description,
             Color = color,
-            IsActive = true
+            IsActive = true,
+            AffectsBalance = affectsBalance
         };
 
     public void Update(string name, string? description, string? color)

@@ -1,17 +1,18 @@
 import { useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useTheme } from '../ThemeContext'
 
-const links: { to: string; label: string; icon: string; match?: string[] }[] = [
-  { to: '/', label: 'Dashboards', icon: '📊', match: ['/', '/transactions-dashboard'] },
-  { to: '/transactions', label: 'Transactions', icon: '💳' },
-  { to: '/plan-fact', label: 'Plan/Fact', icon: '📈' },
-  { to: '/mandatory', label: 'Mandatory', icon: '📋' },
-  { to: '/accounts', label: 'Accounts', icon: '🏦' },
-  { to: '/categories', label: 'Categories', icon: '🏷️' },
-  { to: '/currencies', label: 'Currencies', icon: '💱' },
-  { to: '/counterparties', label: 'Counterparties', icon: '🤝' },
-  { to: '/administration', label: 'Administration', icon: '⚙️' },
+const links: { to: string; labelKey: string; icon: string; match?: string[] }[] = [
+  { to: '/', labelKey: 'sidebar.nav.dashboards', icon: '📊', match: ['/', '/transactions-dashboard'] },
+  { to: '/transactions', labelKey: 'sidebar.nav.transactions', icon: '💳' },
+  { to: '/plan-fact', labelKey: 'sidebar.nav.planFact', icon: '📈' },
+  { to: '/mandatory', labelKey: 'sidebar.nav.mandatory', icon: '📋' },
+  { to: '/accounts', labelKey: 'sidebar.nav.accounts', icon: '🏦' },
+  { to: '/categories', labelKey: 'sidebar.nav.categories', icon: '🏷️' },
+  { to: '/currencies', labelKey: 'sidebar.nav.currencies', icon: '💱' },
+  { to: '/counterparties', labelKey: 'sidebar.nav.counterparties', icon: '🤝' },
+  { to: '/administration', labelKey: 'sidebar.nav.administration', icon: '⚙️' },
 ]
 
 const ChevronLeft = () => (
@@ -35,6 +36,7 @@ function SideTooltip({ label }: { label: string }) {
 }
 
 export function Sidebar() {
+  const { t } = useTranslation()
   const { dark, toggle } = useTheme()
   const { pathname } = useLocation()
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem('sidebar_collapsed') === 'true')
@@ -56,7 +58,7 @@ export function Sidebar() {
           <button
             onClick={toggleCollapsed}
             className="flex items-center justify-center w-full py-1 text-gray-300 hover:text-white transition-colors rounded hover:bg-gray-500 dark:hover:bg-gray-800"
-            title="Expand sidebar"
+            title={t('sidebar.expand')}
           >
             <ChevronRight />
           </button>
@@ -67,7 +69,7 @@ export function Sidebar() {
             <button
               onClick={toggleCollapsed}
               className="flex-shrink-0 p-1.5 rounded text-gray-300 hover:text-white hover:bg-gray-500 dark:hover:bg-gray-800 transition-colors"
-              title="Collapse sidebar"
+              title={t('sidebar.collapse')}
             >
               <ChevronLeft />
             </button>
@@ -77,7 +79,7 @@ export function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 py-4">
-        {links.map(({ to, label, icon, match }) => (
+        {links.map(({ to, labelKey, icon, match }) => (
           <div key={to} className="relative group">
             <NavLink
               to={to}
@@ -92,9 +94,9 @@ export function Sidebar() {
               }}
             >
               <span className="flex-shrink-0 leading-none">{icon}</span>
-              {!collapsed && <span className="truncate">{label}</span>}
+              {!collapsed && <span className="truncate">{t(labelKey)}</span>}
             </NavLink>
-            {collapsed && <SideTooltip label={label} />}
+            {collapsed && <SideTooltip label={t(labelKey)} />}
           </div>
         ))}
       </nav>
@@ -107,9 +109,9 @@ export function Sidebar() {
             className={`flex items-center gap-2 text-sm text-gray-200 hover:text-white transition-colors w-full ${collapsed ? 'justify-center' : ''}`}
           >
             <span className="flex-shrink-0">{dark ? '☀️' : '🌙'}</span>
-            {!collapsed && <span>{dark ? 'Light mode' : 'Dark mode'}</span>}
+            {!collapsed && <span>{dark ? t('sidebar.lightMode') : t('sidebar.darkMode')}</span>}
           </button>
-          {collapsed && <SideTooltip label={dark ? 'Light mode' : 'Dark mode'} />}
+          {collapsed && <SideTooltip label={dark ? t('sidebar.lightMode') : t('sidebar.darkMode')} />}
         </div>
       </div>
     </aside>

@@ -22,7 +22,8 @@ public record UpdateTransactionCommand(
 public class UpdateTransactionCommandHandler(
     ITransactionRepository transactionRepository,
     IAccountRepository accountRepository,
-    ICategoryRepository categoryRepository)
+    ICategoryRepository categoryRepository,
+    IPaymentStatusRepository paymentStatusRepository)
     : IRequestHandler<UpdateTransactionCommand, TransactionResponse?>
 {
     public async Task<TransactionResponse?> Handle(UpdateTransactionCommand request, CancellationToken cancellationToken)
@@ -30,11 +31,18 @@ public class UpdateTransactionCommandHandler(
         var transaction = await transactionRepository.GetByIdAsync(request.Id, cancellationToken);
         if (transaction is null) return null;
 
-        var oldAccount  = transaction.Account!;
-        var oldCategory = transaction.Category!;
+        var oldAccount       = transaction.Account!;
+        var oldCategory      = transaction.Category!;
+        var oldPaymentStatus = transaction.PaymentStatus!;
 
-        // reverse old balance effect
-        oldAccount.AdjustBalance(-BalanceDelta(oldCategory.Type, transaction.Sum));
+        var newPaymentStatus = transaction.PaymentStatusId == request.PaymentStatusId
+            ? oldPaymentStatus
+            : await paymentStatusRepository.GetByIdAsync(request.PaymentStatusId, cancellationToken)
+                ?? throw new InvalidOperationException($"PaymentStatus {request.PaymentStatusId} not found.");
+
+        // reverse old balance effect (only if old status was affecting balance)
+        if (oldPaymentStatus.AffectsBalance)
+            oldAccount.AdjustBalance(-BalanceDelta(oldCategory.Type, transaction.Sum));
 
         // resolve new account (may differ)
         var newAccount = transaction.AccountId == request.AccountId
@@ -48,8 +56,9 @@ public class UpdateTransactionCommandHandler(
             : await categoryRepository.GetByIdAsync(request.CategoryId, cancellationToken)
                 ?? throw new InvalidOperationException($"Category {request.CategoryId} not found.");
 
-        // apply new balance effect
-        newAccount.AdjustBalance(BalanceDelta(newCategory.Type, request.Sum));
+        // apply new balance effect (only if new status affects balance)
+        if (newPaymentStatus.AffectsBalance)
+            newAccount.AdjustBalance(BalanceDelta(newCategory.Type, request.Sum));
 
         transaction.Update(
             request.DateTime, request.Sum, request.ExchangeRate,
