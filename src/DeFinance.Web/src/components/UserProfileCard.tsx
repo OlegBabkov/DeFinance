@@ -27,11 +27,11 @@ export function UserProfileCard({ onClose, onUsernameChange, onPhotoChange, anch
   const [phone, setPhone] = useState('')
   const [profileSaving, setProfileSaving] = useState(false)
 
-  const [language, setLanguage] = useState<'en' | 'de' | 'fr' | 'uk' | 'es' | 'pl'>(
-    () => (localStorage.getItem('lang') as 'en' | 'de' | 'fr' | 'uk' | 'es' | 'pl') ?? 'en'
+  const [language, setLanguage] = useState<'en' | 'de' | 'fr' | 'uk' | 'es' | 'pl' | 'it' | 'sv' | 'no'>(
+    () => (localStorage.getItem('lang') as 'en' | 'de' | 'fr' | 'uk' | 'es' | 'pl' | 'it' | 'sv' | 'no') ?? 'en'
   )
 
-  function handleLanguageChange(lang: 'en' | 'de' | 'fr' | 'uk' | 'es' | 'pl') {
+  function handleLanguageChange(lang: 'en' | 'de' | 'fr' | 'uk' | 'es' | 'pl' | 'it' | 'sv' | 'no') {
     setLanguage(lang)
     localStorage.setItem('lang', lang)
     i18n.changeLanguage(lang)
@@ -217,6 +217,9 @@ export function UserProfileCard({ onClose, onUsernameChange, onPhotoChange, anch
                 { code: 'uk', label: t('userProfile.lang.ukrainian'),  Flag: FlagUA },
                 { code: 'es', label: t('userProfile.lang.spanish'),   Flag: FlagES },
                 { code: 'pl', label: t('userProfile.lang.polish'),    Flag: FlagPL },
+                { code: 'it', label: t('userProfile.lang.italian'),  Flag: FlagIT },
+                { code: 'sv', label: t('userProfile.lang.swedish'),  Flag: FlagSE },
+                { code: 'no', label: t('userProfile.lang.norwegian'), Flag: FlagNO },
               ] as const).map(({ code, Flag, label }) => (
                 <button
                   key={code}
@@ -232,9 +235,6 @@ export function UserProfileCard({ onClose, onUsernameChange, onPhotoChange, anch
                 </button>
               ))}
               {([
-                { Flag: FlagIT, label: 'Italiano (coming soon)' },
-                { Flag: FlagSE, label: 'Svenska (coming soon)' },
-                { Flag: FlagNO, label: 'Norsk (coming soon)' },
                 { Flag: FlagFI, label: 'Suomi (coming soon)' },
                 { Flag: FlagGR, label: 'Ελληνικά (coming soon)' },
                 { Flag: FlagBG, label: 'Български (coming soon)' },
