@@ -27,11 +27,11 @@ export function UserProfileCard({ onClose, onUsernameChange, onPhotoChange, anch
   const [phone, setPhone] = useState('')
   const [profileSaving, setProfileSaving] = useState(false)
 
-  const [language, setLanguage] = useState<'en' | 'de' | 'fr'>(
-    () => (localStorage.getItem('lang') as 'en' | 'de' | 'fr') ?? 'en'
+  const [language, setLanguage] = useState<'en' | 'de' | 'fr' | 'uk' | 'es' | 'pl'>(
+    () => (localStorage.getItem('lang') as 'en' | 'de' | 'fr' | 'uk' | 'es' | 'pl') ?? 'en'
   )
 
-  function handleLanguageChange(lang: 'en' | 'de' | 'fr') {
+  function handleLanguageChange(lang: 'en' | 'de' | 'fr' | 'uk' | 'es' | 'pl') {
     setLanguage(lang)
     localStorage.setItem('lang', lang)
     i18n.changeLanguage(lang)
@@ -211,9 +211,12 @@ export function UserProfileCard({ onClose, onUsernameChange, onPhotoChange, anch
             {/* Language selector */}
             <div className="flex flex-wrap items-center gap-2">
               {([
-                { code: 'en', label: t('userProfile.lang.english'), Flag: FlagUK },
-                { code: 'de', label: t('userProfile.lang.german'),  Flag: FlagDE },
-                { code: 'fr', label: t('userProfile.lang.french'),  Flag: FlagFR },
+                { code: 'en', label: t('userProfile.lang.english'),    Flag: FlagUK },
+                { code: 'de', label: t('userProfile.lang.german'),     Flag: FlagDE },
+                { code: 'fr', label: t('userProfile.lang.french'),     Flag: FlagFR },
+                { code: 'uk', label: t('userProfile.lang.ukrainian'),  Flag: FlagUA },
+                { code: 'es', label: t('userProfile.lang.spanish'),   Flag: FlagES },
+                { code: 'pl', label: t('userProfile.lang.polish'),    Flag: FlagPL },
               ] as const).map(({ code, Flag, label }) => (
                 <button
                   key={code}
@@ -229,10 +232,12 @@ export function UserProfileCard({ onClose, onUsernameChange, onPhotoChange, anch
                 </button>
               ))}
               {([
-                { Flag: FlagES, label: 'Español (coming soon)' },
-                { Flag: FlagPL, label: 'Polski (coming soon)' },
-                { Flag: FlagUA, label: 'Українська (coming soon)' },
                 { Flag: FlagIT, label: 'Italiano (coming soon)' },
+                { Flag: FlagSE, label: 'Svenska (coming soon)' },
+                { Flag: FlagNO, label: 'Norsk (coming soon)' },
+                { Flag: FlagFI, label: 'Suomi (coming soon)' },
+                { Flag: FlagGR, label: 'Ελληνικά (coming soon)' },
+                { Flag: FlagBG, label: 'Български (coming soon)' },
               ]).map(({ Flag, label }) => (
                 <button
                   key={label}
@@ -346,6 +351,63 @@ function FlagIT() {
       <rect width="1" height="2" fill="#009246" />
       <rect width="1" height="2" x="1" fill="#FFF" />
       <rect width="1" height="2" x="2" fill="#CE2B37" />
+    </svg>
+  )
+}
+
+function FlagSE() {
+  return (
+    <svg viewBox="0 0 16 11" className="w-full h-full" preserveAspectRatio="xMidYMid slice">
+      <rect width="16" height="11" fill="#006AA7" />
+      <rect x="5" width="2" height="11" fill="#FECC00" />
+      <rect y="4" width="16" height="2" fill="#FECC00" />
+    </svg>
+  )
+}
+
+function FlagNO() {
+  return (
+    <svg viewBox="0 0 22 16" className="w-full h-full" preserveAspectRatio="xMidYMid slice">
+      <rect width="22" height="16" fill="#EF2B2D" />
+      <rect x="6" width="4" height="16" fill="#fff" />
+      <rect y="6" width="22" height="4" fill="#fff" />
+      <rect x="7" width="2" height="16" fill="#002868" />
+      <rect y="7" width="22" height="2" fill="#002868" />
+    </svg>
+  )
+}
+
+function FlagFI() {
+  return (
+    <svg viewBox="0 0 18 11" className="w-full h-full" preserveAspectRatio="xMidYMid slice">
+      <rect width="18" height="11" fill="#fff" />
+      <rect x="5" width="3" height="11" fill="#003580" />
+      <rect y="4" width="18" height="3" fill="#003580" />
+    </svg>
+  )
+}
+
+function FlagGR() {
+  return (
+    <svg viewBox="0 0 27 18" className="w-full h-full" preserveAspectRatio="xMidYMid slice">
+      <rect width="27" height="18" fill="#0D5EAF" />
+      <rect y="2" width="27" height="2" fill="#fff" />
+      <rect y="6" width="27" height="2" fill="#fff" />
+      <rect y="10" width="27" height="2" fill="#fff" />
+      <rect y="14" width="27" height="2" fill="#fff" />
+      <rect width="10" height="10" fill="#0D5EAF" />
+      <rect x="4" width="2" height="10" fill="#fff" />
+      <rect y="4" width="10" height="2" fill="#fff" />
+    </svg>
+  )
+}
+
+function FlagBG() {
+  return (
+    <svg viewBox="0 0 3 2" className="w-full h-full" preserveAspectRatio="xMidYMid slice">
+      <rect width="3" height="2" fill="#fff" />
+      <rect y="0.667" width="3" height="0.667" fill="#00966E" />
+      <rect y="1.333" width="3" height="0.667" fill="#D62612" />
     </svg>
   )
 }

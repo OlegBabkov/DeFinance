@@ -3,6 +3,9 @@ import { initReactI18next } from 'react-i18next'
 import en from './locales/en'
 import de from './locales/de'
 import fr from './locales/fr'
+import uk from './locales/uk'
+import es from './locales/es'
+import pl from './locales/pl'
 
 const savedLang = localStorage.getItem('lang') ?? 'en'
 
@@ -13,6 +16,9 @@ i18n
       en: { translation: en },
       de: { translation: de },
       fr: { translation: fr },
+      uk: { translation: uk },
+      es: { translation: es },
+      pl: { translation: pl },
     },
     lng: savedLang,
     fallbackLng: 'en',
