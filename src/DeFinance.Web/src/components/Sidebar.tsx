@@ -12,6 +12,7 @@ const links: { to: string; labelKey: string; icon: string; match?: string[] }[] 
   { to: '/categories', labelKey: 'sidebar.nav.categories', icon: '🏷️' },
   { to: '/currencies', labelKey: 'sidebar.nav.currencies', icon: '💱' },
   { to: '/counterparties', labelKey: 'sidebar.nav.counterparties', icon: '🤝' },
+  { to: '/calendar',       labelKey: 'sidebar.nav.calendar',       icon: '📅' },
   { to: '/administration', labelKey: 'sidebar.nav.administration', icon: '⚙️' },
 ]
 

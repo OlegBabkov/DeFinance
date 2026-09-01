@@ -10,6 +10,7 @@ const no: Record<TranslationKeys, string> = {
   'sidebar.nav.categories': 'Kategorier',
   'sidebar.nav.currencies': 'Valutaer',
   'sidebar.nav.counterparties': 'Motparter',
+  'sidebar.nav.calendar': 'Kalender',
   'sidebar.nav.administration': 'Administrasjon',
   'sidebar.expand': 'Utvid sidepanelet',
   'sidebar.collapse': 'Skjul sidepanelet',
@@ -611,6 +612,14 @@ const no: Record<TranslationKeys, string> = {
   // ── Counterparty Panel ────────────────────────────────────────────────────────
   'counterpartyPanel.fallbackTitle': 'Motpartsdetaljer',
   'counterpartyPanel.section.expenses': 'Utgifter — Siste 6 måneder',
+
+  // ── Calendar ──────────────────────────────────────────────────────────────────
+  'calendar.view.week': 'Uke',
+  'calendar.view.month': 'Måned',
+  'calendar.view.year': 'År',
+  'calendar.today': 'I dag',
+  'calendar.dayPanel.noTransactions': 'Ingen transaksjoner for denne dagen',
+  'calendar.dayPanel.addEvent': 'Legg til planlagt hendelse',
 
   // ── Calculator ────────────────────────────────────────────────────────────────
   'calculator.title': 'Kalkulator',

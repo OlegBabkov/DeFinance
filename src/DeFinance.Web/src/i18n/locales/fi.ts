@@ -10,6 +10,7 @@ const fi: Record<TranslationKeys, string> = {
   'sidebar.nav.categories': 'Kategoriat',
   'sidebar.nav.currencies': 'Valuutat',
   'sidebar.nav.counterparties': 'Vastapuolet',
+  'sidebar.nav.calendar': 'Kalenteri',
   'sidebar.nav.administration': 'Hallinto',
   'sidebar.expand': 'Laajenna sivupalkki',
   'sidebar.collapse': 'Pienennä sivupalkki',
@@ -611,6 +612,14 @@ const fi: Record<TranslationKeys, string> = {
   // ── Counterparty Panel ────────────────────────────────────────────────────────
   'counterpartyPanel.fallbackTitle': 'Vastapuolen tiedot',
   'counterpartyPanel.section.expenses': 'Menot — Viimeiset 6 kuukautta',
+
+  // ── Calendar ──────────────────────────────────────────────────────────────────
+  'calendar.view.week': 'Viikko',
+  'calendar.view.month': 'Kuukausi',
+  'calendar.view.year': 'Vuosi',
+  'calendar.today': 'Tänään',
+  'calendar.dayPanel.noTransactions': 'Ei tapahtumia tälle päivälle',
+  'calendar.dayPanel.addEvent': 'Lisää suunniteltu tapahtuma',
 
   // ── Calculator ────────────────────────────────────────────────────────────────
   'calculator.title': 'Laskin',

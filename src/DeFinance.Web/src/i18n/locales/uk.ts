@@ -10,6 +10,7 @@ const uk: Record<TranslationKeys, string> = {
   'sidebar.nav.categories': 'Категорії',
   'sidebar.nav.currencies': 'Валюти',
   'sidebar.nav.counterparties': 'Контрагенти',
+  'sidebar.nav.calendar': 'Календар',
   'sidebar.nav.administration': 'Адміністрування',
   'sidebar.expand': 'Розгорнути панель',
   'sidebar.collapse': 'Згорнути панель',
@@ -611,6 +612,14 @@ const uk: Record<TranslationKeys, string> = {
   // ── Counterparty Panel ────────────────────────────────────────────────────────
   'counterpartyPanel.fallbackTitle': 'Деталі контрагента',
   'counterpartyPanel.section.expenses': 'Витрати — Останні 6 місяців',
+
+  // ── Calendar ──────────────────────────────────────────────────────────────────
+  'calendar.view.week': 'Тиждень',
+  'calendar.view.month': 'Місяць',
+  'calendar.view.year': 'Рік',
+  'calendar.today': 'Сьогодні',
+  'calendar.dayPanel.noTransactions': 'Немає транзакцій за цей день',
+  'calendar.dayPanel.addEvent': 'Додати заплановану подію',
 
   // ── Calculator ────────────────────────────────────────────────────────────────
   'calculator.title': 'Калькулятор',
