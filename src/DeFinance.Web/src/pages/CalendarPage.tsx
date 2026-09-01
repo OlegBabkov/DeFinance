@@ -8,6 +8,7 @@ const LOCALE_MAP: Record<string, string> = {
   uk: 'uk-UA', sv: 'sv-SE', no: 'nb-NO', el: 'el-GR',
   bg: 'bg-BG', fi: 'fi-FI', pl: 'pl-PL', it: 'it-IT',
   es: 'es-ES', de: 'de-DE', fr: 'fr-FR', en: 'en-GB',
+  cs: 'cs-CZ', hr: 'hr-HR', sk: 'sk-SK', sl: 'sl-SI',
 }
 
 function getIntlLocale(lang: string): string {
