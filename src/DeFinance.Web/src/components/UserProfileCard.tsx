@@ -27,11 +27,11 @@ export function UserProfileCard({ onClose, onUsernameChange, onPhotoChange, anch
   const [phone, setPhone] = useState('')
   const [profileSaving, setProfileSaving] = useState(false)
 
-  const [language, setLanguage] = useState<'en' | 'de' | 'fr' | 'uk' | 'es' | 'pl' | 'it' | 'sv' | 'no' | 'fi' | 'el' | 'bg'>(
-    () => (localStorage.getItem('lang') as 'en' | 'de' | 'fr' | 'uk' | 'es' | 'pl' | 'it' | 'sv' | 'no' | 'fi' | 'el' | 'bg') ?? 'en'
+  const [language, setLanguage] = useState<'en' | 'de' | 'fr' | 'uk' | 'es' | 'pl' | 'it' | 'sv' | 'no' | 'fi' | 'el' | 'bg' | 'cs' | 'hr' | 'sk' | 'sl'>(
+    () => (localStorage.getItem('lang') as 'en' | 'de' | 'fr' | 'uk' | 'es' | 'pl' | 'it' | 'sv' | 'no' | 'fi' | 'el' | 'bg' | 'cs' | 'hr' | 'sk' | 'sl') ?? 'en'
   )
 
-  function handleLanguageChange(lang: 'en' | 'de' | 'fr' | 'uk' | 'es' | 'pl' | 'it' | 'sv' | 'no' | 'fi' | 'el' | 'bg') {
+  function handleLanguageChange(lang: 'en' | 'de' | 'fr' | 'uk' | 'es' | 'pl' | 'it' | 'sv' | 'no' | 'fi' | 'el' | 'bg' | 'cs' | 'hr' | 'sk' | 'sl') {
     setLanguage(lang)
     localStorage.setItem('lang', lang)
     i18n.changeLanguage(lang)
@@ -223,6 +223,10 @@ export function UserProfileCard({ onClose, onUsernameChange, onPhotoChange, anch
                 { code: 'fi', label: t('userProfile.lang.finnish'),   Flag: FlagFI },
                 { code: 'el', label: t('userProfile.lang.greek'),      Flag: FlagGR },
                 { code: 'bg', label: t('userProfile.lang.bulgarian'),  Flag: FlagBG },
+                { code: 'cs', label: t('userProfile.lang.czech'),      Flag: FlagCZ },
+                { code: 'hr', label: t('userProfile.lang.croatian'),   Flag: FlagHR },
+                { code: 'sk', label: t('userProfile.lang.slovak'),     Flag: FlagSK },
+                { code: 'sl', label: t('userProfile.lang.slovenian'),  Flag: FlagSI },
               ] as const).map(({ code, Flag, label }) => (
                 <button
                   key={code}
@@ -238,10 +242,6 @@ export function UserProfileCard({ onClose, onUsernameChange, onPhotoChange, anch
                 </button>
               ))}
               {([
-                { Flag: FlagCZ, label: 'Čeština (coming soon)' },
-                { Flag: FlagSI, label: 'Slovenščina (coming soon)' },
-                { Flag: FlagHR, label: 'Hrvatski (coming soon)' },
-                { Flag: FlagSK, label: 'Slovenčina (coming soon)' },
                 { Flag: FlagRO, label: 'Română (coming soon)' },
                 { Flag: FlagHU, label: 'Magyar (coming soon)' },
               ]).map(({ Flag, label }) => (
