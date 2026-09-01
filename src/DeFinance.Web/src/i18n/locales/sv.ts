@@ -10,6 +10,7 @@ const sv: Record<TranslationKeys, string> = {
   'sidebar.nav.categories': 'Kategorier',
   'sidebar.nav.currencies': 'Valutor',
   'sidebar.nav.counterparties': 'Motparter',
+  'sidebar.nav.calendar': 'Kalender',
   'sidebar.nav.administration': 'Administration',
   'sidebar.expand': 'Expandera sidofältet',
   'sidebar.collapse': 'Minimera sidofältet',
@@ -611,6 +612,14 @@ const sv: Record<TranslationKeys, string> = {
   // ── Counterparty Panel ────────────────────────────────────────────────────────
   'counterpartyPanel.fallbackTitle': 'Motpartsdetaljer',
   'counterpartyPanel.section.expenses': 'Utgifter — Senaste 6 månaderna',
+
+  // ── Calendar ──────────────────────────────────────────────────────────────────
+  'calendar.view.week': 'Vecka',
+  'calendar.view.month': 'Månad',
+  'calendar.view.year': 'År',
+  'calendar.today': 'Idag',
+  'calendar.dayPanel.noTransactions': 'Inga transaktioner för denna dag',
+  'calendar.dayPanel.addEvent': 'Lägg till planerad händelse',
 
   // ── Calculator ────────────────────────────────────────────────────────────────
   'calculator.title': 'Kalkylator',

@@ -10,6 +10,7 @@ const bg: Record<TranslationKeys, string> = {
   'sidebar.nav.categories': 'Категории',
   'sidebar.nav.currencies': 'Валути',
   'sidebar.nav.counterparties': 'Контрагенти',
+  'sidebar.nav.calendar': 'Календар',
   'sidebar.nav.administration': 'Администрация',
   'sidebar.expand': 'Разгъни страничната лента',
   'sidebar.collapse': 'Свий страничната лента',
@@ -611,6 +612,14 @@ const bg: Record<TranslationKeys, string> = {
   // ── Counterparty Panel ────────────────────────────────────────────────────────
   'counterpartyPanel.fallbackTitle': 'Детайли на контрагент',
   'counterpartyPanel.section.expenses': 'Разходи — Последните 6 месеца',
+
+  // ── Calendar ──────────────────────────────────────────────────────────────────
+  'calendar.view.week': 'Седмица',
+  'calendar.view.month': 'Месец',
+  'calendar.view.year': 'Година',
+  'calendar.today': 'Днес',
+  'calendar.dayPanel.noTransactions': 'Няма транзакции за този ден',
+  'calendar.dayPanel.addEvent': 'Добави планирано събитие',
 
   // ── Calculator ────────────────────────────────────────────────────────────────
   'calculator.title': 'Калкулатор',

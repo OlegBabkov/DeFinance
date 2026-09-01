@@ -8,6 +8,7 @@ const en = {
   'sidebar.nav.categories': 'Categories',
   'sidebar.nav.currencies': 'Currencies',
   'sidebar.nav.counterparties': 'Counterparties',
+  'sidebar.nav.calendar': 'Calendar',
   'sidebar.nav.administration': 'Administration',
   'sidebar.expand': 'Expand sidebar',
   'sidebar.collapse': 'Collapse sidebar',
@@ -609,6 +610,14 @@ const en = {
   // ── Counterparty Panel ────────────────────────────────────────────────────────
   'counterpartyPanel.fallbackTitle': 'Counterparty Details',
   'counterpartyPanel.section.expenses': 'Expenses — Last 6 Months',
+
+  // ── Calendar ──────────────────────────────────────────────────────────────────
+  'calendar.view.week': 'Week',
+  'calendar.view.month': 'Month',
+  'calendar.view.year': 'Year',
+  'calendar.today': 'Today',
+  'calendar.dayPanel.noTransactions': 'No transactions for this day',
+  'calendar.dayPanel.addEvent': 'Add Planned Event',
 
   // ── Calculator ────────────────────────────────────────────────────────────────
   'calculator.title': 'Calculator',

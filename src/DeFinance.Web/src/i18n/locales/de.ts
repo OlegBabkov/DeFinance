@@ -10,6 +10,7 @@ const de: Record<TranslationKeys, string> = {
   'sidebar.nav.categories': 'Kategorien',
   'sidebar.nav.currencies': 'Währungen',
   'sidebar.nav.counterparties': 'Geschäftspartner',
+  'sidebar.nav.calendar': 'Kalender',
   'sidebar.nav.administration': 'Verwaltung',
   'sidebar.expand': 'Seitenleiste aufklappen',
   'sidebar.collapse': 'Seitenleiste einklappen',
@@ -611,6 +612,14 @@ const de: Record<TranslationKeys, string> = {
   // ── Counterparty Panel ────────────────────────────────────────────────────────
   'counterpartyPanel.fallbackTitle': 'Details des Geschäftspartners',
   'counterpartyPanel.section.expenses': 'Ausgaben — Letzte 6 Monate',
+
+  // ── Calendar ──────────────────────────────────────────────────────────────────
+  'calendar.view.week': 'Woche',
+  'calendar.view.month': 'Monat',
+  'calendar.view.year': 'Jahr',
+  'calendar.today': 'Heute',
+  'calendar.dayPanel.noTransactions': 'Keine Transaktionen für diesen Tag',
+  'calendar.dayPanel.addEvent': 'Geplantes Ereignis hinzufügen',
 
   // ── Calculator ────────────────────────────────────────────────────────────────
   'calculator.title': 'Taschenrechner',

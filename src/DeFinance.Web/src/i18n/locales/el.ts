@@ -10,6 +10,7 @@ const el: Record<TranslationKeys, string> = {
   'sidebar.nav.categories': 'Κατηγορίες',
   'sidebar.nav.currencies': 'Νομίσματα',
   'sidebar.nav.counterparties': 'Αντισυμβαλλόμενοι',
+  'sidebar.nav.calendar': 'Ημερολόγιο',
   'sidebar.nav.administration': 'Διαχείριση',
   'sidebar.expand': 'Ανάπτυξη πλευρικής γραμμής',
   'sidebar.collapse': 'Σύμπτυξη πλευρικής γραμμής',
@@ -611,6 +612,14 @@ const el: Record<TranslationKeys, string> = {
   // ── Counterparty Panel ────────────────────────────────────────────────────────
   'counterpartyPanel.fallbackTitle': 'Λεπτομέρειες αντισυμβαλλόμενου',
   'counterpartyPanel.section.expenses': 'Έξοδα — Τελευταίοι 6 μήνες',
+
+  // ── Calendar ──────────────────────────────────────────────────────────────────
+  'calendar.view.week': 'Εβδομάδα',
+  'calendar.view.month': 'Μήνας',
+  'calendar.view.year': 'Έτος',
+  'calendar.today': 'Σήμερα',
+  'calendar.dayPanel.noTransactions': 'Δεν υπάρχουν συναλλαγές για αυτή την ημέρα',
+  'calendar.dayPanel.addEvent': 'Προσθήκη προγραμματισμένου γεγονότος',
 
   // ── Calculator ────────────────────────────────────────────────────────────────
   'calculator.title': 'Αριθμομηχανή',

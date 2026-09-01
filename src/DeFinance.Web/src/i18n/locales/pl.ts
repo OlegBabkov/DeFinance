@@ -10,6 +10,7 @@ const pl: Record<TranslationKeys, string> = {
   'sidebar.nav.categories': 'Kategorie',
   'sidebar.nav.currencies': 'Waluty',
   'sidebar.nav.counterparties': 'Kontrahenci',
+  'sidebar.nav.calendar': 'Kalendarz',
   'sidebar.nav.administration': 'Administracja',
   'sidebar.expand': 'Rozwiń panel boczny',
   'sidebar.collapse': 'Zwiń panel boczny',
@@ -611,6 +612,14 @@ const pl: Record<TranslationKeys, string> = {
   // ── Counterparty Panel ────────────────────────────────────────────────────────
   'counterpartyPanel.fallbackTitle': 'Szczegóły kontrahenta',
   'counterpartyPanel.section.expenses': 'Wydatki — ostatnie 6 miesięcy',
+
+  // ── Calendar ──────────────────────────────────────────────────────────────────
+  'calendar.view.week': 'Tydzień',
+  'calendar.view.month': 'Miesiąc',
+  'calendar.view.year': 'Rok',
+  'calendar.today': 'Dziś',
+  'calendar.dayPanel.noTransactions': 'Brak transakcji dla tego dnia',
+  'calendar.dayPanel.addEvent': 'Dodaj zaplanowane zdarzenie',
 
   // ── Calculator ────────────────────────────────────────────────────────────────
   'calculator.title': 'Kalkulator',

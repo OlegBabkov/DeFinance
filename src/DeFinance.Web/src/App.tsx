@@ -14,6 +14,7 @@ import { CategoriesPage } from './pages/CategoriesPage'
 import { CurrenciesPage } from './pages/CurrenciesPage'
 import { CounterpartiesPage } from './pages/CounterpartiesPage'
 import { AdministrationPage } from './pages/AdministrationPage'
+import { CalendarPage } from './pages/CalendarPage'
 import { TransactionsPage } from './pages/TransactionsPage'
 import { MandatoryPage } from './pages/MandatoryPage'
 import { PlanFactPage } from './pages/PlanFactPage'
@@ -76,6 +77,7 @@ function App() {
                     <Route path="/transactions" element={<TransactionsPage />} />
                     <Route path="/plan-fact" element={<PlanFactPage />} />
                     <Route path="/mandatory" element={<MandatoryPage />} />
+                    <Route path="/calendar" element={<CalendarPage />} />
                     <Route path="/administration" element={<AdministrationPage />} />
                   </Routes>
                 </main>
