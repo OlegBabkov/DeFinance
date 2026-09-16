@@ -622,8 +622,16 @@ const uk: Record<TranslationKeys, string> = {
   'calendar.view.month': 'Місяць',
   'calendar.view.year': 'Рік',
   'calendar.today': 'Сьогодні',
-  'calendar.dayPanel.noTransactions': 'Немає транзакцій за цей день',
+  'calendar.dayPanel.noEvents': 'Немає запланованих подій на цей день',
   'calendar.dayPanel.addEvent': 'Додати заплановану подію',
+  'calendar.dayPanel.eventCreated': 'Заплановану подію створено',
+  'calendar.form.type': 'Тип',
+  'calendar.form.typeEvent': 'Подія',
+  'calendar.form.typePayment': 'Платіж',
+  'calendar.form.title': 'Назва',
+  'calendar.form.titlePlaceholder': 'Назва події…',
+  'calendar.form.timeFrom': 'Від',
+  'calendar.form.timeTo': 'До',
 
   // ── Calculator ────────────────────────────────────────────────────────────────
   'calculator.title': 'Калькулятор',

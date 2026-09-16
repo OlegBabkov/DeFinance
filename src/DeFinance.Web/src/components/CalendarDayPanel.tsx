@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { transactionsApi, type Transaction } from '../api/transactions'
+import { calendarEventsApi, type CalendarEvent } from '../api/calendarEvents'
 import { Spinner } from './Spinner'
 import { AddCalendarEventModal } from './AddCalendarEventModal'
 
@@ -14,45 +14,31 @@ function fmtAmount(n: number) {
   return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
-function amountColor(type: string) {
-  if (type === 'Income' || type === 'TransferIn') return 'text-emerald-600 dark:text-emerald-400'
-  if (type === 'Expense' || type === 'TransferOut') return 'text-red-500 dark:text-red-400'
-  return 'text-gray-500 dark:text-gray-400'
-}
-
-function amountSign(type: string) {
-  if (type === 'Income' || type === 'TransferIn') return '+'
-  if (type === 'Expense' || type === 'TransferOut') return '−'
-  return ''
-}
-
 export function CalendarDayPanel({ day, intlLocale, onClose }: Props) {
   const { t } = useTranslation()
   const open = day !== null
-  const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [events, setEvents] = useState<CalendarEvent[]>([])
   const [loading, setLoading] = useState(false)
   const [addEventOpen, setAddEventOpen] = useState(false)
 
-  const dayStr = day ? day.toISOString().split('T')[0] : ''
+  const dayStr = day
+    ? `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`
+    : ''
 
   const reload = () => {
     if (!day) return
     setLoading(true)
-    transactionsApi
-      .getAll({ dateFrom: dayStr, dateTo: dayStr, pageSize: 200, sortBy: 'dateTime', sortDirection: 'Desc' })
-      .then(r => setTransactions(r.items))
-      .catch(() => setTransactions([]))
+    calendarEventsApi
+      .getByDate(dayStr)
+      .then(r => setEvents(r.items))
+      .catch(() => setEvents([]))
       .finally(() => setLoading(false))
   }
 
   useEffect(() => {
-    if (!day) { setTransactions([]); return }
+    if (!day) { setEvents([]); return }
     reload()
   }, [day?.getTime()])
-
-  const income   = transactions.filter(tx => tx.category?.type === 'Income'      || tx.category?.type === 'TransferIn').reduce((s, tx) => s + tx.sum, 0)
-  const expenses = transactions.filter(tx => tx.category?.type === 'Expense'     || tx.category?.type === 'TransferOut').reduce((s, tx) => s + tx.sum, 0)
-  const net = income - expenses
 
   const dateLabel = day
     ? (() => {
@@ -98,92 +84,84 @@ export function CalendarDayPanel({ day, intlLocale, onClose }: Props) {
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-4">
+        <div className="flex-1 overflow-y-auto p-5 space-y-3">
           {loading && <Spinner size="sm" />}
 
-          {!loading && transactions.length === 0 && (
+          {!loading && events.length === 0 && (
             <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-10">
-              {t('calendar.dayPanel.noTransactions')}
+              {t('calendar.dayPanel.noEvents')}
             </p>
           )}
 
-          {!loading && transactions.length > 0 && (
-            <>
-              {/* Day summary */}
-              <div className="rounded-lg bg-gray-50 dark:bg-gray-700/50 p-3 space-y-1.5">
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-gray-500 dark:text-gray-400">{t('accountPanel.monthSummary.income')}</span>
-                  <span className="font-mono font-medium text-emerald-600 dark:text-emerald-400">
-                    {income > 0 ? `+ ${fmtAmount(income)}` : fmtAmount(0)}
+          {!loading && events.map(ev => (
+            <div
+              key={ev.id}
+              className="rounded-lg border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/40 p-3"
+            >
+              {ev.eventType === 'Event' ? (
+                /* ── Event card ── */
+                <div className="flex items-start gap-2">
+                  <span className="mt-0.5 text-indigo-500 dark:text-indigo-400 shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4">
+                      <path fillRule="evenodd" d="M4 1.75a.75.75 0 0 1 1.5 0V3h5V1.75a.75.75 0 0 1 1.5 0V3A2 2 0 0 1 14 5v7a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2V1.75ZM3.5 7a.5.5 0 0 0 0 1h9a.5.5 0 0 0 0-1h-9Z" clipRule="evenodd" />
+                    </svg>
                   </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
+                      {ev.title || t('calendar.form.typeEvent')}
+                    </p>
+                    {(ev.timeFrom || ev.timeTo) && (
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                        {ev.timeFrom ?? '?'}{ev.timeTo ? ` → ${ev.timeTo}` : ''}
+                      </p>
+                    )}
+                    {ev.notes && (
+                      <p className="text-xs text-gray-400 dark:text-gray-500 italic mt-0.5 truncate">{ev.notes}</p>
+                    )}
+                  </div>
                 </div>
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-gray-500 dark:text-gray-400">{t('accountPanel.monthSummary.losses')}</span>
-                  <span className="font-mono font-medium text-red-500 dark:text-red-400">
-                    {expenses > 0 ? `− ${fmtAmount(expenses)}` : fmtAmount(0)}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center text-sm border-t border-gray-200 dark:border-gray-600 pt-1.5">
-                  <span className="font-medium text-gray-700 dark:text-gray-300">{t('accountPanel.monthSummary.net')}</span>
-                  <span className={`font-mono font-semibold ${net > 0 ? 'text-emerald-600 dark:text-emerald-400' : net < 0 ? 'text-red-500 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'}`}>
-                    {net > 0 ? '+ ' : net < 0 ? '− ' : ''}{fmtAmount(Math.abs(net))}
-                  </span>
-                </div>
-              </div>
-
-              {/* Transaction list */}
-              <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
-                {t('transactions.title')}
-              </p>
-              <ul className="space-y-0">
-                {transactions.map(tx => {
-                  const type   = tx.category?.type ?? ''
-                  const symbol = tx.account?.currency?.symbol ?? ''
-                  const time   = new Date(tx.dateTime).toLocaleTimeString(intlLocale, { hour: '2-digit', minute: '2-digit' })
-                  return (
-                    <li
-                      key={tx.id}
-                      className="flex items-start justify-between gap-3 py-2.5 border-b border-gray-100 dark:border-gray-700 last:border-0"
-                    >
-                      <div className="flex items-start gap-2 min-w-0">
-                        {tx.category?.color ? (
-                          <span className="w-2 h-2 rounded-full shrink-0 mt-1.5" style={{ backgroundColor: tx.category.color }} />
-                        ) : (
-                          <span className="w-2 h-2 shrink-0" />
-                        )}
-                        <div className="min-w-0">
-                          <p className="text-sm text-gray-800 dark:text-gray-200 truncate">
-                            {tx.category?.icon && <span className="mr-1">{tx.category.icon}</span>}
-                            {tx.category?.name ?? '—'}
-                          </p>
-                          <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{tx.account?.name ?? ''} · {time}</p>
-                          {tx.counterparty && (
-                            <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{tx.counterparty.name}</p>
-                          )}
-                          {tx.notes && (
-                            <p className="text-xs text-gray-400 dark:text-gray-500 italic truncate">{tx.notes}</p>
-                          )}
-                        </div>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <p className={`text-sm font-mono font-medium ${amountColor(type)}`}>
-                          {amountSign(type)}{symbol} {fmtAmount(tx.sum)}
+              ) : (
+                /* ── Payment card ── */
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-2 min-w-0">
+                    {ev.categoryColor ? (
+                      <span className="w-2 h-2 rounded-full shrink-0 mt-1.5" style={{ backgroundColor: ev.categoryColor }} />
+                    ) : (
+                      <span className="w-2 h-2 shrink-0" />
+                    )}
+                    <div className="min-w-0">
+                      <p className="text-sm text-gray-800 dark:text-gray-200 truncate">
+                        {ev.categoryIcon && <span className="mr-1">{ev.categoryIcon}</span>}
+                        {ev.categoryName ?? '—'}
+                      </p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{ev.accountName ?? ''}</p>
+                      {ev.counterpartyName && (
+                        <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{ev.counterpartyName}</p>
+                      )}
+                      {ev.paymentStatusName && (
+                        <p
+                          className="text-xs mt-0.5 font-medium"
+                          style={{ color: ev.paymentStatusColor ?? undefined }}
+                        >
+                          {ev.paymentStatusName}
                         </p>
-                        {tx.paymentStatus && (
-                          <p
-                            className="text-xs mt-0.5 font-medium"
-                            style={{ color: tx.paymentStatus.color ?? undefined }}
-                          >
-                            {tx.paymentStatus.name}
-                          </p>
-                        )}
-                      </div>
-                    </li>
-                  )
-                })}
-              </ul>
-            </>
-          )}
+                      )}
+                      {ev.notes && (
+                        <p className="text-xs text-gray-400 dark:text-gray-500 italic truncate">{ev.notes}</p>
+                      )}
+                    </div>
+                  </div>
+                  {ev.sum != null && (
+                    <div className="text-right shrink-0">
+                      <p className="text-sm font-mono font-medium text-gray-700 dark:text-gray-300">
+                        {ev.accountCurrencySymbol} {fmtAmount(ev.sum)}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       </div>
 

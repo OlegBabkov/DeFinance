@@ -622,8 +622,16 @@ const sv: Record<TranslationKeys, string> = {
   'calendar.view.month': 'Månad',
   'calendar.view.year': 'År',
   'calendar.today': 'Idag',
-  'calendar.dayPanel.noTransactions': 'Inga transaktioner för denna dag',
+  'calendar.dayPanel.noEvents': 'Inga planerade händelser för denna dag',
   'calendar.dayPanel.addEvent': 'Lägg till planerad händelse',
+  'calendar.dayPanel.eventCreated': 'Planerad händelse skapad',
+  'calendar.form.type': 'Typ',
+  'calendar.form.typeEvent': 'Händelse',
+  'calendar.form.typePayment': 'Betalning',
+  'calendar.form.title': 'Titel',
+  'calendar.form.titlePlaceholder': 'Händelsenamn…',
+  'calendar.form.timeFrom': 'Från',
+  'calendar.form.timeTo': 'Till',
 
   // ── Calculator ────────────────────────────────────────────────────────────────
   'calculator.title': 'Kalkylator',

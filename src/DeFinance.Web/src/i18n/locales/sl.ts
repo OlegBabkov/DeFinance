@@ -622,8 +622,16 @@ const sl: Record<TranslationKeys, string> = {
   'calendar.view.month': 'Mesec',
   'calendar.view.year': 'Leto',
   'calendar.today': 'Danes',
-  'calendar.dayPanel.noTransactions': 'Ni transakcij za ta dan',
+  'calendar.dayPanel.noEvents': 'Ni načrtovanih dogodkov za ta dan',
   'calendar.dayPanel.addEvent': 'Dodaj načrtovani dogodek',
+  'calendar.dayPanel.eventCreated': 'Načrtovani dogodek ustvarjen',
+  'calendar.form.type': 'Vrsta',
+  'calendar.form.typeEvent': 'Dogodek',
+  'calendar.form.typePayment': 'Plačilo',
+  'calendar.form.title': 'Naslov',
+  'calendar.form.titlePlaceholder': 'Ime dogodka…',
+  'calendar.form.timeFrom': 'Od',
+  'calendar.form.timeTo': 'Do',
 
   // ── Calculator ────────────────────────────────────────────────────────────────
   'calculator.title': 'Kalkulator',

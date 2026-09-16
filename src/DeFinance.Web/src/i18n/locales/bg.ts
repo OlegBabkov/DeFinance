@@ -622,8 +622,16 @@ const bg: Record<TranslationKeys, string> = {
   'calendar.view.month': 'Месец',
   'calendar.view.year': 'Година',
   'calendar.today': 'Днес',
-  'calendar.dayPanel.noTransactions': 'Няма транзакции за този ден',
+  'calendar.dayPanel.noEvents': 'Няма планирани събития за този ден',
   'calendar.dayPanel.addEvent': 'Добави планирано събитие',
+  'calendar.dayPanel.eventCreated': 'Планираното събитие е създадено',
+  'calendar.form.type': 'Тип',
+  'calendar.form.typeEvent': 'Събитие',
+  'calendar.form.typePayment': 'Плащане',
+  'calendar.form.title': 'Заглавие',
+  'calendar.form.titlePlaceholder': 'Име на събитието…',
+  'calendar.form.timeFrom': 'От',
+  'calendar.form.timeTo': 'До',
 
   // ── Calculator ────────────────────────────────────────────────────────────────
   'calculator.title': 'Калкулатор',

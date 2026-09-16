@@ -622,8 +622,16 @@ const sk: Record<TranslationKeys, string> = {
   'calendar.view.month': 'Mesiac',
   'calendar.view.year': 'Rok',
   'calendar.today': 'Dnes',
-  'calendar.dayPanel.noTransactions': 'Pre tento deň nie sú žiadne transakcie',
+  'calendar.dayPanel.noEvents': 'Žiadne plánované udalosti pre tento deň',
   'calendar.dayPanel.addEvent': 'Pridať plánovanú udalosť',
+  'calendar.dayPanel.eventCreated': 'Plánovaná udalosť vytvorená',
+  'calendar.form.type': 'Typ',
+  'calendar.form.typeEvent': 'Udalosť',
+  'calendar.form.typePayment': 'Platba',
+  'calendar.form.title': 'Názov',
+  'calendar.form.titlePlaceholder': 'Názov udalosti…',
+  'calendar.form.timeFrom': 'Od',
+  'calendar.form.timeTo': 'Do',
 
   // ── Calculator ────────────────────────────────────────────────────────────────
   'calculator.title': 'Kalkulačka',

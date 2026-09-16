@@ -622,8 +622,16 @@ const no: Record<TranslationKeys, string> = {
   'calendar.view.month': 'Måned',
   'calendar.view.year': 'År',
   'calendar.today': 'I dag',
-  'calendar.dayPanel.noTransactions': 'Ingen transaksjoner for denne dagen',
+  'calendar.dayPanel.noEvents': 'Ingen planlagte hendelser for denne dagen',
   'calendar.dayPanel.addEvent': 'Legg til planlagt hendelse',
+  'calendar.dayPanel.eventCreated': 'Planlagt hendelse opprettet',
+  'calendar.form.type': 'Type',
+  'calendar.form.typeEvent': 'Hendelse',
+  'calendar.form.typePayment': 'Betaling',
+  'calendar.form.title': 'Tittel',
+  'calendar.form.titlePlaceholder': 'Hendelsesnavn…',
+  'calendar.form.timeFrom': 'Fra',
+  'calendar.form.timeTo': 'Til',
 
   // ── Calculator ────────────────────────────────────────────────────────────────
   'calculator.title': 'Kalkulator',
