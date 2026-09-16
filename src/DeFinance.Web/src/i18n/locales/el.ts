@@ -622,8 +622,16 @@ const el: Record<TranslationKeys, string> = {
   'calendar.view.month': 'Μήνας',
   'calendar.view.year': 'Έτος',
   'calendar.today': 'Σήμερα',
-  'calendar.dayPanel.noTransactions': 'Δεν υπάρχουν συναλλαγές για αυτή την ημέρα',
+  'calendar.dayPanel.noEvents': 'Δεν υπάρχουν προγραμματισμένα γεγονότα για αυτή την ημέρα',
   'calendar.dayPanel.addEvent': 'Προσθήκη προγραμματισμένου γεγονότος',
+  'calendar.dayPanel.eventCreated': 'Το προγραμματισμένο γεγονός δημιουργήθηκε',
+  'calendar.form.type': 'Τύπος',
+  'calendar.form.typeEvent': 'Γεγονός',
+  'calendar.form.typePayment': 'Πληρωμή',
+  'calendar.form.title': 'Τίτλος',
+  'calendar.form.titlePlaceholder': 'Όνομα γεγονότος…',
+  'calendar.form.timeFrom': 'Από',
+  'calendar.form.timeTo': 'Έως',
 
   // ── Calculator ────────────────────────────────────────────────────────────────
   'calculator.title': 'Αριθμομηχανή',

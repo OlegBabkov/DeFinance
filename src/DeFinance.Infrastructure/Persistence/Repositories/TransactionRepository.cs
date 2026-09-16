@@ -40,6 +40,17 @@ public class TransactionRepository(DeFinanceDbContext dbContext, ICacheService c
                 (t.Category!.Type == CategoryType.Expense || t.Category!.Type == CategoryType.TransferOut) ? -t.AmountInCurrency : 0m,
                 cancellationToken);
 
+    public async Task<decimal> GetSignedBalanceInRangeAsync(DateTime from, DateTime to, bool excludeSavings = false, CancellationToken cancellationToken = default) =>
+        await dbContext.Transactions
+            .Where(t => t.UserId == _userId)
+            .Where(t => t.DateTime >= from && t.DateTime < to)
+            .Where(t => !excludeSavings || t.Account!.Type != AccountType.Savings)
+            .Where(t => t.PaymentStatus!.AffectsBalance)
+            .SumAsync(t =>
+                (t.Category!.Type == CategoryType.Income || t.Category!.Type == CategoryType.TransferIn) ? t.AmountInCurrency :
+                (t.Category!.Type == CategoryType.Expense || t.Category!.Type == CategoryType.TransferOut) ? -t.AmountInCurrency : 0m,
+                cancellationToken);
+
     public async Task AddAsync(Transaction transaction, CancellationToken cancellationToken = default) =>
         await dbContext.Transactions.AddAsync(transaction, cancellationToken);
 

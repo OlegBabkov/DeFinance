@@ -620,8 +620,16 @@ const en = {
   'calendar.view.month': 'Month',
   'calendar.view.year': 'Year',
   'calendar.today': 'Today',
-  'calendar.dayPanel.noTransactions': 'No transactions for this day',
+  'calendar.dayPanel.noEvents': 'No planned events for this day',
   'calendar.dayPanel.addEvent': 'Add Planned Event',
+  'calendar.dayPanel.eventCreated': 'Planned event created',
+  'calendar.form.type': 'Type',
+  'calendar.form.typeEvent': 'Event',
+  'calendar.form.typePayment': 'Payment',
+  'calendar.form.title': 'Title',
+  'calendar.form.titlePlaceholder': 'Event name…',
+  'calendar.form.timeFrom': 'From',
+  'calendar.form.timeTo': 'To',
 
   // ── Calculator ────────────────────────────────────────────────────────────────
   'calculator.title': 'Calculator',

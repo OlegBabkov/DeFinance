@@ -622,8 +622,16 @@ const es: Record<TranslationKeys, string> = {
   'calendar.view.month': 'Mes',
   'calendar.view.year': 'Año',
   'calendar.today': 'Hoy',
-  'calendar.dayPanel.noTransactions': 'Sin transacciones para este día',
+  'calendar.dayPanel.noEvents': 'No hay eventos planificados para este día',
   'calendar.dayPanel.addEvent': 'Agregar evento planificado',
+  'calendar.dayPanel.eventCreated': 'Evento planificado creado',
+  'calendar.form.type': 'Tipo',
+  'calendar.form.typeEvent': 'Evento',
+  'calendar.form.typePayment': 'Pago',
+  'calendar.form.title': 'Título',
+  'calendar.form.titlePlaceholder': 'Nombre del evento…',
+  'calendar.form.timeFrom': 'De',
+  'calendar.form.timeTo': 'A',
 
   // ── Calculator ────────────────────────────────────────────────────────────────
   'calculator.title': 'Calculadora',

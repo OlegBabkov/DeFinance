@@ -21,6 +21,11 @@ public class OpeningBalanceOverrideRepository(DeFinanceDbContext dbContext, ICur
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<OpeningBalanceOverride>> GetAllByYearAsync(int year, CancellationToken cancellationToken = default) =>
+        await dbContext.OpeningBalanceOverrides
+            .Where(e => e.UserId == _userId && e.Year == year)
+            .ToListAsync(cancellationToken);
+
     public async Task AddAsync(OpeningBalanceOverride entry, CancellationToken cancellationToken = default) =>
         await dbContext.OpeningBalanceOverrides.AddAsync(entry, cancellationToken);
 

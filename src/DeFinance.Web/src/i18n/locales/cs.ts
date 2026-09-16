@@ -622,8 +622,16 @@ const cs: Record<TranslationKeys, string> = {
   'calendar.view.month': 'Měsíc',
   'calendar.view.year': 'Rok',
   'calendar.today': 'Dnes',
-  'calendar.dayPanel.noTransactions': 'Pro tento den nejsou žádné transakce',
+  'calendar.dayPanel.noEvents': 'Žádné plánované události pro tento den',
   'calendar.dayPanel.addEvent': 'Přidat plánovanou událost',
+  'calendar.dayPanel.eventCreated': 'Plánovaná událost vytvořena',
+  'calendar.form.type': 'Typ',
+  'calendar.form.typeEvent': 'Událost',
+  'calendar.form.typePayment': 'Platba',
+  'calendar.form.title': 'Název',
+  'calendar.form.titlePlaceholder': 'Název události…',
+  'calendar.form.timeFrom': 'Od',
+  'calendar.form.timeTo': 'Do',
 
   // ── Calculator ────────────────────────────────────────────────────────────────
   'calculator.title': 'Kalkulačka',

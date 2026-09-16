@@ -622,8 +622,16 @@ const fi: Record<TranslationKeys, string> = {
   'calendar.view.month': 'Kuukausi',
   'calendar.view.year': 'Vuosi',
   'calendar.today': 'Tänään',
-  'calendar.dayPanel.noTransactions': 'Ei tapahtumia tälle päivälle',
+  'calendar.dayPanel.noEvents': 'Ei suunniteltuja tapahtumia tälle päivälle',
   'calendar.dayPanel.addEvent': 'Lisää suunniteltu tapahtuma',
+  'calendar.dayPanel.eventCreated': 'Suunniteltu tapahtuma luotu',
+  'calendar.form.type': 'Tyyppi',
+  'calendar.form.typeEvent': 'Tapahtuma',
+  'calendar.form.typePayment': 'Maksu',
+  'calendar.form.title': 'Otsikko',
+  'calendar.form.titlePlaceholder': 'Tapahtuman nimi…',
+  'calendar.form.timeFrom': 'Alkaen',
+  'calendar.form.timeTo': 'Asti',
 
   // ── Calculator ────────────────────────────────────────────────────────────────
   'calculator.title': 'Laskin',
