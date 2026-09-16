@@ -36,7 +36,8 @@ public class GetPlanFactSummaryQueryHandler(
 
         var budgetEntries = await budgetEntryRepository.GetByPeriodAsync(request.Year, months, cancellationToken);
         var transactionTotals = await transactionRepository.GetCategoryMonthlyTotalsAsync(request.Year, months, request.ExcludeSavings, cancellationToken);
-        var openingOverrides = await openingBalanceOverrideRepository.GetByYearAsync(request.Year, months, cancellationToken);
+        // Load ALL overrides for the year so months without an override can cascade from a prior month's override
+        var openingOverrides = await openingBalanceOverrideRepository.GetAllByYearAsync(request.Year, cancellationToken);
         var overrideByMonth = openingOverrides.ToDictionary(o => o.Month);
 
         var monthDataList = new List<PlanFactMonthData>();
@@ -59,7 +60,7 @@ public class GetPlanFactSummaryQueryHandler(
                 }
                 else
                 {
-                    openingBalance = await transactionRepository.GetSignedBalanceBeforeAsync(monthStart, request.ExcludeSavings, cancellationToken);
+                    openingBalance = await ResolveOpeningBalanceAsync(overrideByMonth, month, monthStart, request.Year, request.ExcludeSavings, transactionRepository, cancellationToken);
                     openingIsOverride = false;
                 }
                 planOpeningBalance = ov.PlanAmount;
@@ -67,7 +68,7 @@ public class GetPlanFactSummaryQueryHandler(
             }
             else
             {
-                openingBalance = await transactionRepository.GetSignedBalanceBeforeAsync(monthStart, request.ExcludeSavings, cancellationToken);
+                openingBalance = await ResolveOpeningBalanceAsync(overrideByMonth, month, monthStart, request.Year, request.ExcludeSavings, transactionRepository, cancellationToken);
                 openingIsOverride = false;
                 planOpeningBalance = null;
                 planOpeningIsOverride = false;
@@ -111,6 +112,30 @@ public class GetPlanFactSummaryQueryHandler(
         }
 
         return new PlanFactSummaryResponse(monthDataList);
+    }
+
+    // For months without an explicit override, cascade forward from the nearest prior override.
+    // Falls back to a full raw sum only when no prior override exists.
+    private static async Task<decimal> ResolveOpeningBalanceAsync(
+        Dictionary<int, OpeningBalanceOverride> overrideByMonth,
+        int month,
+        DateTime monthStart,
+        int year,
+        bool excludeSavings,
+        ITransactionRepository transactionRepository,
+        CancellationToken cancellationToken)
+    {
+        var priorOverride = overrideByMonth.Values
+            .Where(o => o.Month < month && o.Amount.HasValue)
+            .MaxBy(o => o.Month);
+
+        if (priorOverride?.Amount is null)
+            return await transactionRepository.GetSignedBalanceBeforeAsync(monthStart, excludeSavings, cancellationToken);
+
+        var priorMonthStart = DateTime.SpecifyKind(new DateTime(year, priorOverride.Month, 1), DateTimeKind.Utc);
+        var netSincePriorOverride = await transactionRepository.GetSignedBalanceInRangeAsync(
+            priorMonthStart, monthStart, excludeSavings, cancellationToken);
+        return priorOverride.Amount.Value + netSincePriorOverride;
     }
 }
 
