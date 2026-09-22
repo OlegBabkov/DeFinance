@@ -28,11 +28,17 @@ public class GetPlanFactSummaryQueryHandler(
             cancellationToken);
 
         var incomeCategories = categories
-            .Where(c => c.Type == CategoryType.Income || c.Type == CategoryType.TransferIn)
+            .Where(c => c.Type == CategoryType.Income)
             .OrderByDescending(c => c.IsImportant).ThenBy(c => c.Name).ToList();
         var expenseCategories = categories
-            .Where(c => c.Type == CategoryType.Expense || c.Type == CategoryType.TransferOut)
+            .Where(c => c.Type == CategoryType.Expense)
             .OrderByDescending(c => c.IsImportant).ThenBy(c => c.Name).ToList();
+        var transferInCategories = categories
+            .Where(c => c.Type == CategoryType.TransferIn)
+            .OrderBy(c => c.Name).ToList();
+        var transferOutCategories = categories
+            .Where(c => c.Type == CategoryType.TransferOut)
+            .OrderBy(c => c.Name).ToList();
 
         var budgetEntries = await budgetEntryRepository.GetByPeriodAsync(request.Year, months, cancellationToken);
         var transactionTotals = await transactionRepository.GetCategoryMonthlyTotalsAsync(request.Year, months, request.ExcludeSavings, cancellationToken);
@@ -108,7 +114,17 @@ public class GetPlanFactSummaryQueryHandler(
                     lines, c.IsImportant);
             }).ToList();
 
-            monthDataList.Add(new PlanFactMonthData(request.Year, month, openingBalance, openingIsOverride, planOpeningBalance, planOpeningIsOverride, incomeRows, expenseRows));
+            var transferInRows = transferInCategories.Select(c => new PlanFactCategoryRow(
+                c.Id, c.Name, 0m,
+                factByCategory.TryGetValue(c.Id, out var ti) ? ti : 0m,
+                [], c.IsImportant)).ToList();
+
+            var transferOutRows = transferOutCategories.Select(c => new PlanFactCategoryRow(
+                c.Id, c.Name, 0m,
+                factByCategory.TryGetValue(c.Id, out var to) ? to : 0m,
+                [], c.IsImportant)).ToList();
+
+            monthDataList.Add(new PlanFactMonthData(request.Year, month, openingBalance, openingIsOverride, planOpeningBalance, planOpeningIsOverride, incomeRows, expenseRows, transferInRows, transferOutRows));
         }
 
         return new PlanFactSummaryResponse(monthDataList);

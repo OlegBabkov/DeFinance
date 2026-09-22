@@ -59,6 +59,8 @@ interface MonthTotals {
   incomeFact: number
   expensePlan: number
   expenseFact: number
+  transferInFact: number
+  transferOutFact: number
 }
 
 function calcMonthTotals(m: PlanFactMonthData): MonthTotals {
@@ -66,10 +68,13 @@ function calcMonthTotals(m: PlanFactMonthData): MonthTotals {
   const incomeFact = m.incomeCategories.reduce((s, c) => s + c.fact, 0)
   const expensePlan = m.expenseCategories.reduce((s, c) => s + c.plan, 0)
   const expenseFact = m.expenseCategories.reduce((s, c) => s + c.fact, 0)
+  const transferInFact = (m.transferInCategories ?? []).reduce((s, c) => s + c.fact, 0)
+  const transferOutFact = (m.transferOutCategories ?? []).reduce((s, c) => s + c.fact, 0)
   return {
     openingBalance: m.openingBalance,
     planOpeningBalance: m.planOpeningBalance ?? m.openingBalance,
     incomePlan, incomeFact, expensePlan, expenseFact,
+    transferInFact, transferOutFact,
   }
 }
 
@@ -485,6 +490,8 @@ export function PlanFactPage() {
       const incomeFact = m.incomeCategories.reduce((s, c) => s + c.fact, 0)
       const expensePlan = m.expenseCategories.reduce((s, c) => s + c.plan, 0)
       const expenseFact = m.expenseCategories.reduce((s, c) => s + c.fact, 0)
+      const transferInFact = (m.transferInCategories ?? []).reduce((s, c) => s + c.fact, 0)
+      const transferOutFact = (m.transferOutCategories ?? []).reduce((s, c) => s + c.fact, 0)
       let factOpen: number, planOpen: number, isAuto: boolean
       if (m.openingBalanceIsOverride) {
         factOpen = m.openingBalance
@@ -500,7 +507,7 @@ export function PlanFactPage() {
         isAuto = false
       }
       result.set(m.month, { factOpen, planOpen, isAuto })
-      prevFactClose = factOpen + incomeFact - expenseFact
+      prevFactClose = factOpen + incomeFact - expenseFact + transferInFact - transferOutFact
       prevPlanClose = planOpen + incomePlan - expensePlan
     }
     return result
@@ -552,6 +559,8 @@ export function PlanFactPage() {
 
   const allIncomeIds: string[] = data?.months[0]?.incomeCategories.map(c => c.categoryId) ?? []
   const allExpenseIds: string[] = data?.months[0]?.expenseCategories.map(c => c.categoryId) ?? []
+  const allTransferInIds: string[] = data?.months[0]?.transferInCategories.map(c => c.categoryId) ?? []
+  const allTransferOutIds: string[] = data?.months[0]?.transferOutCategories.map(c => c.categoryId) ?? []
 
   const hasAnyValue = (id: string, isExpense: boolean) =>
     orderedMonths.some(m => {
@@ -564,6 +573,8 @@ export function PlanFactPage() {
 
   const getIncomeName = (id: string) => data?.months[0]?.incomeCategories.find(c => c.categoryId === id)?.categoryName ?? ''
   const getExpenseName = (id: string) => data?.months[0]?.expenseCategories.find(c => c.categoryId === id)?.categoryName ?? ''
+  const getTransferInName = (id: string) => data?.months[0]?.transferInCategories.find(c => c.categoryId === id)?.categoryName ?? ''
+  const getTransferOutName = (id: string) => data?.months[0]?.transferOutCategories.find(c => c.categoryId === id)?.categoryName ?? ''
   const getIncomeImportant = (id: string) => data?.months[0]?.incomeCategories.find(c => c.categoryId === id)?.isImportant ?? false
   const getExpenseImportant = (id: string) => data?.months[0]?.expenseCategories.find(c => c.categoryId === id)?.isImportant ?? false
 
@@ -713,7 +724,7 @@ export function PlanFactPage() {
                       >
                         {isAuto
                           ? <>{fmt(planOb)}<span className="ml-1 text-[10px] opacity-60">↻</span></>
-                          : planIsOverride ? <>{fmt(planOb)}<span className="ml-1 text-[10px] opacity-70">✎</span></> : '—'}
+                          : planIsOverride ? <>{fmt(planOb)}<span className="ml-1 text-[10px] opacity-70">✎</span></> : <span className="opacity-40">{fmt(planOb)}</span>}
                       </td>
                       <td
                         key={`${m}-ob-fact`}
@@ -891,7 +902,7 @@ export function PlanFactPage() {
                     </>
                   )
                   const planClose = t.planOpeningBalance + t.incomePlan - t.expensePlan
-                  const factClose = t.openingBalance + t.incomeFact - t.expenseFact
+                  const factClose = t.openingBalance + t.incomeFact - t.expenseFact + t.transferInFact - t.transferOutFact
                   return (
                     <>
                       <td key={`${m}-cb-plan`} className={`px-2 py-2.5 text-right text-xs font-mono border-l border-gray-100 dark:border-gray-700 ${planColCls} ${signedColor(planClose)}`}>{fmt(planClose)}</td>
@@ -905,8 +916,10 @@ export function PlanFactPage() {
                   const incomeFact = combined.categories.filter(c => !c.isExpense).reduce((s, c) => s + c.fact, 0)
                   const expensePlan = combined.categories.filter(c => c.isExpense).reduce((s, c) => s + c.plan, 0)
                   const expenseFact = combined.categories.filter(c => c.isExpense).reduce((s, c) => s + c.fact, 0)
+                  const transferInFact = orderedMonths.reduce((s, m) => { const t = monthTotals(m); return s + (t?.transferInFact ?? 0) }, 0)
+                  const transferOutFact = orderedMonths.reduce((s, m) => { const t = monthTotals(m); return s + (t?.transferOutFact ?? 0) }, 0)
                   const planClose = combined.firstPlanOpening + incomePlan - expensePlan
-                  const factClose = combined.firstOpening + incomeFact - expenseFact
+                  const factClose = combined.firstOpening + incomeFact - expenseFact + transferInFact - transferOutFact
                   return (
                     <>
                       <td className={`px-2 py-2.5 text-right text-xs font-mono border-l border-gray-100 dark:border-gray-700 ${planColCls} ${signedColor(planClose)}`}>{fmt(planClose)}</td>
@@ -916,6 +929,97 @@ export function PlanFactPage() {
                   )
                 })()}
               </tr>
+
+              {/* Transfers section */}
+              {(allTransferInIds.length > 0 || allTransferOutIds.length > 0) && (
+                <>
+                  <tr>
+                    <td colSpan={totalCols} className={sectionHdrCls}>{t('planFact.section.transfers')}</td>
+                  </tr>
+
+                  {allTransferInIds.map(id => (
+                    <tr key={id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                      <td className="px-4 py-2 text-gray-700 dark:text-gray-300 sticky left-0 bg-white dark:bg-gray-800 z-10 border-r border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                        <span className="pl-1 text-emerald-700 dark:text-emerald-400">↓</span> {getTransferInName(id)}
+                      </td>
+                      {orderedMonths.map(m => {
+                        const md = getMonthData(m)
+                        const fact = md?.transferInCategories.find(c => c.categoryId === id)?.fact ?? 0
+                        return (
+                          <>
+                            <td key={`${m}-${id}-tiplan`} className={`px-2 py-2 text-right text-xs font-mono border-l border-gray-100 dark:border-gray-700 ${planColCls} text-gray-300 dark:text-gray-600`}>—</td>
+                            <td key={`${m}-${id}-tifact`} className={`px-2 py-2 text-right text-xs font-mono text-emerald-700 dark:text-emerald-400 ${factColCls}`}>{fact > 0 ? fmt(fact) : <span className="text-gray-300 dark:text-gray-600">—</span>}</td>
+                            <td key={`${m}-${id}-tipct`} className="px-2 py-2 text-center text-gray-400 text-xs">—</td>
+                          </>
+                        )
+                      })}
+                      {showTotal && (
+                        <>
+                          <td className={`px-2 py-2 text-right text-xs font-mono border-l border-gray-100 dark:border-gray-700 ${planColCls} text-gray-300 dark:text-gray-600`}>—</td>
+                          <td className={`px-2 py-2 text-right text-xs font-mono text-emerald-700 dark:text-emerald-400 ${factColCls}`}>{fmt(orderedMonths.reduce((s, m) => s + (getMonthData(m)?.transferInCategories.find(c => c.categoryId === id)?.fact ?? 0), 0))}</td>
+                          <td className="px-2 py-2 text-center text-gray-400 text-xs">—</td>
+                        </>
+                      )}
+                    </tr>
+                  ))}
+
+                  {allTransferOutIds.map(id => (
+                    <tr key={id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                      <td className="px-4 py-2 text-gray-700 dark:text-gray-300 sticky left-0 bg-white dark:bg-gray-800 z-10 border-r border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                        <span className="pl-1 text-red-500 dark:text-red-400">↑</span> {getTransferOutName(id)}
+                      </td>
+                      {orderedMonths.map(m => {
+                        const md = getMonthData(m)
+                        const fact = md?.transferOutCategories.find(c => c.categoryId === id)?.fact ?? 0
+                        return (
+                          <>
+                            <td key={`${m}-${id}-toplan`} className={`px-2 py-2 text-right text-xs font-mono border-l border-gray-100 dark:border-gray-700 ${planColCls} text-gray-300 dark:text-gray-600`}>—</td>
+                            <td key={`${m}-${id}-tofact`} className={`px-2 py-2 text-right text-xs font-mono text-red-500 dark:text-red-400 ${factColCls}`}>{fact > 0 ? fmt(fact) : <span className="text-gray-300 dark:text-gray-600">—</span>}</td>
+                            <td key={`${m}-${id}-topct`} className="px-2 py-2 text-center text-gray-400 text-xs">—</td>
+                          </>
+                        )
+                      })}
+                      {showTotal && (
+                        <>
+                          <td className={`px-2 py-2 text-right text-xs font-mono border-l border-gray-100 dark:border-gray-700 ${planColCls} text-gray-300 dark:text-gray-600`}>—</td>
+                          <td className={`px-2 py-2 text-right text-xs font-mono text-red-500 dark:text-red-400 ${factColCls}`}>{fmt(orderedMonths.reduce((s, m) => s + (getMonthData(m)?.transferOutCategories.find(c => c.categoryId === id)?.fact ?? 0), 0))}</td>
+                          <td className="px-2 py-2 text-center text-gray-400 text-xs">—</td>
+                        </>
+                      )}
+                    </tr>
+                  ))}
+
+                  {/* Net transfers total */}
+                  <tr className={totalRowCls}>
+                    <td className="px-4 py-2 text-gray-800 dark:text-gray-100 sticky left-0 bg-gray-50 dark:bg-gray-800/80 z-10 border-r border-gray-200 dark:border-gray-600">
+                      {t('planFact.row.netTransfers')}
+                    </td>
+                    {orderedMonths.map(m => {
+                      const t = monthTotals(m)
+                      const net = (t?.transferInFact ?? 0) - (t?.transferOutFact ?? 0)
+                      return (
+                        <>
+                          <td key={`${m}-nt-plan`} className={`px-2 py-2 text-right text-xs font-mono border-l border-gray-100 dark:border-gray-700 ${planColCls} text-gray-300 dark:text-gray-600`}>—</td>
+                          <td key={`${m}-nt-fact`} className={`px-2 py-2 text-right text-xs font-mono ${factColCls} ${signedColor(net)}`}>{fmt(net)}</td>
+                          <td key={`${m}-nt-pct`} className="px-2 py-2 text-center text-gray-400 text-xs">—</td>
+                        </>
+                      )
+                    })}
+                    {showTotal && (() => {
+                      const totalIn = orderedMonths.reduce((s, m) => { const t = monthTotals(m); return s + (t?.transferInFact ?? 0) }, 0)
+                      const totalOut = orderedMonths.reduce((s, m) => { const t = monthTotals(m); return s + (t?.transferOutFact ?? 0) }, 0)
+                      const net = totalIn - totalOut
+                      return (
+                        <>
+                          <td className={`px-2 py-2 text-right text-xs font-mono border-l border-gray-100 dark:border-gray-700 ${planColCls} text-gray-300 dark:text-gray-600`}>—</td>
+                          <td className={`px-2 py-2 text-right text-xs font-mono ${factColCls} ${signedColor(net)}`}>{fmt(net)}</td>
+                          <td className="px-2 py-2 text-center text-gray-400 text-xs">—</td>
+                        </>
+                      )
+                    })()}
+                  </tr>
+                </>
+              )}
 
             </tbody>
           </table>
