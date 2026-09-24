@@ -28,11 +28,17 @@ public class GetPlanFactSummaryQueryHandler(
             cancellationToken);
 
         var incomeCategories = categories
-            .Where(c => c.Type == CategoryType.Income || c.Type == CategoryType.TransferIn)
+            .Where(c => c.Type == CategoryType.Income)
             .OrderByDescending(c => c.IsImportant).ThenBy(c => c.Name).ToList();
         var expenseCategories = categories
-            .Where(c => c.Type == CategoryType.Expense || c.Type == CategoryType.TransferOut)
+            .Where(c => c.Type == CategoryType.Expense)
             .OrderByDescending(c => c.IsImportant).ThenBy(c => c.Name).ToList();
+        var transferInCategories = categories
+            .Where(c => c.Type == CategoryType.TransferIn)
+            .OrderBy(c => c.Name).ToList();
+        var transferOutCategories = categories
+            .Where(c => c.Type == CategoryType.TransferOut)
+            .OrderBy(c => c.Name).ToList();
 
         var budgetEntries = await budgetEntryRepository.GetByPeriodAsync(request.Year, months, cancellationToken);
         var transactionTotals = await transactionRepository.GetCategoryMonthlyTotalsAsync(request.Year, months, request.ExcludeSavings, cancellationToken);
@@ -53,7 +59,9 @@ public class GetPlanFactSummaryQueryHandler(
 
             if (overrideByMonth.TryGetValue(month, out var ov))
             {
-                if (ov.Amount.HasValue)
+                // Overrides store a full-portfolio amount; when excluding savings they can't be used
+                // as an anchor because we'd be mixing a savings-inclusive base with savings-exclusive flow.
+                if (ov.Amount.HasValue && !request.ExcludeSavings)
                 {
                     openingBalance = ov.Amount.Value;
                     openingIsOverride = true;
@@ -108,7 +116,17 @@ public class GetPlanFactSummaryQueryHandler(
                     lines, c.IsImportant);
             }).ToList();
 
-            monthDataList.Add(new PlanFactMonthData(request.Year, month, openingBalance, openingIsOverride, planOpeningBalance, planOpeningIsOverride, incomeRows, expenseRows));
+            var transferInRows = transferInCategories.Select(c => new PlanFactCategoryRow(
+                c.Id, c.Name, 0m,
+                factByCategory.TryGetValue(c.Id, out var ti) ? ti : 0m,
+                [], c.IsImportant)).ToList();
+
+            var transferOutRows = transferOutCategories.Select(c => new PlanFactCategoryRow(
+                c.Id, c.Name, 0m,
+                factByCategory.TryGetValue(c.Id, out var to) ? to : 0m,
+                [], c.IsImportant)).ToList();
+
+            monthDataList.Add(new PlanFactMonthData(request.Year, month, openingBalance, openingIsOverride, planOpeningBalance, planOpeningIsOverride, incomeRows, expenseRows, transferInRows, transferOutRows));
         }
 
         return new PlanFactSummaryResponse(monthDataList);
@@ -125,6 +143,12 @@ public class GetPlanFactSummaryQueryHandler(
         ITransactionRepository transactionRepository,
         CancellationToken cancellationToken)
     {
+        // Overrides are full-portfolio anchors. Mixing one with savings-excluded net flow
+        // would leave the savings portion of the override permanently baked in, so when
+        // savings are excluded we always compute the opening balance from raw transactions.
+        if (excludeSavings)
+            return await transactionRepository.GetSignedBalanceBeforeAsync(monthStart, true, cancellationToken);
+
         var priorOverride = overrideByMonth.Values
             .Where(o => o.Month < month && o.Amount.HasValue)
             .MaxBy(o => o.Month);

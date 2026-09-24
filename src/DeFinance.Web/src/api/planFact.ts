@@ -23,6 +23,8 @@ export interface PlanFactMonthData {
   planOpeningBalanceIsOverride: boolean
   incomeCategories: PlanFactCategoryRow[]
   expenseCategories: PlanFactCategoryRow[]
+  transferInCategories: PlanFactCategoryRow[]
+  transferOutCategories: PlanFactCategoryRow[]
 }
 
 export interface PlanFactSummaryResponse {
