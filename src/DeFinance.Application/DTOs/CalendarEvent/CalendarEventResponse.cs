@@ -25,4 +25,5 @@ public record CalendarEventResponse(
     decimal? Sum,
     decimal? ExchangeRate,
     // Common
+    string? Color,
     string? Notes);

@@ -634,6 +634,8 @@ const uk: Record<TranslationKeys, string> = {
   'calendar.form.titlePlaceholder': 'Назва події…',
   'calendar.form.timeFrom': 'Від',
   'calendar.form.timeTo': 'До',
+  'calendar.form.color': 'Color',
+  'calendar.form.customColor': 'Custom color',
 
   // ── Calculator ────────────────────────────────────────────────────────────────
   'calculator.title': 'Калькулятор',

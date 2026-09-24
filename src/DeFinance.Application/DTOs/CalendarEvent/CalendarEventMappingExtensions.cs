@@ -27,5 +27,6 @@ public static class CalendarEventMappingExtensions
             e.InCurrencyId,
             e.Sum,
             e.ExchangeRate,
+            e.Color,
             e.Notes);
 }

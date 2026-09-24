@@ -634,6 +634,8 @@ const el: Record<TranslationKeys, string> = {
   'calendar.form.titlePlaceholder': 'Όνομα γεγονότος…',
   'calendar.form.timeFrom': 'Από',
   'calendar.form.timeTo': 'Έως',
+  'calendar.form.color': 'Color',
+  'calendar.form.customColor': 'Custom color',
 
   // ── Calculator ────────────────────────────────────────────────────────────────
   'calculator.title': 'Αριθμομηχανή',

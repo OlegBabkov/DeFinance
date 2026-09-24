@@ -20,6 +20,7 @@ public record CreateCalendarEventCommand(
     Guid? InCurrencyId,
     decimal? Sum,
     decimal? ExchangeRate,
+    string? Color,
     string? Notes
 ) : IRequest<CalendarEventResponse>;
 
@@ -40,7 +41,7 @@ public class CreateCalendarEventCommandHandler(
         {
             var timeFrom = string.IsNullOrEmpty(request.TimeFrom) ? (TimeOnly?)null : TimeOnly.Parse(request.TimeFrom);
             var timeTo = string.IsNullOrEmpty(request.TimeTo) ? (TimeOnly?)null : TimeOnly.Parse(request.TimeTo);
-            calendarEvent = CalendarEvent.CreateEvent(date, request.Title, timeFrom, timeTo, userId, request.Notes);
+            calendarEvent = CalendarEvent.CreateEvent(date, request.Title, timeFrom, timeTo, userId, request.Color, request.Notes);
         }
         else
         {
@@ -48,7 +49,7 @@ public class CreateCalendarEventCommandHandler(
                 date, request.AccountId!.Value, request.CategoryId!.Value,
                 request.CounterpartyId, request.PaymentStatusId!.Value,
                 request.InCurrencyId!.Value, request.Sum!.Value, request.ExchangeRate!.Value,
-                userId, request.Notes);
+                userId, request.Color, request.Notes);
         }
 
         await calendarEventRepository.AddAsync(calendarEvent, cancellationToken);

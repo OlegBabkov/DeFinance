@@ -28,6 +28,7 @@ export interface CalendarEvent {
   sum: number | null
   exchangeRate: number | null
   // Common
+  color: string | null
   notes: string | null
 }
 
@@ -44,12 +45,15 @@ export interface CreateCalendarEventRequest {
   inCurrencyId?: string | null
   sum?: number | null
   exchangeRate?: number | null
+  color?: string | null
   notes?: string | null
 }
 
 export const calendarEventsApi = {
   getByDate: (date: string) =>
-    client.get<PagedResult<CalendarEvent>>('/calendar-events', { params: { date, pageSize: 200 } }).then(r => r.data),
+    client.get<PagedResult<CalendarEvent>>('/calendar-events', { params: { date, pageSize: 500 } }).then(r => r.data),
+  getByDateRange: (dateFrom: string, dateTo: string) =>
+    client.get<PagedResult<CalendarEvent>>('/calendar-events', { params: { dateFrom, dateTo, pageSize: 500 } }).then(r => r.data),
   create: (req: CreateCalendarEventRequest) =>
     client.post<CalendarEvent>('/calendar-events', req).then(r => r.data),
   remove: (id: string) =>

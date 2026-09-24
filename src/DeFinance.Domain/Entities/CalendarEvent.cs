@@ -25,6 +25,7 @@ public class CalendarEvent
     public decimal? ExchangeRate { get; private set; }
 
     // Common
+    public string? Color { get; private set; }
     public string? Notes { get; private set; }
     public Guid UserId { get; private set; }
 
@@ -32,7 +33,7 @@ public class CalendarEvent
 
     public static CalendarEvent CreateEvent(
         DateOnly date, string? title, TimeOnly? timeFrom, TimeOnly? timeTo,
-        Guid userId, string? notes = null) =>
+        Guid userId, string? color = null, string? notes = null) =>
         new()
         {
             Id = Guid.NewGuid(),
@@ -41,6 +42,7 @@ public class CalendarEvent
             Title = title,
             TimeFrom = timeFrom,
             TimeTo = timeTo,
+            Color = color,
             UserId = userId,
             Notes = notes
         };
@@ -48,7 +50,7 @@ public class CalendarEvent
     public static CalendarEvent CreatePayment(
         DateOnly date, Guid accountId, Guid categoryId, Guid? counterpartyId,
         Guid paymentStatusId, Guid inCurrencyId, decimal sum, decimal exchangeRate,
-        Guid userId, string? notes = null) =>
+        Guid userId, string? color = null, string? notes = null) =>
         new()
         {
             Id = Guid.NewGuid(),
@@ -61,6 +63,7 @@ public class CalendarEvent
             InCurrencyId = inCurrencyId,
             Sum = sum,
             ExchangeRate = exchangeRate,
+            Color = color,
             UserId = userId,
             Notes = notes
         };

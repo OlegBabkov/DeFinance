@@ -31,6 +31,12 @@ function activeOrCurrent<T extends { id: string; isActive: boolean }>(items: T[]
   return active
 }
 
+const PRESET_COLORS = [
+  '#6366F1', '#8B5CF6', '#EC4899', '#EF4444',
+  '#F97316', '#EAB308', '#22C55E', '#14B8A6',
+  '#3B82F6', '#64748B',
+]
+
 interface FormState {
   eventType: CalendarEventType
   date: string
@@ -47,6 +53,7 @@ interface FormState {
   sum: string
   exchangeRate: string
   // Common
+  color: string
   notes: string
 }
 
@@ -78,6 +85,7 @@ export function AddCalendarEventModal({ initialDate, onClose, onCreated }: Props
     inCurrencyId:    '',
     sum:             '',
     exchangeRate:    '1',
+    color:           PRESET_COLORS[0],
     notes:           '',
   })
 
@@ -143,6 +151,7 @@ export function AddCalendarEventModal({ initialDate, onClose, onCreated }: Props
           title:     form.title || null,
           timeFrom:  form.timeFrom || null,
           timeTo:    form.timeTo || null,
+          color:     form.color || null,
           notes:     form.notes || null,
         })
       } else {
@@ -156,6 +165,7 @@ export function AddCalendarEventModal({ initialDate, onClose, onCreated }: Props
           inCurrencyId:    form.inCurrencyId,
           sum:             parseFloat(form.sum),
           exchangeRate:    parseFloat(form.exchangeRate),
+          color:           form.color || null,
           notes:           form.notes || null,
         })
       }
@@ -322,6 +332,30 @@ export function AddCalendarEventModal({ initialDate, onClose, onCreated }: Props
               </div>
             </div>
           )}
+
+          {/* ── Color picker (common) ────────────────────────────────────── */}
+          <div>
+            <label className={labelCls}>{t('calendar.form.color')}</label>
+            <div className="flex items-center gap-2 flex-wrap">
+              {PRESET_COLORS.map(c => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setForm(f => ({ ...f, color: c }))}
+                  className={`w-7 h-7 rounded-full transition-all ${form.color === c ? 'ring-2 ring-offset-2 ring-gray-400 dark:ring-gray-300 scale-110' : 'hover:scale-110'}`}
+                  style={{ backgroundColor: c }}
+                  aria-label={c}
+                />
+              ))}
+              <input
+                type="color"
+                value={form.color}
+                onChange={e => setForm(f => ({ ...f, color: e.target.value }))}
+                className="w-7 h-7 rounded-full cursor-pointer border-0 p-0 bg-transparent"
+                title={t('calendar.form.customColor')}
+              />
+            </div>
+          </div>
 
           {/* ── Notes (common) ────────────────────────────────────────────── */}
           <div>

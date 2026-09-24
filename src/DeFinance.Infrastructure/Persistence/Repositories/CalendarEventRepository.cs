@@ -20,6 +20,18 @@ public class CalendarEventRepository(DeFinanceDbContext dbContext, ICurrentUserS
             .ThenBy(e => e.TimeFrom)
             .ToListAsync(cancellationToken);
 
+    public async Task<IReadOnlyList<CalendarEvent>> GetByDateRangeAsync(DateOnly from, DateOnly to, CancellationToken cancellationToken = default) =>
+        await dbContext.CalendarEvents
+            .Where(e => e.UserId == _userId && e.Date >= from && e.Date <= to)
+            .Include(e => e.Account).ThenInclude(a => a!.Currency)
+            .Include(e => e.Category)
+            .Include(e => e.Counterparty)
+            .Include(e => e.PaymentStatus)
+            .OrderBy(e => e.Date)
+            .ThenBy(e => e.EventType)
+            .ThenBy(e => e.TimeFrom)
+            .ToListAsync(cancellationToken);
+
     public async Task<CalendarEvent?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
         await dbContext.CalendarEvents
             .Where(e => e.UserId == _userId && e.Id == id)

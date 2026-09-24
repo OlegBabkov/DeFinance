@@ -13,6 +13,7 @@ public class CalendarEventConfiguration : IEntityTypeConfiguration<CalendarEvent
         builder.Property(e => e.Date).IsRequired();
         builder.Property(e => e.EventType).HasMaxLength(20).IsRequired();
         builder.Property(e => e.Title).HasMaxLength(200);
+        builder.Property(e => e.Color).HasMaxLength(20);
         builder.Property(e => e.Notes).HasMaxLength(500);
         builder.Property(e => e.Sum).HasPrecision(18, 2);
         builder.Property(e => e.ExchangeRate).HasPrecision(18, 6);
