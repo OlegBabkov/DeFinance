@@ -632,6 +632,8 @@ const en = {
   'calendar.form.titlePlaceholder': 'Event name…',
   'calendar.form.timeFrom': 'From',
   'calendar.form.timeTo': 'To',
+  'calendar.form.color': 'Color',
+  'calendar.form.customColor': 'Custom color',
 
   // ── Calculator ────────────────────────────────────────────────────────────────
   'calculator.title': 'Calculator',

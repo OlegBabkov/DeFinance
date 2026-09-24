@@ -634,6 +634,8 @@ const sv: Record<TranslationKeys, string> = {
   'calendar.form.titlePlaceholder': 'Händelsenamn…',
   'calendar.form.timeFrom': 'Från',
   'calendar.form.timeTo': 'Till',
+  'calendar.form.color': 'Color',
+  'calendar.form.customColor': 'Custom color',
 
   // ── Calculator ────────────────────────────────────────────────────────────────
   'calculator.title': 'Kalkylator',

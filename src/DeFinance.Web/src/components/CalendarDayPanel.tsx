@@ -8,13 +8,14 @@ interface Props {
   day: Date | null
   intlLocale: string
   onClose: () => void
+  onEventsChanged?: () => void
 }
 
 function fmtAmount(n: number) {
   return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
-export function CalendarDayPanel({ day, intlLocale, onClose }: Props) {
+export function CalendarDayPanel({ day, intlLocale, onClose, onEventsChanged }: Props) {
   const { t } = useTranslation()
   const open = day !== null
   const [events, setEvents] = useState<CalendarEvent[]>([])
@@ -33,6 +34,7 @@ export function CalendarDayPanel({ day, intlLocale, onClose }: Props) {
       .then(r => setEvents(r.items))
       .catch(() => setEvents([]))
       .finally(() => setLoading(false))
+    onEventsChanged?.()
   }
 
   useEffect(() => {
@@ -101,7 +103,10 @@ export function CalendarDayPanel({ day, intlLocale, onClose }: Props) {
               {ev.eventType === 'Event' ? (
                 /* ── Event card ── */
                 <div className="flex items-start gap-2">
-                  <span className="mt-0.5 text-indigo-500 dark:text-indigo-400 shrink-0">
+                  <span
+                    className="mt-0.5 shrink-0"
+                    style={{ color: ev.color ?? '#6366F1' }}
+                  >
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4">
                       <path fillRule="evenodd" d="M4 1.75a.75.75 0 0 1 1.5 0V3h5V1.75a.75.75 0 0 1 1.5 0V3A2 2 0 0 1 14 5v7a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2V1.75ZM3.5 7a.5.5 0 0 0 0 1h9a.5.5 0 0 0 0-1h-9Z" clipRule="evenodd" />
                     </svg>
@@ -124,8 +129,8 @@ export function CalendarDayPanel({ day, intlLocale, onClose }: Props) {
                 /* ── Payment card ── */
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-start gap-2 min-w-0">
-                    {ev.categoryColor ? (
-                      <span className="w-2 h-2 rounded-full shrink-0 mt-1.5" style={{ backgroundColor: ev.categoryColor }} />
+                    {(ev.color ?? ev.categoryColor) ? (
+                      <span className="w-2 h-2 rounded-full shrink-0 mt-1.5" style={{ backgroundColor: ev.color ?? ev.categoryColor ?? undefined }} />
                     ) : (
                       <span className="w-2 h-2 shrink-0" />
                     )}

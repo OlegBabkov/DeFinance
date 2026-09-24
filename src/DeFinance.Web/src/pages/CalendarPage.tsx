@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { CalendarDayPanel } from '../components/CalendarDayPanel'
+import { calendarEventsApi, type CalendarEvent } from '../api/calendarEvents'
 
 type ViewMode = 'week' | 'month' | 'year'
 
@@ -29,6 +30,26 @@ function getWeekStart(date: Date): Date {
   return d
 }
 
+function toDateStr(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+function EventBar({ ev }: { ev: CalendarEvent }) {
+  const color = ev.color ?? (ev.eventType === 'Payment' ? (ev.categoryColor ?? '#6366F1') : '#6366F1')
+  const label = ev.eventType === 'Event'
+    ? (ev.title || 'Event')
+    : (ev.categoryName || 'Payment')
+  return (
+    <div
+      className="text-white text-xs rounded px-1 py-0.5 truncate leading-tight"
+      style={{ backgroundColor: color }}
+      title={label}
+    >
+      {ev.eventType === 'Payment' && ev.categoryIcon ? `${ev.categoryIcon} ` : ''}{label}
+    </div>
+  )
+}
+
 const REF_MONDAY = new Date(2024, 0, 1)
 
 function getWeekDayLabels(intlLocale: string, fmt: 'short' | 'narrow'): string[] {
@@ -42,8 +63,9 @@ function getWeekDayLabels(intlLocale: string, fmt: 'short' | 'narrow'): string[]
 
 // ── Week View ──────────────────────────────────────────────────────────────────
 
-function WeekView({ current, today, intlLocale, onDayClick }: {
+function WeekView({ current, today, intlLocale, eventsByDate, onDayClick }: {
   current: Date; today: Date; intlLocale: string
+  eventsByDate: Map<string, CalendarEvent[]>
   onDayClick: (date: Date) => void
 }) {
   const weekStart = getWeekStart(current)
@@ -87,6 +109,27 @@ function WeekView({ current, today, intlLocale, onDayClick }: {
         })}
       </div>
 
+      {/* All-day event bars per day column */}
+      {days.some(d => (eventsByDate.get(toDateStr(d))?.length ?? 0) > 0) && (
+        <div
+          className="grid border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+          style={{ gridTemplateColumns: '52px repeat(7, 1fr)' }}
+        >
+          <div className="border-r border-gray-200 dark:border-gray-700" />
+          {days.map((day, i) => {
+            const dayEvs = eventsByDate.get(toDateStr(day)) ?? []
+            return (
+              <div key={i} className="border-r border-gray-100 dark:border-gray-800 last:border-r-0 p-1 space-y-0.5 min-h-[28px]">
+                {dayEvs.slice(0, 3).map(ev => <EventBar key={ev.id} ev={ev} />)}
+                {dayEvs.length > 3 && (
+                  <div className="text-xs text-gray-400 dark:text-gray-500 pl-1">+{dayEvs.length - 3}</div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
+
       {/* Time grid — clicking a cell opens that day */}
       {hours.map(hour => (
         <div
@@ -114,8 +157,9 @@ function WeekView({ current, today, intlLocale, onDayClick }: {
 
 // ── Month View ─────────────────────────────────────────────────────────────────
 
-function MonthView({ current, today, intlLocale, onDayClick }: {
+function MonthView({ current, today, intlLocale, eventsByDate, onDayClick }: {
   current: Date; today: Date; intlLocale: string
+  eventsByDate: Map<string, CalendarEvent[]>
   onDayClick: (date: Date) => void
 }) {
   const year = current.getFullYear()
@@ -157,15 +201,27 @@ function MonthView({ current, today, intlLocale, onDayClick }: {
             <button
               key={i}
               onClick={() => onDayClick(date)}
-              className={`p-2 flex flex-col items-start bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/60 transition-colors text-left ${!isCurrent ? 'opacity-40' : ''}`}
+              className={`p-1.5 flex flex-col items-start bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/60 transition-colors text-left overflow-hidden ${!isCurrent ? 'opacity-40' : ''}`}
             >
-              <span className={`text-sm w-7 h-7 flex items-center justify-center rounded-full font-medium ${
+              <span className={`text-sm w-7 h-7 flex items-center justify-center rounded-full font-medium shrink-0 ${
                 isToday
                   ? 'bg-indigo-600 text-white'
                   : 'text-gray-900 dark:text-white'
               }`}>
                 {date.getDate()}
               </span>
+              {isCurrent && (() => {
+                const dayEvs = eventsByDate.get(toDateStr(date)) ?? []
+                if (dayEvs.length === 0) return null
+                return (
+                  <div className="w-full mt-0.5 space-y-0.5 min-w-0">
+                    {dayEvs.slice(0, 3).map(ev => <EventBar key={ev.id} ev={ev} />)}
+                    {dayEvs.length > 3 && (
+                      <div className="text-xs text-gray-400 dark:text-gray-500 pl-1">+{dayEvs.length - 3}</div>
+                    )}
+                  </div>
+                )
+              })()}
             </button>
           )
         })}
@@ -263,6 +319,34 @@ export function CalendarPage() {
     return d
   })
   const [selectedDay, setSelectedDay] = useState<Date | null>(null)
+  const [eventsByDate, setEventsByDate] = useState<Map<string, CalendarEvent[]>>(new Map())
+  const loadKeyRef = useRef(0)
+
+  const loadEvents = useCallback(() => {
+    if (view === 'year') { setEventsByDate(new Map()); return }
+    const key = ++loadKeyRef.current
+    let dateFrom: string, dateTo: string
+    if (view === 'month') {
+      const y = current.getFullYear(), m = current.getMonth()
+      const days = new Date(y, m + 1, 0).getDate()
+      dateFrom = `${y}-${String(m + 1).padStart(2, '0')}-01`
+      dateTo   = `${y}-${String(m + 1).padStart(2, '0')}-${String(days).padStart(2, '0')}`
+    } else {
+      const ws = getWeekStart(current)
+      const we = new Date(ws); we.setDate(ws.getDate() + 6)
+      dateFrom = toDateStr(ws); dateTo = toDateStr(we)
+    }
+    calendarEventsApi.getByDateRange(dateFrom, dateTo).then(r => {
+      if (loadKeyRef.current !== key) return
+      const map = new Map<string, CalendarEvent[]>()
+      for (const ev of r.items) {
+        const arr = map.get(ev.date) ?? []; arr.push(ev); map.set(ev.date, arr)
+      }
+      setEventsByDate(map)
+    }).catch(() => {})
+  }, [view, current.getFullYear(), current.getMonth(), current.getDate()])
+
+  useEffect(() => { loadEvents() }, [loadEvents])
 
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -371,10 +455,10 @@ export function CalendarPage() {
       {/* Calendar body */}
       <div className="flex-1 overflow-hidden bg-gray-50 dark:bg-gray-900">
         {view === 'week' && (
-          <WeekView current={current} today={today} intlLocale={intlLocale} onDayClick={handleDayClick} />
+          <WeekView current={current} today={today} intlLocale={intlLocale} eventsByDate={eventsByDate} onDayClick={handleDayClick} />
         )}
         {view === 'month' && (
-          <MonthView current={current} today={today} intlLocale={intlLocale} onDayClick={handleDayClick} />
+          <MonthView current={current} today={today} intlLocale={intlLocale} eventsByDate={eventsByDate} onDayClick={handleDayClick} />
         )}
         {view === 'year' && (
           <YearView
@@ -390,6 +474,7 @@ export function CalendarPage() {
         day={selectedDay}
         intlLocale={intlLocale}
         onClose={() => setSelectedDay(null)}
+        onEventsChanged={loadEvents}
       />
     </div>
   )

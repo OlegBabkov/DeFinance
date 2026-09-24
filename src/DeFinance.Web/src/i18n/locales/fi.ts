@@ -634,6 +634,8 @@ const fi: Record<TranslationKeys, string> = {
   'calendar.form.titlePlaceholder': 'Tapahtuman nimi…',
   'calendar.form.timeFrom': 'Alkaen',
   'calendar.form.timeTo': 'Asti',
+  'calendar.form.color': 'Color',
+  'calendar.form.customColor': 'Custom color',
 
   // ── Calculator ────────────────────────────────────────────────────────────────
   'calculator.title': 'Laskin',

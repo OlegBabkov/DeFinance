@@ -634,6 +634,8 @@ const fr: Record<TranslationKeys, string> = {
   'calendar.form.titlePlaceholder': 'Nom de l\'événement…',
   'calendar.form.timeFrom': 'De',
   'calendar.form.timeTo': 'À',
+  'calendar.form.color': 'Color',
+  'calendar.form.customColor': 'Custom color',
 
   // ── Calculator ────────────────────────────────────────────────────────────────
   'calculator.title': 'Calculatrice',

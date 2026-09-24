@@ -634,6 +634,8 @@ const cs: Record<TranslationKeys, string> = {
   'calendar.form.titlePlaceholder': 'Název události…',
   'calendar.form.timeFrom': 'Od',
   'calendar.form.timeTo': 'Do',
+  'calendar.form.color': 'Color',
+  'calendar.form.customColor': 'Custom color',
 
   // ── Calculator ────────────────────────────────────────────────────────────────
   'calculator.title': 'Kalkulačka',

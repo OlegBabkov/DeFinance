@@ -634,6 +634,8 @@ const bg: Record<TranslationKeys, string> = {
   'calendar.form.titlePlaceholder': 'Име на събитието…',
   'calendar.form.timeFrom': 'От',
   'calendar.form.timeTo': 'До',
+  'calendar.form.color': 'Color',
+  'calendar.form.customColor': 'Custom color',
 
   // ── Calculator ────────────────────────────────────────────────────────────────
   'calculator.title': 'Калкулатор',
