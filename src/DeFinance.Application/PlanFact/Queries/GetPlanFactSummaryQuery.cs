@@ -59,7 +59,9 @@ public class GetPlanFactSummaryQueryHandler(
 
             if (overrideByMonth.TryGetValue(month, out var ov))
             {
-                if (ov.Amount.HasValue)
+                // Overrides store a full-portfolio amount; when excluding savings they can't be used
+                // as an anchor because we'd be mixing a savings-inclusive base with savings-exclusive flow.
+                if (ov.Amount.HasValue && !request.ExcludeSavings)
                 {
                     openingBalance = ov.Amount.Value;
                     openingIsOverride = true;
@@ -141,6 +143,12 @@ public class GetPlanFactSummaryQueryHandler(
         ITransactionRepository transactionRepository,
         CancellationToken cancellationToken)
     {
+        // Overrides are full-portfolio anchors. Mixing one with savings-excluded net flow
+        // would leave the savings portion of the override permanently baked in, so when
+        // savings are excluded we always compute the opening balance from raw transactions.
+        if (excludeSavings)
+            return await transactionRepository.GetSignedBalanceBeforeAsync(monthStart, true, cancellationToken);
+
         var priorOverride = overrideByMonth.Values
             .Where(o => o.Month < month && o.Amount.HasValue)
             .MaxBy(o => o.Month);
