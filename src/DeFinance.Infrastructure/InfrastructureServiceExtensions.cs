@@ -36,6 +36,7 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<IOpeningBalanceOverrideRepository, OpeningBalanceOverrideRepository>();
         services.AddScoped<IReportRepository, ReportRepository>();
         services.AddScoped<IExchangeRateHistoryRepository, ExchangeRateHistoryRepository>();
+        services.AddScoped<ICalendarEventRepository, CalendarEventRepository>();
 
         services.AddHttpClient("frankfurter", c =>
         {
