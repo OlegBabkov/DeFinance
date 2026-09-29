@@ -92,6 +92,7 @@ using (var scope = app.Services.CreateScope())
     await CounterpartySeeder.SeedAsync(db);
     await PaymentStatusSeeder.SeedAsync(db);
     await UserSeeder.SeedAsync(db);
+    await DemoSeeder.SeedAsync(db);
 }
 
 app.UseSerilogRequestLogging();
