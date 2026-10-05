@@ -40,11 +40,18 @@ public class GetPlanFactSummaryQueryHandler(
             .Where(c => c.Type == CategoryType.TransferOut)
             .OrderBy(c => c.Name).ToList();
 
-        var budgetEntries = await budgetEntryRepository.GetByPeriodAsync(request.Year, months, cancellationToken);
-        var transactionTotals = await transactionRepository.GetCategoryMonthlyTotalsAsync(request.Year, months, request.ExcludeSavings, cancellationToken);
         // Load ALL overrides for the year so months without an override can cascade from a prior month's override
         var openingOverrides = await openingBalanceOverrideRepository.GetAllByYearAsync(request.Year, cancellationToken);
         var overrideByMonth = openingOverrides.ToDictionary(o => o.Month);
+
+        // Load budget entries for all months up to the last requested month so the plan
+        // opening balance can be cascaded forward even when earlier months are not displayed.
+        var maxMonth = months.Max();
+        var allPriorMonths = Enumerable.Range(1, maxMonth).ToList();
+        var allBudgetEntries = await budgetEntryRepository.GetByPeriodAsync(request.Year, allPriorMonths, cancellationToken);
+        var budgetEntries = allBudgetEntries; // alias kept for the per-month lookup below
+
+        var transactionTotals = await transactionRepository.GetCategoryMonthlyTotalsAsync(request.Year, months, request.ExcludeSavings, cancellationToken);
 
         var monthDataList = new List<PlanFactMonthData>();
 
@@ -78,7 +85,7 @@ public class GetPlanFactSummaryQueryHandler(
             {
                 openingBalance = await ResolveOpeningBalanceAsync(overrideByMonth, month, monthStart, request.Year, request.ExcludeSavings, transactionRepository, cancellationToken);
                 openingIsOverride = false;
-                planOpeningBalance = null;
+                planOpeningBalance = ResolvePlanOpeningBalance(overrideByMonth, month, allBudgetEntries, incomeCategories, expenseCategories);
                 planOpeningIsOverride = false;
             }
 
@@ -130,6 +137,38 @@ public class GetPlanFactSummaryQueryHandler(
         }
 
         return new PlanFactSummaryResponse(monthDataList);
+    }
+
+    // Mirrors ResolveOpeningBalanceAsync but for the plan side: finds the nearest prior
+    // plan override and adds the net planned flow (income - expense budget entries) since that
+    // override up to (but not including) the target month.  Returns null when no prior plan
+    // override exists so the frontend can fall back to the fact opening balance.
+    private static decimal? ResolvePlanOpeningBalance(
+        Dictionary<int, OpeningBalanceOverride> overrideByMonth,
+        int month,
+        IReadOnlyList<BudgetEntry> allBudgetEntries,
+        IEnumerable<Category> incomeCategories,
+        IEnumerable<Category> expenseCategories)
+    {
+        var priorPlanOverride = overrideByMonth.Values
+            .Where(o => o.Month < month && o.PlanAmount.HasValue)
+            .MaxBy(o => o.Month);
+
+        if (priorPlanOverride?.PlanAmount is null)
+            return null;
+
+        var incomeIds  = incomeCategories.Select(c => c.Id).ToHashSet();
+        var expenseIds = expenseCategories.Select(c => c.Id).ToHashSet();
+
+        // Sum budget entries from the override month up to (but not including) the target month.
+        var netPlan = allBudgetEntries
+            .Where(e => e.Month >= priorPlanOverride.Month && e.Month < month)
+            .Sum(e =>
+                incomeIds.Contains(e.CategoryId)  ?  e.PlannedAmount :
+                expenseIds.Contains(e.CategoryId) ? -e.PlannedAmount :
+                0m);
+
+        return priorPlanOverride.PlanAmount.Value + netPlan;
     }
 
     // For months without an explicit override, cascade forward from the nearest prior override.
