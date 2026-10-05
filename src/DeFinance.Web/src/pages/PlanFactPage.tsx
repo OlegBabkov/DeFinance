@@ -718,9 +718,9 @@ export function PlanFactPage() {
                     <>
                       <td
                         key={`${m}-ob-plan`}
-                        className={`px-2 py-2.5 text-right text-xs font-mono border-l border-gray-100 dark:border-gray-700 ${planColCls} ${isAuto ? 'text-indigo-400 dark:text-indigo-500' : planIsOverride ? 'text-indigo-600 dark:text-indigo-400 cursor-pointer select-none hover:brightness-95 dark:hover:brightness-110' : 'text-gray-400 dark:text-gray-500 cursor-pointer select-none hover:brightness-95 dark:hover:brightness-110'}`}
-                        title={isAuto ? t('planFact.ob.autoCalc') : t('planFact.ob.clickToSetPlan')}
-                        onClick={isAuto ? undefined : () => setPlanObModal({ year, month: m, currentValue: planOb })}
+                        className={`px-2 py-2.5 text-right text-xs font-mono border-l border-gray-100 dark:border-gray-700 ${planColCls} cursor-pointer select-none hover:brightness-95 dark:hover:brightness-110 ${isAuto ? 'text-indigo-400 dark:text-indigo-500' : planIsOverride ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-400 dark:text-gray-500'}`}
+                        title={t('planFact.ob.clickToSetPlan')}
+                        onClick={() => setPlanObModal({ year, month: m, currentValue: planOb })}
                       >
                         {isAuto
                           ? <>{fmt(planOb)}<span className="ml-1 text-[10px] opacity-60">↻</span></>
@@ -728,9 +728,9 @@ export function PlanFactPage() {
                       </td>
                       <td
                         key={`${m}-ob-fact`}
-                        className={`px-2 py-2.5 text-right text-xs font-mono ${factColCls} ${isAuto ? signedColor(ob) : isOverride ? 'text-amber-600 dark:text-amber-400 cursor-pointer select-none hover:brightness-95 dark:hover:brightness-110' : `${signedColor(ob)} cursor-pointer select-none hover:brightness-95 dark:hover:brightness-110`}`}
-                        title={isAuto ? t('planFact.ob.autoCalc') : t('planFact.ob.clickToOverride')}
-                        onClick={isAuto ? undefined : () => setObModal({ year, month: m, currentValue: ob })}
+                        className={`px-2 py-2.5 text-right text-xs font-mono ${factColCls} cursor-pointer select-none hover:brightness-95 dark:hover:brightness-110 ${isAuto ? signedColor(ob) : isOverride ? 'text-amber-600 dark:text-amber-400' : signedColor(ob)}`}
+                        title={t('planFact.ob.clickToOverride')}
+                        onClick={() => setObModal({ year, month: m, currentValue: ob })}
                       >
                         {fmt(ob)}{isAuto
                           ? <span className="ml-1 text-[10px] opacity-60">↻</span>
