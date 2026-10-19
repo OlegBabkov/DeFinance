@@ -2,12 +2,14 @@ using DeFinance.Application.Common;
 using DeFinance.Application.Users.Commands;
 using DeFinance.Application.Users.Queries;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DeFinance.Api.Controllers;
 
 [ApiController]
 [Route("api/users")]
+[Authorize(Roles = "Admin")]
 public class UsersController(ISender sender) : ControllerBase
 {
     [HttpGet]

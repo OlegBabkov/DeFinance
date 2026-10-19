@@ -17,7 +17,8 @@ public static class UserSeeder
                 username: "admin",
                 password: BCrypt.Net.BCrypt.HashPassword(adminPassword),
                 email: adminEmail,
-                phoneNumber: null);
+                phoneNumber: null,
+                isAdmin: true);
 
             await context.Users.AddAsync(admin, cancellationToken);
             await context.SaveChangesAsync(cancellationToken);

@@ -20,7 +20,7 @@ public class LoginCommandHandler(IUserRepository userRepository, IPasswordServic
         if (!passwordService.Verify(request.Password, user.Password))
             return null;
 
-        var token = jwtTokenService.GenerateToken(user.Id, user.Username, user.Email);
+        var token = jwtTokenService.GenerateToken(user.Id, user.Username, user.Email, user.IsAdmin);
         return new LoginResponse(token, user.Username);
     }
 }

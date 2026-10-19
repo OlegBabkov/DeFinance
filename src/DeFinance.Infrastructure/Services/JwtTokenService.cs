@@ -9,18 +9,21 @@ namespace DeFinance.Infrastructure.Services;
 
 public class JwtTokenService(IConfiguration configuration) : IJwtTokenService
 {
-    public string GenerateToken(Guid userId, string username, string email)
+    public string GenerateToken(Guid userId, string username, string email, bool isAdmin)
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-        var claims = new[]
+        var claims = new List<Claim>
         {
-            new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()),
-            new Claim(JwtRegisteredClaimNames.UniqueName, username),
-            new Claim(JwtRegisteredClaimNames.Email, email),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new(JwtRegisteredClaimNames.Sub, userId.ToString()),
+            new(JwtRegisteredClaimNames.UniqueName, username),
+            new(JwtRegisteredClaimNames.Email, email),
+            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
         };
+
+        if (isAdmin)
+            claims.Add(new Claim(ClaimTypes.Role, "Admin"));
 
         var expirationHours = double.TryParse(configuration["Jwt:ExpirationHours"], out var h) ? h : 24;
 

@@ -9,12 +9,13 @@ public class User
     public string? PhoneNumber { get; private set; }
     public DateTime CreatedAt { get; private set; }
     public bool IsActive { get; private set; }
+    public bool IsAdmin { get; private set; }
     public byte[]? Photo { get; private set; }
     public string? PhotoContentType { get; private set; }
 
     private User() { }
 
-    public static User Create(string username, string password, string email, string? phoneNumber) =>
+    public static User Create(string username, string password, string email, string? phoneNumber, bool isAdmin = false) =>
         new()
         {
             Id = Guid.NewGuid(),
@@ -24,6 +25,7 @@ public class User
             PhoneNumber = phoneNumber,
             CreatedAt = DateTime.UtcNow,
             IsActive = true,
+            IsAdmin = isAdmin,
         };
 
     public void Update(string username, string email, string? phoneNumber)

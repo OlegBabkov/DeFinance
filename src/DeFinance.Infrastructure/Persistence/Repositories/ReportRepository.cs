@@ -6,8 +6,8 @@ namespace DeFinance.Infrastructure.Persistence.Repositories;
 
 public class ReportRepository(DeFinanceDbContext db) : IReportRepository
 {
-    public Task<Report?> GetByIdAsync(Guid id, CancellationToken ct = default) =>
-        db.Reports.FirstOrDefaultAsync(r => r.Id == id, ct);
+    public Task<Report?> GetByIdAsync(Guid id, Guid userId, CancellationToken ct = default) =>
+        db.Reports.FirstOrDefaultAsync(r => r.Id == id && r.UserId == userId, ct);
 
     public async Task<IReadOnlyList<Report>> GetByUserAsync(Guid userId, CancellationToken ct = default) =>
         await db.Reports
