@@ -163,6 +163,8 @@ services:
       Observability__ElasticsearchUsername: "elastic"
       Observability__ElasticsearchPassword: "definance_elastic"
       Observability__OtlpEndpoint: "http://otel-collector:4317"
+      Jwt__Key: "${JWT_KEY:?JWT_KEY must be set in docker/.env}"
+      Admin__Password: "${ADMIN_PASSWORD:?ADMIN_PASSWORD must be set in docker/.env}"
     ports:
       - "8080:8080"
     depends_on:

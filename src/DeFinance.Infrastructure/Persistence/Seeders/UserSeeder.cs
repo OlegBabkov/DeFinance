@@ -5,9 +5,11 @@ namespace DeFinance.Infrastructure.Persistence.Seeders;
 
 public static class UserSeeder
 {
-    public static async Task SeedAsync(DeFinanceDbContext context, CancellationToken cancellationToken = default)
+    public static async Task SeedAsync(DeFinanceDbContext context, string adminPassword, CancellationToken cancellationToken = default)
     {
-        const string adminPassword = "admin123";
+        if (string.IsNullOrWhiteSpace(adminPassword))
+            throw new InvalidOperationException("Admin password must be set via Admin:Password configuration or Admin__Password environment variable.");
+
         const string adminEmail = "admin@definance.local";
 
         var existing = await context.Users.FirstOrDefaultAsync(u => u.Username == "admin", cancellationToken);

@@ -91,7 +91,9 @@ using (var scope = app.Services.CreateScope())
     await CategorySeeder.SeedAsync(db);
     await CounterpartySeeder.SeedAsync(db);
     await PaymentStatusSeeder.SeedAsync(db);
-    await UserSeeder.SeedAsync(db);
+    var adminPassword = builder.Configuration["Admin:Password"]
+        ?? throw new InvalidOperationException("Admin:Password configuration is required. Set it via appsettings.Development.json or Admin__Password environment variable.");
+    await UserSeeder.SeedAsync(db, adminPassword);
 }
 
 app.UseSerilogRequestLogging();
